@@ -126,25 +126,26 @@ Read in this order:
 12. `Helpful Md/PREMIUM_CAPABILITY_ROADMAP.md`
 13. `Helpful Md/PREMIUM_V1_CLOSEOUT_CHECKLIST.md`
 14. `Helpful Md/ENTITLEMENT_SOURCE_OF_TRUTH_GUIDE.md`
-15. `Helpful Md/PREMIUM_ENTITLEMENT_FOUNDATION_GUIDE.md`
-16. `Helpful Md/OPTIONAL_BACKEND_FOUNDATION_GUIDE.md`
-17. `Helpful Md/BACKEND_SQLITE_STORAGE_GUIDE.md`
-18. `Helpful Md/BACKEND_BACKUP_AND_RESTORE_GUIDE.md`
-19. `Helpful Md/BACKEND_BACKUP_RETENTION_AND_SCHEDULING_GUIDE.md`
-20. `Helpful Md/PREMIUM_OPERATIONS_OWNERSHIP_AND_READINESS_GUIDE.md`
-21. `Helpful Md/BACKEND_SECURITY_AND_AUDIT_GUIDE.md`
-22. `Helpful Md/BACKEND_ADMIN_CONSOLE_GUIDE.md`
-23. `Helpful Md/BACKEND_DELIVERY_TRAIL_GUIDE.md`
-24. `Helpful Md/BACKEND_DELIVERY_DISPATCH_PACK_GUIDE.md`
-25. `Helpful Md/BACKEND_DELIVERY_ACKNOWLEDGMENT_GUIDE.md`
-26. `Helpful Md/BACKEND_SEAT_SESSION_GUIDE.md`
-27. `Helpful Md/TEAM_SEAT_SIGNIN_AND_SESSION_LIFECYCLE_GUIDE.md`
-28. `Helpful Md/TEAM_SEAT_RECOVERY_AND_ROTATION_GUIDE.md`
-29. `Helpful Md/TEAM_SEAT_RECOVERY_CODE_GUIDE.md`
-30. `Helpful Md/TEAM_SEAT_INVITE_AND_ENROLLMENT_GUIDE.md`
-31. `Helpful Md/TEAM_SEAT_SIGNED_LINK_GUIDE.md`
-32. `Helpful Md/TEAM_WORKSPACE_APPROVAL_HANDOFF_GUIDE.md`
-33. `Helpful Md/PROPOSAL_BRANDING_AND_RELEASE_CONTROL_GUIDE.md`
+15. `Helpful Md/OWNER_ADMIN_PREMIUM_ACCESS_POLICY.md`
+16. `Helpful Md/PREMIUM_ENTITLEMENT_FOUNDATION_GUIDE.md`
+17. `Helpful Md/OPTIONAL_BACKEND_FOUNDATION_GUIDE.md`
+18. `Helpful Md/BACKEND_SQLITE_STORAGE_GUIDE.md`
+19. `Helpful Md/BACKEND_BACKUP_AND_RESTORE_GUIDE.md`
+20. `Helpful Md/BACKEND_BACKUP_RETENTION_AND_SCHEDULING_GUIDE.md`
+21. `Helpful Md/PREMIUM_OPERATIONS_OWNERSHIP_AND_READINESS_GUIDE.md`
+22. `Helpful Md/BACKEND_SECURITY_AND_AUDIT_GUIDE.md`
+23. `Helpful Md/BACKEND_ADMIN_CONSOLE_GUIDE.md`
+24. `Helpful Md/BACKEND_DELIVERY_TRAIL_GUIDE.md`
+25. `Helpful Md/BACKEND_DELIVERY_DISPATCH_PACK_GUIDE.md`
+26. `Helpful Md/BACKEND_DELIVERY_ACKNOWLEDGMENT_GUIDE.md`
+27. `Helpful Md/BACKEND_SEAT_SESSION_GUIDE.md`
+28. `Helpful Md/TEAM_SEAT_SIGNIN_AND_SESSION_LIFECYCLE_GUIDE.md`
+29. `Helpful Md/TEAM_SEAT_RECOVERY_AND_ROTATION_GUIDE.md`
+30. `Helpful Md/TEAM_SEAT_RECOVERY_CODE_GUIDE.md`
+31. `Helpful Md/TEAM_SEAT_INVITE_AND_ENROLLMENT_GUIDE.md`
+32. `Helpful Md/TEAM_SEAT_SIGNED_LINK_GUIDE.md`
+33. `Helpful Md/TEAM_WORKSPACE_APPROVAL_HANDOFF_GUIDE.md`
+34. `Helpful Md/PROPOSAL_BRANDING_AND_RELEASE_CONTROL_GUIDE.md`
 
 Then use this working rule:
 
@@ -158,6 +159,7 @@ Then use this working rule:
 - use the free static hosting quickstart when the priority is getting the app live at zero cost with the least possible operational overhead
 - use the GitHub Pages publish checklist when you want the exact lowest-friction repo-native free launch path for this repo
 - use the hosting recommendation and remote deployment guide when you want the dated host recommendation, the remote-push requirements, and the honest alternatives to Oracle
+- use the owner/admin premium access policy guide when you want the explicit rule for installation-wide admin-managed premium access versus future seat-level billing
 - use the deployment templates guide when you want concrete starter files for GitHub Pages, Netlify, or Render instead of writing deployment config from scratch
 - use the Oracle backend guide when you want to keep the frontend on GitHub Pages or Netlify and add a low-cash premium backend later on Oracle Cloud
 - use `node _ui_height_debug.js` for initial-load UI height checks
