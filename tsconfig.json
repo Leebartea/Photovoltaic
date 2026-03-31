@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ES2021",
+    "module": "none",
+    "lib": ["ES2021", "DOM"],
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "moduleDetection": "legacy"
+  },
+  "include": [
+    "src/scripts/types/**/*.d.ts",
+    "src/scripts/modules/00-defaults.ts",
+    "src/scripts/modules/10-engines.ts",
+    "src/scripts/modules/25-controller-payloads.ts",
+    "src/scripts/modules/26-controller-state.ts",
+    "src/scripts/modules/27-controller-guidance.ts",
+    "src/scripts/modules/28-entitlements.ts",
+    "src/scripts/modules/29-backend.ts",
+    "src/scripts/modules/20-reporting.ts"
+  ],
+  "exclude": [
+    "src/scripts/modules/30-controller.js",
+    "src/scripts/modules/40-init.js",
+    "dist",
+    "vendor"
+  ]
+}

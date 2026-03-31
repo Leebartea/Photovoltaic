@@ -1,0 +1,26 @@
+{
+  "scopes": {
+    "demo-engineering-plus": [
+      {
+        "projectKey": "adeniran_backup_upgrade",
+        "projectName": "Adeniran Backup Upgrade",
+        "stageKey": "engineering_review",
+        "stageLabel": "Engineering Review",
+        "owner": "Sales Desk - Tunde",
+        "reviewDesk": "Engineering Review",
+        "handbackTarget": "Installer Ops",
+        "dueDate": "2026-03-31",
+        "notes": "Confirm supplier quote refresh before client release.",
+        "locationName": "Lagos, Nigeria",
+        "audienceMode": "installer",
+        "systemType": "hybrid",
+        "businessProfileLabel": "Retail / POS",
+        "applianceCount": 8,
+        "companyName": "Leebartea Solar",
+        "clientName": "Adeniran Stores",
+        "siteName": "Ikorodu Branch",
+        "updatedAt": "2026-03-27T00:00:00.000Z"
+      }
+    ]
+  }
+}

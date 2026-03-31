@@ -1,0 +1,20 @@
+{
+  "scopes": {
+    "demo-engineering-plus": [
+      {
+        "id": "profile_lagos_sales",
+        "label": "Lagos Sales Desk",
+        "companyName": "Leebartea Solar",
+        "contactName": "Tunde",
+        "contactPhone": "+234-800-000-0000",
+        "contactEmail": "sales@leebartea.example",
+        "brandAccent": "#2563eb",
+        "issuerTagline": "Commercial solar delivery for high-uptime sites",
+        "footerNote": "Internal release only until client issue is approved",
+        "brandLogoName": "",
+        "brandLogoDataUrl": "",
+        "updatedAt": "2026-03-27T00:00:00.000Z"
+      }
+    ]
+  }
+}

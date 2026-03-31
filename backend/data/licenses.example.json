@@ -1,0 +1,34 @@
+{
+  "backendLabel": "PV Premium Sync Reference Server",
+  "licenses": [
+    {
+      "installationKey": "demo-installer-pro",
+      "label": "Installer Pro Demo License",
+      "planKey": "installer_pro",
+      "grantedCapabilities": [
+        "commercial_workflow",
+        "branded_exports",
+        "supplier_sync"
+      ],
+      "status": "active",
+      "expiresAt": "2026-12-31T00:00:00.000Z",
+      "offlineGraceDays": 14,
+      "note": "Example license for local testing."
+    },
+    {
+      "installationKey": "demo-engineering-plus",
+      "label": "Engineering Plus Demo License",
+      "planKey": "engineering_plus",
+      "grantedCapabilities": [
+        "commercial_workflow",
+        "team_workspace",
+        "branded_exports",
+        "formal_study_surface"
+      ],
+      "status": "active",
+      "expiresAt": "2026-12-31T00:00:00.000Z",
+      "offlineGraceDays": 21,
+      "note": "Example engineering entitlement for backend sync trials."
+    }
+  ]
+}

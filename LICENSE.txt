@@ -1,5 +1,9 @@
 MIT License
 
+Advanced PV System Calculator — Global Edition v3.0.0
+Professional off-grid and hybrid solar system sizing tool for residential,
+commercial, and small-industrial captive-site installations worldwide.
+
 Copyright (c) 2026 Leebartea
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,3 +23,11 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+DISCLAIMER: This tool is for estimation and planning purposes only. Final
+system designs, interconnections, inverter cluster mappings, generator-assist
+schemes, protection coordination, and OEM parallel-connection rules must be
+validated by a qualified solar engineer or electrician in accordance with
+local electrical codes and standards (NEC, IEC, NEIS, etc.) and the relevant
+equipment manufacturer documentation. The authors assume no liability for
+installations based on this tool's output.

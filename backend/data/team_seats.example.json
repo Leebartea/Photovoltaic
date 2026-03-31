@@ -1,0 +1,48 @@
+{
+  "scopes": {
+    "demo-engineering-plus": [
+      {
+        "id": "team_seat_admin_demo",
+        "label": "Ada - Workspace Admin",
+        "roleKey": "workspace_admin",
+        "roleLabel": "Workspace Admin",
+        "stateKey": "active",
+        "stateLabel": "Active",
+        "contact": "ada@example.com",
+        "accessCodeHint": "Ops desk phrase",
+        "accessCodeSalt": "seat_admin_demo_salt",
+        "accessCodeHash": "fe3c2d3fa15006037d56a1c49ece1e0c262dbe9621a929fbf6639064a34b4b714dc0a3169f09ca277c8ddf076c9dee78c5e29397f285141d0ab3a135a2ee3b3c",
+        "updatedAt": "2026-03-27T09:00:00.000Z",
+        "source": "server_sync"
+      },
+      {
+        "id": "team_seat_eng_demo",
+        "label": "Chinedu - Engineering Review",
+        "roleKey": "engineering_review",
+        "roleLabel": "Engineering Review",
+        "stateKey": "active",
+        "stateLabel": "Active",
+        "contact": "chinedu@example.com",
+        "accessCodeHint": "Study desk phrase",
+        "accessCodeSalt": "seat_eng_demo_salt",
+        "accessCodeHash": "dfbaedbabbc0dc0cadddf7cbb59a806639a5a84012875c737d7d4691e364e3e1d9d34f2066c225e99816bb6b2e3ebb4608c42487d60092039cd0d6e3e58a6925",
+        "updatedAt": "2026-03-27T09:10:00.000Z",
+        "source": "server_sync"
+      },
+      {
+        "id": "team_seat_sales_demo",
+        "label": "Tunde - Sales Desk",
+        "roleKey": "sales_desk",
+        "roleLabel": "Sales Desk",
+        "stateKey": "review_only",
+        "stateLabel": "Review-only",
+        "contact": "tunde@example.com",
+        "accessCodeHint": "Review desk phrase",
+        "accessCodeSalt": "seat_sales_demo_salt",
+        "accessCodeHash": "63a46ae6635e211d91d315c0424105e05427a191e9b4ce25658983e7ccd6ecea0ce17d8ef85534651ad158bb8e1a91ad37b560c348cc92a61ab8427a19b32ef5",
+        "updatedAt": "2026-03-27T09:20:00.000Z",
+        "source": "server_sync"
+      }
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "scopes": {
+    "demo-engineering-plus": {
+      "admin": {
+        "coordinator": "Ada - Ops Coordinator",
+        "contact": "ops@example.com",
+        "updatedAt": "2026-03-27T09:00:00.000Z",
+        "source": "server_sync"
+      },
+      "roster": [
+        {
+          "id": "team_roster_sales_demo",
+          "label": "Sales Desk - Tunde",
+          "roleKey": "sales_desk",
+          "roleLabel": "Sales Desk",
+          "roleHint": "Owns commercial shaping and client issue prep.",
+          "contact": "Tunde / +234...",
+          "updatedAt": "2026-03-27T09:00:00.000Z",
+          "source": "server_sync"
+        },
+        {
+          "id": "team_roster_eng_demo",
+          "label": "Engineering Review Desk",
+          "roleKey": "engineering_review",
+          "roleLabel": "Engineering Review",
+          "roleHint": "Validates technical basis before release or procurement.",
+          "contact": "Chinedu / +234...",
+          "updatedAt": "2026-03-27T09:05:00.000Z",
+          "source": "server_sync"
+        }
+      ]
+    }
+  }
+}

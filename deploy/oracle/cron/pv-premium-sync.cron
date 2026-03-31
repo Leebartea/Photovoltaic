@@ -1,0 +1,6 @@
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+
+# Nightly sqlite backup and retention pruning for the Oracle backend host.
+10 2 * * * root cd /srv/pv-premium && set -a && . /etc/pv-premium-sync/backend.env && set +a && node scripts/backend_backup.js "$BACKEND_BACKUP_ROOT_DIR/backend-backup-$(date +\%F)"
+20 2 * * * root cd /srv/pv-premium && set -a && . /etc/pv-premium-sync/backend.env && set +a && node scripts/backend_backup_prune.js "$BACKEND_BACKUP_ROOT_DIR" --keep-count="$BACKEND_BACKUP_KEEP_COUNT" --keep-days="$BACKEND_BACKUP_KEEP_DAYS"

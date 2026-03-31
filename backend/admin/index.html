@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PV Premium Admin Console</title>
+    <link rel="stylesheet" href="/admin/app.css">
+</head>
+<body>
+    <main class="shell">
+        <section class="hero">
+            <p class="eyebrow">PV Premium Sync Backend</p>
+            <h1>Admin Console</h1>
+            <p class="hero-copy">
+                Same-origin, memory-only admin surface for shared seats, invite delivery, recovery delivery, and audit review.
+                This does not run calculator logic and it does not persist browser secrets.
+            </p>
+            <div class="hero-grid">
+                <div class="hero-card">
+                    <strong>Trust boundary</strong>
+                    <span>Backend seats, sessions, invite links, and recovery links only.</span>
+                </div>
+                <div class="hero-card">
+                    <strong>Storage posture</strong>
+                    <span>API keys, seat codes, and session tokens stay in browser memory only.</span>
+                </div>
+                <div class="hero-card">
+                    <strong>Recommended ops mode</strong>
+                    <span>Issue a short-lived seat session, then use that session for admin actions.</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">Runtime</p>
+                    <h2>Security Posture</h2>
+                </div>
+                <button type="button" id="refreshPostureBtn" class="button ghost">Refresh posture</button>
+            </div>
+            <div id="statusBanner" class="banner" aria-live="polite">Loading backend posture…</div>
+            <div id="postureSummary" class="summary-grid" aria-live="polite"></div>
+            <ul id="postureWarnings" class="warning-list"></ul>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">Same-origin console</p>
+                    <h2>Session Bootstrap</h2>
+                </div>
+            </div>
+            <div class="form-grid two">
+                <label class="field">
+                    <span>Installation Key</span>
+                    <input type="text" id="installationKey" placeholder="demo-engineering-plus" autocomplete="off">
+                </label>
+                <label class="field">
+                    <span>Frontend App URL</span>
+                    <input type="url" id="frontendAppUrl" placeholder="https://your-static-app.example.com/pv_calculator_ui.html" autocomplete="off">
+                </label>
+                <label class="field">
+                    <span>Backend API Key</span>
+                    <input type="password" id="apiKey" placeholder="Optional bootstrap credential" autocomplete="off">
+                </label>
+                <label class="field">
+                    <span>Device Label</span>
+                    <input type="text" id="deviceLabel" placeholder="Admin Console Browser" autocomplete="off">
+                </label>
+                <label class="field">
+                    <span>Admin Seat ID</span>
+                    <input type="text" id="actorSeatId" placeholder="team_seat_admin_demo" autocomplete="off">
+                </label>
+                <label class="field">
+                    <span>Seat Access Code</span>
+                    <input type="password" id="actorSeatCode" placeholder="Preferred over API bootstrap" autocomplete="off">
+                </label>
+            </div>
+            <div class="action-row">
+                <button type="button" id="issueSessionBtn" class="button primary">Issue session</button>
+                <button type="button" id="renewSessionBtn" class="button">Renew session</button>
+                <button type="button" id="revokeSessionBtn" class="button">Revoke session</button>
+                <button type="button" id="clearSessionBtn" class="button ghost">Clear local session</button>
+            </div>
+            <div id="sessionSummary" class="console-block" aria-live="polite"></div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">Authenticated shell</p>
+                    <h2>Admin Unlock State</h2>
+                </div>
+                <button type="button" id="refreshShellBtn" class="button ghost">Refresh shell</button>
+            </div>
+            <div id="shellBanner" class="banner warn" aria-live="polite">Admin shell is locked until a short-lived seat session is active.</div>
+            <div id="shellSummary" class="summary-grid" aria-live="polite"></div>
+            <div id="shellNote" class="console-block">Issue a short-lived seat session first. The admin workspace unlocks only from a valid backend seat session, not from API-key bootstrap alone.</div>
+        </section>
+
+        <section class="panel requires-session" id="workspaceSection">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">Shared workspace</p>
+                    <h2>Team Seats</h2>
+                </div>
+                <div class="action-row compact">
+                    <button type="button" id="loadSeatsBtn" class="button primary">Load seats</button>
+                </div>
+            </div>
+            <div id="seatSummary" class="console-block">Load the shared seat library for the current installation.</div>
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Target</th>
+                            <th>Seat</th>
+                            <th>Role</th>
+                            <th>State</th>
+                            <th>Sign-in</th>
+                            <th>Hint</th>
+                            <th>Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody id="seatTableBody"></tbody>
+                </table>
+            </div>
+            <div class="locked-overlay" data-locked-overlay>
+                <strong>Admin shell locked</strong>
+                <span>Issue a short-lived seat session first. This keeps operator actions tied to a named seat instead of a raw bootstrap credential.</span>
+            </div>
+        </section>
+
+        <section class="panel requires-session" id="approvalSection">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">High-risk control</p>
+                    <h2>Action Approval Queue</h2>
+                </div>
+                <div class="action-row compact">
+                    <label class="field compact-field">
+                        <span>Queue</span>
+                        <select id="approvalStatusFilter">
+                            <option value="open">Open</option>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="all">All</option>
+                        </select>
+                    </label>
+                    <button type="button" id="loadApprovalsBtn" class="button primary">Refresh queue</button>
+                </div>
+            </div>
+            <div class="form-grid two">
+                <label class="field">
+                    <span>High-risk action</span>
+                    <select id="approvalRecoveryAction">
+                        <option value="rotate_access_code">Rotate Access Code</option>
+                        <option value="disable_sign_in">Disable Shared Sign-In</option>
+                        <option value="suspend_seat">Suspend Seat</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Review note</span>
+                    <textarea id="approvalReviewNote" rows="3" placeholder="Optional request or review note"></textarea>
+                </label>
+            </div>
+            <div class="action-row">
+                <button type="button" id="requestApprovalBtn" class="button primary">Request approval</button>
+                <button type="button" id="approveSelectedApprovalBtn" class="button">Approve selected</button>
+                <button type="button" id="rejectSelectedApprovalBtn" class="button">Reject selected</button>
+            </div>
+            <div id="approvalSummary" class="console-block">Load the shared seat library, select a target seat, then queue or review high-risk actions here.</div>
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Target</th>
+                            <th>Action</th>
+                            <th>Status</th>
+                            <th>Requested By</th>
+                            <th>Reviewed By</th>
+                            <th>Expires</th>
+                            <th>Note</th>
+                        </tr>
+                    </thead>
+                    <tbody id="approvalTableBody"></tbody>
+                </table>
+            </div>
+            <div class="locked-overlay" data-locked-overlay>
+                <strong>Approval queue locked</strong>
+                <span>High-risk seat changes are reviewed here only after the admin shell is backed by a valid short-lived seat session.</span>
+            </div>
+        </section>
+
+        <section class="panel-grid">
+            <section class="panel requires-session" id="inviteSection">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Delivery</p>
+                        <h2>Seat Invite</h2>
+                    </div>
+                </div>
+                <label class="field">
+                    <span>Invite note</span>
+                    <textarea id="inviteNote" rows="3" placeholder="Optional onboarding note for the target seat"></textarea>
+                </label>
+                <div class="action-row">
+                    <button type="button" id="issueInviteBtn" class="button primary">Issue seat invite</button>
+                    <button type="button" id="copyInviteCodeBtn" class="button">Copy code</button>
+                    <button type="button" id="copyInviteLinkBtn" class="button">Copy app link</button>
+                </div>
+                <div class="output-grid">
+                    <label class="field">
+                        <span>Invite code</span>
+                        <textarea id="inviteCodeOutput" rows="3" readonly></textarea>
+                    </label>
+                    <label class="field">
+                        <span>Signed app link</span>
+                        <textarea id="inviteLinkOutput" rows="4" readonly></textarea>
+                    </label>
+                </div>
+                <div id="inviteMeta" class="console-block">Issue a one-time seat invite for the selected shared seat.</div>
+                <div class="locked-overlay" data-locked-overlay>
+                    <strong>Invite controls locked</strong>
+                    <span>Invite delivery only unlocks after the admin shell is backed by a valid short-lived seat session.</span>
+                </div>
+            </section>
+
+            <section class="panel requires-session" id="recoverySection">
+                <div class="panel-header">
+                    <div>
+                        <p class="eyebrow">Recovery</p>
+                        <h2>Seat Recovery</h2>
+                    </div>
+                </div>
+                <label class="field">
+                    <span>Recovery note</span>
+                    <textarea id="recoveryNote" rows="3" placeholder="Optional recovery note for the target seat"></textarea>
+                </label>
+                <div class="action-row">
+                    <button type="button" id="issueRecoveryBtn" class="button primary">Issue recovery code</button>
+                    <button type="button" id="copyRecoveryCodeBtn" class="button">Copy code</button>
+                    <button type="button" id="copyRecoveryLinkBtn" class="button">Copy app link</button>
+                </div>
+                <div class="output-grid">
+                    <label class="field">
+                        <span>Recovery code</span>
+                        <textarea id="recoveryCodeOutput" rows="3" readonly></textarea>
+                    </label>
+                    <label class="field">
+                        <span>Signed app link</span>
+                        <textarea id="recoveryLinkOutput" rows="4" readonly></textarea>
+                    </label>
+                </div>
+                <div id="recoveryMeta" class="console-block">Issue a one-time recovery code for the selected shared seat.</div>
+                <div class="locked-overlay" data-locked-overlay>
+                    <strong>Recovery controls locked</strong>
+                    <span>Recovery delivery only unlocks after the admin shell is backed by a valid short-lived seat session.</span>
+                </div>
+            </section>
+        </section>
+
+        <section class="panel requires-session" id="deliverySection">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">Delivery Trail</p>
+                    <h2>Invite & Recovery Handoff Log</h2>
+                </div>
+                <div class="action-row compact">
+                    <label class="field compact-field">
+                        <span>Limit</span>
+                        <input type="number" id="deliveryLimit" min="1" max="50" value="12">
+                    </label>
+                    <label class="field compact-field">
+                        <span>Type</span>
+                        <select id="deliveryTypeFilter">
+                            <option value="">All</option>
+                            <option value="seat_invite">Seat Invite</option>
+                            <option value="seat_recovery">Seat Recovery</option>
+                        </select>
+                    </label>
+                    <label class="field compact-field">
+                        <span>Channel</span>
+                        <select id="deliveryChannelFilter">
+                            <option value="">All</option>
+                            <option value="secure_chat">secure_chat</option>
+                            <option value="email">email</option>
+                            <option value="sms">sms</option>
+                            <option value="phone">phone</option>
+                            <option value="in_person">in_person</option>
+                            <option value="other">other</option>
+                        </select>
+                    </label>
+                    <label class="field compact-field">
+                        <span>Status</span>
+                        <select id="deliveryAckStatusFilter">
+                            <option value="">All</option>
+                            <option value="pending">pending</option>
+                            <option value="acknowledged">acknowledged</option>
+                        </select>
+                    </label>
+                    <button type="button" id="loadDeliveryTrailBtn" class="button primary">Refresh trail</button>
+                </div>
+            </div>
+            <div class="form-grid two">
+                <label class="field">
+                    <span>Delivery channel</span>
+                    <select id="deliveryChannel">
+                        <option value="secure_chat">secure_chat</option>
+                        <option value="email">email</option>
+                        <option value="sms">sms</option>
+                        <option value="phone">phone</option>
+                        <option value="in_person">in_person</option>
+                        <option value="other">other</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Artifact mode</span>
+                    <select id="deliveryArtifactMode">
+                        <option value="signed_link">signed_link</option>
+                        <option value="code_only">code_only</option>
+                        <option value="code_plus_link">code_plus_link</option>
+                        <option value="operator_note">operator_note</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Recipient</span>
+                    <input type="text" id="deliveryRecipient" placeholder="desk owner, email alias, phone label..." autocomplete="off">
+                </label>
+                <label class="field">
+                    <span>Operator note</span>
+                    <textarea id="deliveryNote" rows="3" placeholder="How it was handed off, who confirmed receipt, any follow-up note..."></textarea>
+                </label>
+                <label class="field">
+                    <span>Acknowledgment note</span>
+                    <textarea id="deliveryAckNote" rows="3" placeholder="Who confirmed receipt or what closed the handoff loop..."></textarea>
+                </label>
+            </div>
+            <div class="action-row">
+                <button type="button" id="recordInviteDeliveryBtn" class="button primary">Record invite delivery</button>
+                <button type="button" id="recordRecoveryDeliveryBtn" class="button">Record recovery delivery</button>
+            </div>
+            <div id="deliveryTrailSummary" class="console-block">Issue an invite or recovery item first, then record how it was delivered and pull the filtered trail back from the server.</div>
+            <div id="deliveryTrailList" class="audit-list"></div>
+            <div class="locked-overlay" data-locked-overlay>
+                <strong>Delivery trail locked</strong>
+                <span>Delivery logging unlocks only after the admin shell is backed by a valid short-lived seat session.</span>
+            </div>
+        </section>
+
+        <section class="panel requires-session" id="dispatchSection">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">Dispatch Pack</p>
+                    <h2>Provider-Ready Handoff Copy</h2>
+                </div>
+            </div>
+            <div class="action-row">
+                <button type="button" id="prepareInviteDispatchBtn" class="button primary">Prepare invite dispatch</button>
+                <button type="button" id="prepareRecoveryDispatchBtn" class="button">Prepare recovery dispatch</button>
+                <button type="button" id="copyDispatchSubjectBtn" class="button">Copy subject</button>
+                <button type="button" id="copyDispatchBodyBtn" class="button">Copy body</button>
+                <button type="button" id="downloadDispatchTxtBtn" class="button">Download TXT</button>
+            </div>
+            <div class="output-grid">
+                <label class="field">
+                    <span>Dispatch subject</span>
+                    <textarea id="dispatchSubjectOutput" rows="3" readonly></textarea>
+                </label>
+                <label class="field">
+                    <span>Dispatch body</span>
+                    <textarea id="dispatchBodyOutput" rows="10" readonly></textarea>
+                </label>
+            </div>
+            <div id="dispatchMeta" class="console-block">Issue an invite or recovery item first, then prepare a provider-ready dispatch pack using the current channel, recipient, artifact mode, and frontend app URL.</div>
+            <div class="locked-overlay" data-locked-overlay>
+                <strong>Dispatch pack locked</strong>
+                <span>Dispatch-pack preparation unlocks only after the admin shell is backed by a valid short-lived seat session.</span>
+            </div>
+        </section>
+
+        <section class="panel requires-session" id="auditSection">
+            <div class="panel-header">
+                <div>
+                    <p class="eyebrow">Audit</p>
+                    <h2>Recent Events</h2>
+                </div>
+                <div class="action-row compact">
+                    <label class="field compact-field">
+                        <span>Limit</span>
+                        <input type="number" id="auditLimit" min="1" max="50" value="12">
+                    </label>
+                    <label class="field compact-field">
+                        <span>Category</span>
+                        <select id="auditCategoryFilter">
+                            <option value="">All</option>
+                            <option value="team_session">team_session</option>
+                            <option value="team_seat">team_seat</option>
+                            <option value="team_seat_invite">team_seat_invite</option>
+                            <option value="team_seat_recovery_code">team_seat_recovery_code</option>
+                            <option value="team_seat_recovery">team_seat_recovery</option>
+                            <option value="admin_action_approval">admin_action_approval</option>
+                            <option value="admin_delivery">admin_delivery</option>
+                            <option value="team_roster">team_roster</option>
+                            <option value="team_handback">team_handback</option>
+                            <option value="company_profile">company_profile</option>
+                            <option value="entitlement">entitlement</option>
+                        </select>
+                    </label>
+                    <label class="field compact-field">
+                        <span>Action</span>
+                        <select id="auditActionFilter">
+                            <option value="">All</option>
+                            <option value="issue">issue</option>
+                            <option value="renew">renew</option>
+                            <option value="revoke">revoke</option>
+                            <option value="upsert">upsert</option>
+                            <option value="update">update</option>
+                            <option value="redeem">redeem</option>
+                            <option value="signin_failed">signin_failed</option>
+                            <option value="signin_locked">signin_locked</option>
+                            <option value="clear_signin_lockout">clear_signin_lockout</option>
+                            <option value="rotate_access_code">rotate_access_code</option>
+                            <option value="suspend_seat">suspend_seat</option>
+                            <option value="restore_active">restore_active</option>
+                            <option value="request">request</option>
+                            <option value="approve">approve</option>
+                            <option value="reject">reject</option>
+                            <option value="consume">consume</option>
+                            <option value="record">record</option>
+                        </select>
+                    </label>
+                    <label class="field audit-query-field">
+                        <span>Contains</span>
+                        <input type="text" id="auditQueryFilter" placeholder="actor, target, note, device..." autocomplete="off">
+                    </label>
+                    <button type="button" id="pullAuditBtn" class="button primary">Pull audit</button>
+                    <button type="button" id="copyAuditSnapshotBtn" class="button">Copy snapshot</button>
+                    <button type="button" id="downloadAuditTxtBtn" class="button">Download TXT</button>
+                    <button type="button" id="downloadAuditCsvBtn" class="button">Download CSV</button>
+                </div>
+            </div>
+            <div id="auditSummary" class="console-block">Pull the backend audit log after seat or shared-library activity.</div>
+            <div id="auditList" class="audit-list"></div>
+            <div class="locked-overlay" data-locked-overlay>
+                <strong>Audit view locked</strong>
+                <span>Audit review unlocks after the admin shell is bound to a live short-lived seat session.</span>
+            </div>
+        </section>
+    </main>
+
+    <script src="/admin/app.js" defer></script>
+</body>
+</html>

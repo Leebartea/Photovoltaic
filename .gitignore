@@ -1,0 +1,17 @@
+.DS_Store
+.claude/
+.pytest_cache/
+__pycache__/
+node_modules/
+output/
+Pv Backup/
+
+backend/data/*.json
+!backend/data/*.example.json
+
+*.pyc
+*.pyo
+*.sqlite
+
+_debug_*.js
+_tmp_*.js

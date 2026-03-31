@@ -1,0 +1,30 @@
+{
+  "scopes": {
+    "demo-engineering-plus": [
+      {
+        "id": "audit_demo_roster",
+        "installationKey": "demo-engineering-plus",
+        "category": "team_roster",
+        "action": "upsert",
+        "targetLabel": "Engineering Review Desk",
+        "actorLabel": "Ada - Ops Coordinator",
+        "deviceLabel": "Lagos Ops Laptop",
+        "note": "Stored shared team roster entry \"Engineering Review Desk\".",
+        "timestamp": "2026-03-27T10:00:00.000Z",
+        "source": "server_sync"
+      },
+      {
+        "id": "audit_demo_entitlement",
+        "installationKey": "demo-engineering-plus",
+        "category": "entitlement",
+        "action": "resolve",
+        "targetLabel": "engineering_plus",
+        "actorLabel": "Lagos Sales Laptop",
+        "deviceLabel": "Lagos Sales Laptop",
+        "note": "Resolved entitlement Engineering Plus.",
+        "timestamp": "2026-03-27T10:05:00.000Z",
+        "source": "server_sync"
+      }
+    ]
+  }
+}
