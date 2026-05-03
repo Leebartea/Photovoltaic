@@ -19603,6 +19603,12 @@ const PVCalculator = {
             return;
         }
 
+        const _pdfRateErrors = checkAllRates(this.getProposalPricingInputs().supplierOverrides).filter(i => i.level === 'error');
+        if (_pdfRateErrors.length > 0) {
+            alert('PDF blocked — fix these supplier rate errors first:\n\n' + _pdfRateErrors.map(e => e.msg).join('\n'));
+            return;
+        }
+
         const spinner = document.getElementById('pdfSpinnerOverlay');
         if (spinner) spinner.classList.add('active');
 
@@ -20060,8 +20066,8 @@ const PVCalculator = {
                     setColor(DARK);
                     row.forEach((cell, i) => {
                         const cellText = String(cell);
-                        const truncated = cellText.length > Math.floor(colWidths[i] / 2.2)
-                            ? cellText.substring(0, Math.floor(colWidths[i] / 2.2)) + '..'
+                        const truncated = cellText.length > Math.floor(colWidths[i] / 2.2) - 1
+                            ? cellText.substring(0, Math.floor(colWidths[i] / 2.2) - 1) + '…'
                             : cellText;
                         doc.text(truncated, cx, y);
                         cx += colWidths[i];
@@ -20845,6 +20851,18 @@ const PVCalculator = {
                     doc.setTextColor(255, 255, 255);
                     doc.text(`Coping Score: ${copingScore_pdf}% — ${scoreLabel_pdf} (with load management)`, mL + contentW / 2, y + 9, { align: 'center' });
                     y += 18;
+                    const _copFS1 = doc.getFontSize();
+                    doc.setFontSize(8);
+                    doc.setTextColor(130, 130, 130);
+                    checkSpace(13);
+                    doc.text(`Inverter fit: ${Math.round(invRatio_pdf * 100)}%  (40% weight)`, mL + 4, y);
+                    y += 4;
+                    doc.text(`Surge headroom: ${Math.round(surgeRatio_pdf * 100)}%  (25% weight)`, mL + 4, y);
+                    y += 4;
+                    doc.text(`Battery autonomy: ${Math.round(battRatio_pdf * 100)}%  (35% weight)`, mL + 4, y);
+                    y += 4;
+                    doc.setFontSize(_copFS1);
+                    doc.setTextColor(0, 0, 0);
                     // Inverter technology note in PDF coping section
                     const copeTech_pdf = config.inverterTechnology || 'unknown';
                     if (copeTech_pdf !== 'unknown') {
@@ -20896,6 +20914,18 @@ const PVCalculator = {
                 const barText = `Coping Score: ${copingPct}% — ${barLabel}`;
                 doc.text(barText, mL + contentW / 2, y + 4.2, { align: 'center' });
                 y += 10;
+                const _copFS2 = doc.getFontSize();
+                doc.setFontSize(8);
+                doc.setTextColor(130, 130, 130);
+                checkSpace(13);
+                doc.text(`Inverter fit: ${Math.round(invRatio_adv * 100)}%  (40% weight)`, mL + 4, y);
+                y += 4;
+                doc.text(`Surge headroom: ${Math.round(surgeRatio_adv * 100)}%  (25% weight)`, mL + 4, y);
+                y += 4;
+                doc.text(`Battery autonomy: ${Math.round(battRatio_adv * 100)}%  (35% weight)`, mL + 4, y);
+                y += 4;
+                doc.setFontSize(_copFS2);
+                doc.setTextColor(0, 0, 0);
                 setColor(DARK);
             }
 
@@ -21108,7 +21138,7 @@ const PVCalculator = {
                         ? ['Appliance', 'Qty', 'Watts', 'Hours', 'Duty%', 'Type', 'Phase', 'Daily Wh']
                         : ['Appliance', 'Qty', 'Watts', 'Hours', 'Duty%', 'Type', 'Daily Wh'];
                     const appRows = LoadEngine.appliances.map((a, index) => [
-                        a.name.substring(0, 20),
+                        a.name.length > 28 ? a.name.substring(0, 27) + '…' : a.name,
                         a.quantity,
                         a.ratedPowerW,
                         a.dailyUsageHours,
@@ -21145,6 +21175,9 @@ const PVCalculator = {
                 labelValue('Motor Buffer:', `${inv.motorBufferPct || 0}%`);
                 if (inv.complianceRisk && inv.complianceRisk !== 'low') {
                     labelValue('Compliance Risk:', `${inv.complianceRisk.toUpperCase()} (+${inv.complianceBuffer || 0}% buffer applied)`);
+                }
+                if (inv.surgePromotionApplied) {
+                    labelValue('Surge Promotion:', `Auto-promoted from ${inv.surgePromotionFromVA} VA to ${inv.recommendedBalancedSizeVA} VA to maintain ≥10% surge headroom floor.`);
                 }
                 if (inv.clusterPlan?.enabled) {
                     labelValue('3-Phase Cluster:', `${inv.clusterPlan.totalModuleCount} × ${Math.round(inv.clusterPlan.moduleRatedVA)}VA  |  ${inv.clusterPlan.statusLabel}`);
@@ -21327,7 +21360,7 @@ const PVCalculator = {
                         subTitle(section.title);
                         const protHeaders = ['Device', 'Type / Rating', 'Location'];
                         const protRows = section.devices.map(d => [
-                            d.name.substring(0, 26),
+                            d.name.length > 26 ? d.name.substring(0, 25) + '…' : d.name,
                             (`${d.type || ''} ${d.rating || ''}`).substring(0, 38),
                             (d.location || '').substring(0, 34)
                         ]);
@@ -25037,6 +25070,16 @@ const PVCalculator = {
                 </div>`;
         }
 
+        if (inverter.surgePromotionApplied) {
+            html += `
+                <div class="alert" style="margin-bottom:12px;border-color:#d97706;background:rgba(251,191,36,0.08);">
+                    <span class="alert-icon">&#8679;</span>
+                    <div class="alert-content">
+                        <strong style="color:#d97706;">Surge Auto-Promoted</strong> — Recommended size raised from ${InverterSizingEngine.formatMarketRange(inverter.surgePromotionFromVA)} to ${InverterSizingEngine.formatMarketRange(inverter.recommendedBalancedSizeVA)} to maintain ≥10% surge headroom floor.
+                    </div>
+                </div>`;
+        }
+
         html += `
                 <div class="result-row">
                     <span class="result-label">Continuous VA Required</span>
@@ -27137,6 +27180,55 @@ const PVCalculator = {
         const items = document.getElementById('sectionNavItems');
         if (!items) return;
         items.classList.toggle('collapsed');
+    },
+
+    initRateBadges() {
+        const badgeMap = {
+            pvPerWp:         'supplierPvPerWp',
+            inverterPerVA:   'supplierInverterPerVA',
+            batteryPerKwh:   'supplierBatteryPerKWh',
+            mpptPerW:        'supplierMpptPerW',
+            mountingPerWp:   'supplierMountingPerWp',
+            protectionPerWp: 'supplierProtectionPerWp'
+        };
+        for (const [rateKey, inputId] of Object.entries(badgeMap)) {
+            const input = document.getElementById(inputId);
+            if (!input) continue;
+            let badge = input.parentElement.querySelector('.rate-badge');
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'rate-badge';
+                badge.style.cssText = 'display:inline-block;font-size:11px;margin-left:4px;vertical-align:middle;';
+                input.insertAdjacentElement('afterend', badge);
+            }
+            const update = () => {
+                const val = parseFloat(input.value);
+                if (!input.value || !Number.isFinite(val)) {
+                    badge.textContent = '';
+                    input.style.borderColor = '';
+                    return;
+                }
+                const status = getRateStatus(rateKey, val);
+                if (!status || status.level === 'ok') {
+                    badge.textContent = '✓';
+                    badge.style.color = '#16a34a';
+                    input.style.borderColor = '#16a34a';
+                    badge.title = '';
+                } else if (status.level === 'warn') {
+                    badge.textContent = '⚠ ' + status.msg;
+                    badge.style.color = '#b45309';
+                    input.style.borderColor = '#d97706';
+                    badge.title = status.msg;
+                } else {
+                    badge.textContent = '✗ ' + status.msg;
+                    badge.style.color = '#dc2626';
+                    input.style.borderColor = '#dc2626';
+                    badge.title = status.msg;
+                }
+            };
+            input.addEventListener('input', update);
+            update();
+        }
     },
 
     initSectionNav() {

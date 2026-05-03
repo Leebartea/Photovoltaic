@@ -1022,6 +1022,19 @@ const InverterSizingEngine = {
             recommendedBalancedSize = this.selectInverterSize(industrialMinVA, market);
         }
 
+        let surgePromotionApplied = false;
+        let surgePromotionFromVA: number | null = null;
+        const _surgeCap = recommendedBalancedSize * config.inverterSurgeMultiplier;
+        if (_surgeCap < surgeRequired * 1.10) {
+            const _origBalanced = recommendedBalancedSize;
+            const _promoted = this.selectInverterSize(_origBalanced + 1, market);
+            if (_promoted * config.inverterSurgeMultiplier >= surgeRequired * 1.10) {
+                recommendedBalancedSize = _promoted;
+                surgePromotionApplied = true;
+                surgePromotionFromVA = _origBalanced;
+            }
+        }
+
         // Determine DC bus voltage
         const dcVoltage = this.selectDCVoltage(recommendedSize);
 
@@ -1096,7 +1109,9 @@ const InverterSizingEngine = {
             hasCompressor: aggregatedLoad.hasCompressor || false,
             industrialMinVA: industrialMinVA,
             servoUpgradeAdvice: aggregatedLoad.servoUpgradeAdvice || null,
-            complianceBuffer: Math.round(complianceBuffer * 100)
+            complianceBuffer: Math.round(complianceBuffer * 100),
+            surgePromotionApplied,
+            surgePromotionFromVA
         };
     }
 };

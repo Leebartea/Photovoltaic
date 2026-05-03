@@ -197,6 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
     PVCalculator.initSectionNav();
     PVCalculator.updateReadinessGuide();
     PVCalculator.updateCardStatus();
+    PVCalculator.initRateBadges();
     initFieldHelpPopovers();
 
     // Add input validation listeners for real-time feedback

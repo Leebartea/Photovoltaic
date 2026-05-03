@@ -4076,3 +4076,33 @@ const DEFAULTS = {
     CABLE_LOSS_FACTOR: 0.02,
     VOC_HEADROOM_PERCENT: 0.03
 };
+
+const RATE_BENCHMARKS: Record<string, { min: number; max: number; unit: string }> = {
+    pvPerWp:         { min: 0.20, max: 0.55,  unit: 'USD/Wp' },
+    inverterPerVA:   { min: 0.10, max: 0.25,  unit: 'USD/VA' },
+    batteryPerKwh:   { min: 180,  max: 350,   unit: 'USD/kWh' },
+    mpptPerW:        { min: 0.03, max: 0.08,  unit: 'USD/W' },
+    mountingPerWp:   { min: 0.08, max: 0.14,  unit: 'USD/Wp' },
+    protectionPerWp: { min: 0.06, max: 0.12,  unit: 'USD/Wp' }
+};
+
+function getRateStatus(key: string, value: number): { level: 'error' | 'warn' | 'ok'; msg: string } | null {
+    const bench = RATE_BENCHMARKS[key];
+    if (!bench) return null;
+    if (value > bench.max * 5) return { level: 'error', msg: `${key}: ${value} ${bench.unit} exceeds ${bench.max * 5} — verify this rate` };
+    if (value > bench.max * 1.2 || value < bench.min * 0.8) return { level: 'warn', msg: `${key}: ${value} ${bench.unit} outside normal range (${bench.min}–${bench.max} ${bench.unit})` };
+    return { level: 'ok', msg: '' };
+}
+
+function checkAllRates(supplierRates: Record<string, number | null | undefined>): Array<{ level: string; msg: string }> {
+    const issues: Array<{ level: string; msg: string }> = [];
+    const keyMap: Record<string, string> = { batteryPerKwh: 'batteryPerKWh' };
+    for (const key of Object.keys(RATE_BENCHMARKS)) {
+        const supplierKey = keyMap[key] || key;
+        const raw = supplierRates[supplierKey];
+        if (raw === null || raw === undefined || raw === ('' as any) || !Number.isFinite(Number(raw))) continue;
+        const status = getRateStatus(key, Number(raw));
+        if (status && status.level !== 'ok') issues.push(status);
+    }
+    return issues;
+}
