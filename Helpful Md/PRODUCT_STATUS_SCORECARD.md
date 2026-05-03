@@ -161,6 +161,14 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Bug fix batch 2 (2026-05-03)
+
+Three CRITICAL bugs fixed and deployed (commit ea59036):
+
+- **Battery manual-Ah override usable capacity** — manual Ah override branch now recomputes `usableCapacityWh = manualAh × bankVoltage × maxDoD × dischargeEfficiency`. Previously left the stale demand-based value causing the physically impossible "usable > total" output in PDF 2.
+- **AC voltage custom badge** — `acVoltageIsCustom` flag derived at `getConfig()` using `locationProfile.acVoltage`. Gear icon ⚙ appended in PDF system configuration row; wrench 🔧 appended in HTML detail row when voltage differs from region default. Prevents silent cross-session voltage flip.
+- **3-phase cable BOM** — PDF cable schedule now decomposes into `Inverter AC L1`, `Inverter AC L2`, `Inverter AC L3`, and `Neutral Conductor` rows in 3-phase mode. Neutral sized per IEC 60364 50% rule (full-size when `neutralI > 0.5 × maxPhaseI`). Replaces the generic single `Inverter AC Output` row. Single-phase jobs unaffected.
+
 ### Bug fix batch 1 (2026-05-03)
 
 Four CRITICAL / MEDIUM bugs fixed and deployed to GitHub Pages (commit 3c8aece):

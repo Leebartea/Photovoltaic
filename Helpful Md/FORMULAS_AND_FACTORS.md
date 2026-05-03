@@ -507,6 +507,16 @@ Ah = (kWh x 1000) / BankVoltage
 UsableCapacity_Wh = TotalCapacity_Wh x MaxDoD
 ```
 
+**Override branch correction (added 2026-05-03 Batch 2):**
+
+The engine's `usableCapacityWh` is internally computed as `(dailyEnergyWh × autonomyDays) / dischargeEfficiency` — a demand value, not a supply value. This is self-consistent in the auto-sizing path. However, when a user manually overrides battery Ah in Expert Mode, the override branch previously left the stale demand-based value, causing `usableCapacityWh > totalCapacityWh` (physically impossible).
+
+Fix: the manual-Ah override branch (30-controller.js line 22614) now recomputes:
+```
+usableCapacityWh = manualAh × bankVoltage × maxDoD × dischargeEfficiency
+```
+This is the correct supply-side semantic: energy the bank can actually deliver to the inverter input. The unit-count and mixed-bank override branches already used this formula; the manual-Ah branch is now consistent.
+
 ### 4.14 Battery Parallel Limits by Chemistry
 **Lines 3063-3068**
 

@@ -30,6 +30,7 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 | Date | Batch | Issues Fixed | Commit |
 |---|---|---|---|
 | 2026-05-03 | Batch 1 | #3, #4, #6, #9, #10 | 3c8aece |
+| 2026-05-03 | Batch 2 | #1, #2, #5 | ea59036 |
 
 ---
 
@@ -37,8 +38,8 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 
 | Severity | Open | Fixed |
 |---|---|---|
-| CRITICAL | 4 | 2 (#3, #4 rate validation; #6 surge promote) |
-| MEDIUM | 4 | 2 (#9 coping score; #10 truncation) |
+| CRITICAL | 1 | 5 (#1, #2, #3, #4, #5, #6) |
+| MEDIUM | 4 | 2 (#9, #10) |
 | LOW | 3 | — |
 | INFO | 3 | — |
 
@@ -46,7 +47,7 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 
 ## Issues
 
-### #1 — CRITICAL: `usableCapacityWh` is the demand, not the supply — and is never recomputed on manual battery override
+### #1 — ~~CRITICAL~~ FIXED (2026-05-03 Batch 2): `usableCapacityWh` is the demand, not the supply — and is never recomputed on manual battery override
 
 **Section affected:** Sizing
 **Source:** `src/scripts/app.js:5549,5551,5627` (`BatterySizingEngine.calculate`); `src/scripts/app.js:33680–33701` (manual override path); `src/scripts/app.js:33653–33654, 33767` (override branches that DO recompute it)
@@ -70,7 +71,7 @@ That is the *required usable energy* (demand), not the *available* energy from t
 
 ---
 
-### #2 — CRITICAL: AC voltage is persisted to project state and not re-bound when country changes
+### #2 — ~~CRITICAL~~ FIXED (2026-05-03 Batch 2): AC voltage is persisted to project state and not re-bound when country changes
 
 **Section affected:** Sizing / Persistence
 **Source:** `src/scripts/app.js:15990–15991`
@@ -131,7 +132,7 @@ A `0.55` value entered as `550` gives a 1,000× error. Same root cause as #3.
 
 ---
 
-### #5 — CRITICAL: 3-phase cable schedule omits L1/L2/L3 and Neutral as discrete BOM rows
+### #5 — ~~CRITICAL~~ FIXED (2026-05-03 Batch 2): 3-phase cable schedule omits L1/L2/L3 and Neutral as discrete BOM rows
 
 **Section affected:** Installer BOM / 3-Phase
 **Source:** `src/scripts/app.js:31934–31942` (cable headers + rows); lines 4393–4404, 4436 (neutral current computed but not added); line 18296 (neutral current in HTML panel only)
