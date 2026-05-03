@@ -248,6 +248,53 @@ DC_Current_Surge      = DesignSurgeVA / DC_Bus_Voltage
 ### 3.9 Maximum DC Current Limits
 **Lines 1572-1576**
 
+### 3.10 Surge Headroom Auto-Promote (added 2026-05-03)
+**src/scripts/modules/10-engines.ts**
+
+After the Recommended tier is selected, a post-selection headroom check runs:
+```
+SurgeCap = RecommendedBalancedSize × SurgeMultiplier
+if SurgeCap < SurgeRequired × 1.10:
+    PromotedSize = NextStandardSize(RecommendedBalancedSize + 1)
+    if PromotedSize × SurgeMultiplier >= SurgeRequired × 1.10:
+        RecommendedBalancedSize = PromotedSize
+        surgePromotionApplied   = true
+        surgePromotionFromVA    = original size
+```
+
+**Headroom floor:** 10% above the raw surge requirement.
+
+**Why:** A tier that only just clears the surge floor (e.g. 2.7% headroom) is unsafe for cold motor start variance. Auto-promote removes the need for the installer to catch this manually.
+
+**UI:** When `surgePromotionApplied`, an amber pill appears in the Inverter tab.
+**PDF:** A `Surge Promotion` row appears in the installer BOM section.
+
+---
+
+### 3.11 Rate Benchmark Validation (added 2026-05-03)
+**src/scripts/modules/00-defaults.ts**
+
+Supplier rate inputs are validated at entry time against benchmark bands:
+
+| Rate Key | Min | Max | Unit |
+|---|---|---|---|
+| pvPerWp | 0.20 | 0.55 | USD/Wp |
+| inverterPerVA | 0.10 | 0.25 | USD/VA |
+| batteryPerKwh | 180 | 350 | USD/kWh |
+| mpptPerW | 0.03 | 0.08 | USD/W |
+| mountingPerWp | 0.08 | 0.14 | USD/Wp |
+| protectionPerWp | 0.06 | 0.12 | USD/Wp |
+
+**Validation levels:**
+- `error`: value > max × 5 — red border, PDF generation blocked
+- `warn`: value > max × 1.2 or < min × 0.8 — amber border, PDF still generates
+- `ok`: within range — green border
+
+**Function:** `getRateStatus(key, value)` → `{ level, msg } | null`
+**Guard:** `checkAllRates(supplierRates)` runs at PDF generation entry; blocks on any `error`-level rate with an alert.
+
+**Why:** PDF 1 had a $33M inverter quote because `6000` was entered as USD/VA instead of USD per unit. There was zero prior validation.
+
 | DC Voltage | Max Current |
 |-----------|------------|
 | 12V | 150A |
@@ -1266,6 +1313,14 @@ CopingScore   = (InvRatio × 0.40 + SurgeRatio × 0.25 + BattRatio × 0.35) × 1
 - 75-94%: Green "Manageable" — works with careful load management
 - 50-74%: Orange "Tight" — significant scheduling needed
 - < 50%: Red "Critical" — severely undersized
+
+**PDF output (added 2026-05-03):** The coping score block in the PDF now prints three breakdown rows in 8pt muted text beneath the score bar:
+```
+Inverter fit:      X%  (40% weight)
+Surge headroom:    Y%  (25% weight)
+Battery autonomy:  Z%  (35% weight)
+```
+Both the override path and the advisory page path print the breakdown. This makes the score auditable without a separate guide.
 
 ---
 

@@ -161,6 +161,15 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Bug fix batch 1 (2026-05-03)
+
+Four CRITICAL / MEDIUM bugs fixed and deployed to GitHub Pages (commit 3c8aece):
+
+- **Rate input validation** — `RATE_BENCHMARKS` constant with 6 component bands (USD/Wp, USD/VA, USD/kWh, USD/W). `getRateStatus` and `checkAllRates` functions. Live green/amber/red badges on all 6 supplier rate fields. PDF generation blocked when any rate exceeds 5× the benchmark max. Prevents million-dollar quotes from unit-entry errors (e.g. `6000` for USD/VA instead of USD/unit).
+- **Inverter surge auto-promote** — After the recommended tier is selected, a 10% surge headroom check runs. If headroom is insufficient, the engine promotes to the next catalog tier automatically. Amber UI pill and PDF row surface the promotion so the installer knows why the size changed.
+- **Text truncation** — Replaced `'..'` hard cut with `'…'` (U+2026) in the PDF table cell renderer. Appliance name limit raised from 20 to 28 chars. Protection device name uses proper ellipsis. Installer name confirmed to bypass the truncator.
+- **Coping score PDF breakdown** — The three weighted component ratios (Inverter fit 40%, Surge headroom 25%, Battery autonomy 35%) now print as muted 8pt rows beneath the score bar in both the override path and the advisory page path.
+
 ### UI/UX improvements pass (2026-03-22)
 - P4: Tablet dropdown truncation fix at 900px breakpoint with flex-wrap for `.form-row.three` and `.form-row.four`
 - P2: Help text converted from always-visible `<small>` to info tooltips (now 161 fields), reducing vertical scroll significantly; Duty Cycle, Power (NOT startup watts), and Workspace Mode kept always-visible

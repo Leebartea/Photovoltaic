@@ -215,6 +215,16 @@ How to read it:
 - `Tight`: the quote is survival-oriented, not comfort-oriented
 - `Critical`: the selected override is too aggressive for a stable continuity promise
 
+**PDF breakdown (added 2026-05-03):** The PDF now prints the three component percentages directly beneath the coping score bar in muted 8pt text:
+
+```
+Inverter fit:      X%  (40% weight)
+Surge headroom:    Y%  (25% weight)
+Battery autonomy:  Z%  (35% weight)
+```
+
+This makes the score self-explanatory in the printed document without requiring the client or installer to cross-reference this guide.
+
 If no coping card is shown:
 
 - it usually means no manual-override survival check is needed
