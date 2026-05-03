@@ -20450,7 +20450,7 @@ const PVCalculator = {
             // Detailed summary rows
             sectionTitle('System Configuration');
             const pdfPhaseLabel = DEFAULTS.PHASE_CONFIG[config.phaseType]?.label || 'Single Phase';
-            labelValue('System Type:', `${systemTypeLabel}  |  ${config.acVoltage || 230}V AC  |  ${pdfPhaseLabel}  |  ${config.frequency || 50}Hz`);
+            labelValue('System Type:', `${systemTypeLabel}  |  ${config.acVoltage || 230}V AC${config.acVoltageIsCustom ? ' ⚙' : ''}  |  ${pdfPhaseLabel}  |  ${config.frequency || 50}Hz`);
             labelValue('Location Profile:', `${locName}  |  PSH: ${config.avgPSH}h  |  Temp: ${config.ambientTempMin}–${config.ambientTempMax}°C`);
             labelValue('Autonomy:', `${config.autonomyDays} day(s)  |  Design Margin: ${config.designMargin}%  |  Market: ${DEFAULTS.INVERTER_MARKET[config.inverterMarket]?.label || 'Standard'}`);
             labelValue('DC Bus Voltage:', `${inv.dcBusVoltage}V`);
@@ -20756,7 +20756,69 @@ const PVCalculator = {
             // Cable summary under diagram (always shown, whether SVG or fallback)
             checkSpace(40);
             subTitle('Cable Sizing Summary');
-            const allCableRuns = [...(cables.dcRuns || []), ...(cables.acRuns || [])];
+            let allCableRuns = [...(cables.dcRuns || []), ...(cables.acRuns || [])];
+
+            if (config.phaseType === 'three_phase' &&
+                phaseAllocation && Array.isArray(phaseAllocation.phases) &&
+                phaseAllocation.phases.length === 3) {
+
+                const acRun = (cables.acRuns || []).find(r => /Inverter AC Output/i.test(r.name))
+                              || (cables.acRuns || [])[0];
+
+                const maxPhaseI = Math.max(...phaseAllocation.phases.map(p => Number(p.currentA)));
+                const neutralI  = Number(phaseAllocation.neutralCurrentA || 0);
+                const neutralUpsize = neutralI > maxPhaseI * 0.5;
+
+                const phaseRows = phaseAllocation.phases.map(p => ({
+                    name: `Inverter AC ${p.label}`,
+                    current: Number(p.currentA),
+                    voltage: phaseAllocation.phaseVoltage,
+                    lengthM: acRun?.lengthM || 0,
+                    isDC: false,
+                    recommendedMm2: acRun?.recommendedMm2 || 0,
+                    marketMm2: acRun?.marketMm2 || 0,
+                    sizeRangeDisplay: acRun?.sizeRangeDisplay || `${acRun?.recommendedMm2 || 0}mm²`,
+                    actualVoltageDropPercent: acRun?.actualVoltageDropPercent || 0,
+                    ampacityRating: acRun?.ampacityRating || 0,
+                    ampacityOK: (acRun?.ampacityRating || 0) >= Number(p.currentA),
+                    voltageDropOK: acRun?.voltageDropOK ?? true,
+                    parallelCables: acRun?.parallelCables || 1,
+                    warnings: []
+                }));
+
+                const neutralRow = {
+                    name: neutralUpsize
+                        ? 'Neutral Conductor (full-size — imbalance >50%)'
+                        : 'Neutral Conductor',
+                    current: Number(neutralI),
+                    voltage: phaseAllocation.phaseVoltage,
+                    lengthM: acRun?.lengthM || 0,
+                    isDC: false,
+                    recommendedMm2: neutralUpsize
+                        ? (acRun?.recommendedMm2 || 0)
+                        : Math.max(2.5, (acRun?.recommendedMm2 || 0) * 0.5),
+                    marketMm2: neutralUpsize
+                        ? (acRun?.marketMm2 || 0)
+                        : Math.max(2.5, (acRun?.marketMm2 || 0) * 0.5),
+                    sizeRangeDisplay: neutralUpsize
+                        ? (acRun?.sizeRangeDisplay || `${acRun?.recommendedMm2 || 0}mm²`)
+                        : `${Math.max(2.5, (acRun?.marketMm2 || 0) * 0.5)}mm² (reduced)`,
+                    actualVoltageDropPercent: 0,
+                    ampacityRating: acRun?.ampacityRating || 0,
+                    ampacityOK: (acRun?.ampacityRating || 0) >= Number(neutralI),
+                    voltageDropOK: true,
+                    parallelCables: 1,
+                    warnings: neutralUpsize
+                        ? ['Neutral >50% of heaviest phase; sized as full phase conductor per IEC 60364']
+                        : []
+                };
+
+                const filteredAcRuns = (cables.acRuns || []).filter(r =>
+                    !/Inverter AC Output/i.test(r.name)
+                );
+                allCableRuns = [...(cables.dcRuns || []), ...filteredAcRuns, ...phaseRows, neutralRow];
+            }
+
             if (allCableRuns.length > 0) {
                 const cableHeaders = ['Cable Run', 'Current (A)', 'Size (mm²)', 'V-Drop (%)', 'Status'];
                 const cableRows = allCableRuns.map(r => [
@@ -22199,6 +22261,13 @@ const PVCalculator = {
                 if (sel === 'custom') return parseFloat(document.getElementById('acVoltageCustom').value) || 230;
                 return parseFloat(sel) || 230;
             })(),
+            acVoltageIsCustom: (() => {
+                const sel = document.getElementById('acVoltage')?.value;
+                const v = sel === 'custom'
+                    ? parseFloat(document.getElementById('acVoltageCustom')?.value) || 230
+                    : parseFloat(sel) || 230;
+                return v !== (locationProfile.acVoltage || 230);
+            })(),
             phaseType: document.getElementById('phaseType').value || 'single',
             frequency: parseInt(document.getElementById('frequency').value) || 50,
             inverterMarket: marketOverride !== 'auto' ? marketOverride : locationProfile.inverterMarket,
@@ -22545,6 +22614,7 @@ const PVCalculator = {
                     const specs = DEFAULTS.BATTERY_SPECS[batteryChemistry];
                     battery.maxDischargeCurrent = Math.round(manualAh * specs.maxDischargeRate * 10) / 10;
                     battery.maxChargeCurrent = Math.round(manualAh * specs.maxChargeRate * 10) / 10;
+                    battery.usableCapacityWh = Math.round(manualAh * battery.bankVoltage * specs.maxDoD * specs.dischargeEfficiency * 10) / 10;
 
                     // Warn if undersized
                     if (manualAh < autoAh * 0.8) {
@@ -24676,7 +24746,7 @@ const PVCalculator = {
         html += row('Ambient Temp Range', `${config.ambientTempMin}\u00B0C to ${config.ambientTempMax}\u00B0C`);
         html += row('Autonomy', `${config.autonomyDays} day(s)`);
         html += row('Design Margin', `${config.designMargin}%`);
-        html += row('AC Voltage', `${config.acVoltage} V`);
+        html += row('AC Voltage', `${config.acVoltage} V${config.acVoltageIsCustom ? ' &#128295;' : ''}`);
         html += row('Phase / Frequency', `${DEFAULTS.PHASE_CONFIG[config.phaseType]?.label || 'Single Phase'} | ${config.frequency || 50} Hz`);
         html += row('Inverter Market', DEFAULTS.INVERTER_MARKET[config.inverterMarket]?.label || config.inverterMarket);
         html += row('Compliance Path', `${compliance.pathLabel} | ${compliance.statusLabel} (${compliance.completionPct}%)`, true);
