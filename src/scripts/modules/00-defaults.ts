@@ -572,7 +572,10 @@ const DEFAULTS = {
             ambientTempMax: 35,
             climate: 'tropical_hot',
             regulatoryNote: 'Nigerian Electrical Installation Standard (NEIS) applies. Consult a licensed electrician.',
-            gridNote: 'Unstable grid typical (140–260V swings). Use AVR before inverter. Utility supply may be unreliable.'
+            gridNote: 'Unstable grid typical (140–260V swings). Use AVR before inverter. Utility supply may be unreliable.',
+            vatPct: 7.5,
+            currencyDisplay: 'NGN',
+            fxRateToUSD: 1550
         },
         nairobi_ke: {
             name: 'Nairobi, Kenya',
@@ -585,7 +588,10 @@ const DEFAULTS = {
             ambientTempMin: 10,
             ambientTempMax: 28,
             climate: 'tropical_moderate',
-            regulatoryNote: 'Kenya Bureau of Standards (KEBS) solar regulations apply.'
+            regulatoryNote: 'Kenya Bureau of Standards (KEBS) solar regulations apply.',
+            vatPct: 16,
+            currencyDisplay: 'KES',
+            fxRateToUSD: 130
         },
         accra_gh: {
             name: 'Accra, Ghana',
@@ -598,7 +604,10 @@ const DEFAULTS = {
             ambientTempMin: 22,
             ambientTempMax: 33,
             climate: 'tropical_hot',
-            regulatoryNote: 'Energy Commission of Ghana regulations apply.'
+            regulatoryNote: 'Energy Commission of Ghana regulations apply.',
+            vatPct: 15,
+            currencyDisplay: 'GHS',
+            fxRateToUSD: 12.5
         },
         // --- Americas ---
         us_south: {
@@ -638,7 +647,9 @@ const DEFAULTS = {
             ambientTempMin: 10,
             ambientTempMax: 38,
             climate: 'tropical_hot',
-            regulatoryNote: 'ABNT NBR 16690 (PV installations) applies. Check local utility interconnection rules.'
+            regulatoryNote: 'ABNT NBR 16690 (PV installations) applies. Check local utility interconnection rules.',
+            currencyDisplay: 'BRL',
+            fxRateToUSD: 5.05
         },
         // --- Europe ---
         eu_central: {
@@ -652,7 +663,10 @@ const DEFAULTS = {
             ambientTempMin: -10,
             ambientTempMax: 35,
             climate: 'cold_temperate',
-            regulatoryNote: 'IEC 62109, EN 50549 apply. Check local feed-in regulations and grid codes.'
+            regulatoryNote: 'IEC 62109, EN 50549 apply. Check local feed-in regulations and grid codes.',
+            vatPct: 20,
+            currencyDisplay: 'EUR',
+            fxRateToUSD: 0.92
         },
         eu_south: {
             name: 'Southern Europe (ES, IT, GR)',
@@ -665,7 +679,10 @@ const DEFAULTS = {
             ambientTempMin: 0,
             ambientTempMax: 40,
             climate: 'hot_arid',
-            regulatoryNote: 'IEC 62109, EN 50549 apply. High ambient temperatures — derate accordingly.'
+            regulatoryNote: 'IEC 62109, EN 50549 apply. High ambient temperatures — derate accordingly.',
+            vatPct: 22,
+            currencyDisplay: 'EUR',
+            fxRateToUSD: 0.92
         },
         // --- Asia / Oceania ---
         india: {
@@ -679,7 +696,10 @@ const DEFAULTS = {
             ambientTempMin: 5,
             ambientTempMax: 45,
             climate: 'tropical_hot',
-            regulatoryNote: 'CEA (Central Electricity Authority) technical standards and MNRE guidelines apply.'
+            regulatoryNote: 'CEA (Central Electricity Authority) technical standards and MNRE guidelines apply.',
+            vatPct: 18,
+            currencyDisplay: 'INR',
+            fxRateToUSD: 84
         },
         uae: {
             name: 'UAE / Middle East',
@@ -692,7 +712,10 @@ const DEFAULTS = {
             ambientTempMin: 10,
             ambientTempMax: 50,
             climate: 'hot_arid',
-            regulatoryNote: 'DEWA/ADDC regulations apply for grid-connected systems.'
+            regulatoryNote: 'DEWA/ADDC regulations apply for grid-connected systems.',
+            vatPct: 5,
+            currencyDisplay: 'AED',
+            fxRateToUSD: 3.67
         },
         australia: {
             name: 'Australia',
@@ -705,7 +728,10 @@ const DEFAULTS = {
             ambientTempMin: 0,
             ambientTempMax: 45,
             climate: 'hot_arid',
-            regulatoryNote: 'AS/NZS 5033 (PV installations) and AS/NZS 4777 (grid connection) apply.'
+            regulatoryNote: 'AS/NZS 5033 (PV installations) and AS/NZS 4777 (grid connection) apply.',
+            vatPct: 10,
+            currencyDisplay: 'AUD',
+            fxRateToUSD: 1.52
         },
         // --- Catch-all ---
         generic: {

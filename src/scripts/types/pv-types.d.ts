@@ -329,6 +329,9 @@ export interface RegionProfile {
     climate: string;
     regulatoryNote: string;
     gridNote?: string;
+    vatPct?: number;
+    currencyDisplay?: string;
+    fxRateToUSD?: number;
 }
 
 export interface BusinessContextIntentSummary {

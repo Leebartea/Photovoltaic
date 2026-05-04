@@ -498,7 +498,10 @@ const DEFAULTS = {
             ambientTempMax: 35,
             climate: 'tropical_hot',
             regulatoryNote: 'Nigerian Electrical Installation Standard (NEIS) applies. Consult a licensed electrician.',
-            gridNote: 'Unstable grid typical (140–260V swings). Use AVR before inverter. Utility supply may be unreliable.'
+            gridNote: 'Unstable grid typical (140–260V swings). Use AVR before inverter. Utility supply may be unreliable.',
+            vatPct: 7.5,
+            currencyDisplay: 'NGN',
+            fxRateToUSD: 1550
         },
         nairobi_ke: {
             name: 'Nairobi, Kenya',
@@ -511,7 +514,10 @@ const DEFAULTS = {
             ambientTempMin: 10,
             ambientTempMax: 28,
             climate: 'tropical_moderate',
-            regulatoryNote: 'Kenya Bureau of Standards (KEBS) solar regulations apply.'
+            regulatoryNote: 'Kenya Bureau of Standards (KEBS) solar regulations apply.',
+            vatPct: 16,
+            currencyDisplay: 'KES',
+            fxRateToUSD: 130
         },
         accra_gh: {
             name: 'Accra, Ghana',
@@ -524,7 +530,10 @@ const DEFAULTS = {
             ambientTempMin: 22,
             ambientTempMax: 33,
             climate: 'tropical_hot',
-            regulatoryNote: 'Energy Commission of Ghana regulations apply.'
+            regulatoryNote: 'Energy Commission of Ghana regulations apply.',
+            vatPct: 15,
+            currencyDisplay: 'GHS',
+            fxRateToUSD: 12.5
         },
         // --- Americas ---
         us_south: {
@@ -564,7 +573,9 @@ const DEFAULTS = {
             ambientTempMin: 10,
             ambientTempMax: 38,
             climate: 'tropical_hot',
-            regulatoryNote: 'ABNT NBR 16690 (PV installations) applies. Check local utility interconnection rules.'
+            regulatoryNote: 'ABNT NBR 16690 (PV installations) applies. Check local utility interconnection rules.',
+            currencyDisplay: 'BRL',
+            fxRateToUSD: 5.05
         },
         // --- Europe ---
         eu_central: {
@@ -578,7 +589,10 @@ const DEFAULTS = {
             ambientTempMin: -10,
             ambientTempMax: 35,
             climate: 'cold_temperate',
-            regulatoryNote: 'IEC 62109, EN 50549 apply. Check local feed-in regulations and grid codes.'
+            regulatoryNote: 'IEC 62109, EN 50549 apply. Check local feed-in regulations and grid codes.',
+            vatPct: 20,
+            currencyDisplay: 'EUR',
+            fxRateToUSD: 0.92
         },
         eu_south: {
             name: 'Southern Europe (ES, IT, GR)',
@@ -591,7 +605,10 @@ const DEFAULTS = {
             ambientTempMin: 0,
             ambientTempMax: 40,
             climate: 'hot_arid',
-            regulatoryNote: 'IEC 62109, EN 50549 apply. High ambient temperatures — derate accordingly.'
+            regulatoryNote: 'IEC 62109, EN 50549 apply. High ambient temperatures — derate accordingly.',
+            vatPct: 22,
+            currencyDisplay: 'EUR',
+            fxRateToUSD: 0.92
         },
         // --- Asia / Oceania ---
         india: {
@@ -605,7 +622,10 @@ const DEFAULTS = {
             ambientTempMin: 5,
             ambientTempMax: 45,
             climate: 'tropical_hot',
-            regulatoryNote: 'CEA (Central Electricity Authority) technical standards and MNRE guidelines apply.'
+            regulatoryNote: 'CEA (Central Electricity Authority) technical standards and MNRE guidelines apply.',
+            vatPct: 18,
+            currencyDisplay: 'INR',
+            fxRateToUSD: 84
         },
         uae: {
             name: 'UAE / Middle East',
@@ -618,7 +638,10 @@ const DEFAULTS = {
             ambientTempMin: 10,
             ambientTempMax: 50,
             climate: 'hot_arid',
-            regulatoryNote: 'DEWA/ADDC regulations apply for grid-connected systems.'
+            regulatoryNote: 'DEWA/ADDC regulations apply for grid-connected systems.',
+            vatPct: 5,
+            currencyDisplay: 'AED',
+            fxRateToUSD: 3.67
         },
         australia: {
             name: 'Australia',
@@ -631,7 +654,10 @@ const DEFAULTS = {
             ambientTempMin: 0,
             ambientTempMax: 45,
             climate: 'hot_arid',
-            regulatoryNote: 'AS/NZS 5033 (PV installations) and AS/NZS 4777 (grid connection) apply.'
+            regulatoryNote: 'AS/NZS 5033 (PV installations) and AS/NZS 4777 (grid connection) apply.',
+            vatPct: 10,
+            currencyDisplay: 'AUD',
+            fxRateToUSD: 1.52
         },
         // --- Catch-all ---
         generic: {
@@ -16058,7 +16084,7 @@ const PVCalculator = {
             laborPct: { value: String(data?.proposalPricing?.laborPct || regionDefaults.laborPct || 18) },
             softCostPct: { value: String(data?.proposalPricing?.softCostPct || regionDefaults.softCostPct || 8) },
             proposalMarginPct: { value: String(data?.proposalPricing?.marginPct || regionDefaults.marginPct || 12) },
-            proposalTaxPct: { value: String(data?.proposalPricing?.taxPct || regionDefaults.taxPct || 0) },
+            proposalTaxPct: { value: String(data?.proposalPricing?.taxPct ?? DEFAULTS.REGION_PROFILES[location]?.vatPct ?? regionDefaults?.taxPct ?? 0) },
             financeValueBasis: { value: data?.proposalPricing?.financeValueBasis || regionDefaults.financeMode || 'blended_site_energy' },
             financeEnergyRatePerKWh: { value: String(data?.proposalPricing?.energyRatePerKWh || regionDefaults.energyRatePerKWh || 0.18) },
             financeExportCreditPerKWh: { value: String(data?.proposalPricing?.exportCreditPerKWh || regionDefaults.exportCreditPerKWh || 0) },
@@ -28601,6 +28627,19 @@ const PVCalculator = {
             debtAprPct: parseFinanceRate('financeDebtAprPct', financeSensitivityDefaults.debtAprPct || 0, { min: 0, max: 40 }),
             debtTermYears: parseFinanceInteger('financeDebtTermYears', financeSensitivityDefaults.debtTermYears || 5, { min: 1, max: 20 }),
             residualValuePct: parseFinanceRate('financeResidualValuePct', financeSensitivityDefaults.residualValuePct || 0, { min: 0, max: 40 }),
+            fxRateToUSD: (() => {
+                const domVal = parseFloat(document.getElementById('quoteFxRateToUSD')?.value);
+                if (Number.isFinite(domVal) && domVal > 0) return domVal;
+                return DEFAULTS.REGION_PROFILES[locationKey]?.fxRateToUSD ?? 1.0;
+            })(),
+            effectiveFxRate: (() => {
+                const domVal = parseFloat(document.getElementById('quoteFxRateToUSD')?.value);
+                const rate = (Number.isFinite(domVal) && domVal > 0)
+                    ? domVal
+                    : (DEFAULTS.REGION_PROFILES[locationKey]?.fxRateToUSD ?? 1.0);
+                const audience = document.getElementById('audienceMode')?.value || '';
+                return audience === 'installer' ? 1.0 : rate;
+            })(),
             depositPct: parseFloat(document.getElementById('proposalDepositPct')?.value) || termDefaults.depositPct,
             validityDays: parseInt(document.getElementById('proposalValidityDays')?.value, 10) || termDefaults.validityDays,
             installWindowDays: parseInt(document.getElementById('proposalInstallWindowDays')?.value, 10) || termDefaults.installWindowDays,
@@ -28658,14 +28697,17 @@ const PVCalculator = {
         const lifecycleDefaults = DEFAULTS.PROPOSAL_PRICING.lifecycleDefaults || {};
         const financeSensitivityDefaults = DEFAULTS.PROPOSAL_PRICING.financeSensitivityDefaults || {};
         const quoteFreshnessDefaults = DEFAULTS.PROPOSAL_PRICING.quoteFreshnessDefaults || {};
+        const locationProfile = DEFAULTS.REGION_PROFILES[locationKey];
 
-        if (currencyEl) currencyEl.value = defaults.currencyLabel;
+        if (currencyEl) currencyEl.value = locationProfile?.currencyDisplay ?? defaults.currencyLabel ?? 'USD';
+        const fxEl = document.getElementById('quoteFxRateToUSD');
+        if (fxEl) fxEl.value = locationProfile?.fxRateToUSD != null ? String(locationProfile.fxRateToUSD) : '';
         if (supplierPackEl && defaults.supplierPricePack) supplierPackEl.value = defaults.supplierPricePack;
         if (regionalEl) regionalEl.value = defaults.regionalMultiplier.toFixed(2);
         if (laborEl) laborEl.value = defaults.laborPct;
         if (softEl) softEl.value = defaults.softCostPct;
         if (marginEl) marginEl.value = defaults.marginPct;
-        if (taxEl) taxEl.value = defaults.taxPct;
+        if (taxEl) taxEl.value = locationProfile?.vatPct ?? defaults.taxPct ?? 0;
         if (financeModeEl) financeModeEl.value = defaults.financeMode || 'blended_site_energy';
         if (energyRateEl) energyRateEl.value = defaults.energyRatePerKWh ?? 0.18;
         if (exportCreditEl) exportCreditEl.value = defaults.exportCreditPerKWh ?? 0;
@@ -28693,10 +28735,10 @@ const PVCalculator = {
     /**
      * Format proposal values with the selected currency label.
      */
-    formatProposalMoney(value, currencyLabel) {
+    formatProposalMoney(value, currencyLabel, fxRate = 1) {
         const numeric = Number.isFinite(value) ? value : 0;
-        const rounded = Math.round(numeric);
-        return `${currencyLabel} ${rounded.toLocaleString()}`;
+        const converted = Math.round(numeric * fxRate);
+        return `${currencyLabel} ${converted.toLocaleString()}`;
     },
 
     formatFinancePayback(value) {
@@ -28705,9 +28747,10 @@ const PVCalculator = {
         return `${roundValue(value, 1).toFixed(1)} yrs`;
     },
 
-    formatCommercialUnitRate(value, currencyLabel) {
+    formatCommercialUnitRate(value, currencyLabel, fxRate = 1) {
         const numeric = Number.isFinite(value) ? value : 0;
-        return `${currencyLabel} ${numeric.toFixed(2)}`;
+        const converted = numeric * fxRate;
+        return `${currencyLabel} ${converted.toFixed(2)}`;
     },
 
     calculateCommercialFinanceSummary(results, estimate, context = {}) {
@@ -30928,7 +30971,7 @@ const PVCalculator = {
             const AMBER_BG = [254, 243, 199];
             const GREEN_BG = [220, 252, 231];
             const readinessColorMap = { green: GREEN, blue: BLUE, amber: AMBER, red: RED };
-            const formatPdfMoney = (value) => this.formatProposalMoney(value, commercial.inputs.currencyLabel);
+            const formatPdfMoney = (value) => this.formatProposalMoney(value, commercial.inputs.currencyLabel, commercial.inputs.effectiveFxRate || 1);
 
             // ---- SVG-to-Image capture helper (for embedding UI diagram in PDF) ----
             async function captureSvgAsImage(svgElement, maxWidthMm) {
@@ -34871,7 +34914,7 @@ const PVCalculator = {
             )
             : null);
         const supportSummary = detailContext.supportSummary || this.getCommercialSupportSummary(detailContext);
-        const money = (value) => this.formatProposalMoney(value, commercial.inputs.currencyLabel);
+        const money = (value) => this.formatProposalMoney(value, commercial.inputs.currencyLabel, commercial.inputs.effectiveFxRate || 1);
         const finance = commercial.finance || null;
         const quoteLabel = isClientMode ? 'Proposal Budget' : 'Commercial Estimate';
         const comparisonLabel = isClientMode ? 'Package Options' : 'Pricing Basis Comparison';
