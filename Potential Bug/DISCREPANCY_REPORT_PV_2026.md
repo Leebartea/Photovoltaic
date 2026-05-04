@@ -29,9 +29,10 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 
 | Date | Batch | Issues Fixed | Commit |
 |---|---|---|---|
-| 2026-05-03 | Batch 1 | #3, #4, #6, #9, #10 | 3c8aece |
+| 2026-05-03 | Batch 1 | #3, #4, #6, #9, #10, #14 | 3c8aece |
 | 2026-05-03 | Batch 2 | #1, #2, #5 | ea59036 |
 | 2026-05-04 | Batch 3 | #11, #12 | 7b9a8d6 |
+| 2026-05-04 | Batch 4 | #7, #8, #13, #15 + Batch 3 FX gap | 78cfa10 |
 
 ---
 
@@ -39,12 +40,12 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 
 | Severity | Open | Fixed |
 |---|---|---|
-| CRITICAL | 1 | 5 (#1, #2, #3, #4, #5, #6) |
-| MEDIUM | 2 | 4 (#9, #10, #11, #12) |
-| LOW | 3 | — |
-| INFO | 3 | — |
+| CRITICAL | 0 | 6 (#1, #2, #3, #4, #5, #6) |
+| MEDIUM | 0 | 6 (#7, #8, #9, #10, #11, #12) |
+| LOW | 0 | 3 (#13, #14, #15) |
+| INFO | 3 | — (#16, #17, #18 remain open) |
 
-**Known gap (Batch 3):** Direct `formatProposalMoney` calls in the financial summary card (~lines 11125–11183) still use `fxRate = 1`. Only the PDF closure (`formatPdfMoney`) and HTML commercial report closure (`money`) are FX-converted. Flagged for Batch 4.
+**Batch 3 FX gap — RESOLVED (Batch 4):** All `formatProposalMoney` and `formatCommercialUnitRate` calls in `renderCommercialFinancePanel` now pass `fxRate`. All three call sites pass `fxRate: commercial.inputs.effectiveFxRate || 1`. Direct calls at `capitalStackSummary` and `comparisonDetail` also updated. FX conversion is now complete across the full commercial finance output.
 
 ---
 
@@ -161,7 +162,7 @@ The PDF "Cable Sizing Summary" table iterates `cables.dcRuns` and `cables.acRuns
 
 ---
 
-### #7 — MEDIUM: Daily energy total has unexplained ~8–12% gap from appliance subtotal
+### #7 — ~~MEDIUM~~ FIXED (2026-05-04 Batch 4): Daily energy total has unexplained ~8–12% gap from appliance subtotal
 
 **Section affected:** Sizing / Reporting
 **Source:** `src/scripts/app.js` — `AggregationEngine.calculate` (line 33518) applies `designMargin` (default 125%) and upstream `efficiency` factor; appliance table PDF (line 32289) shows per-appliance pre-margin values; headline `agg.dailyEnergyWh` (line 31919) is post-margin/derating
@@ -180,7 +181,7 @@ Appliance subtotal:      X Wh
 
 ---
 
-### #8 — MEDIUM: MPPT priced on controller rating, not array Wp, with no client-facing rationale
+### #8 — ~~MEDIUM~~ FIXED (2026-05-04 Batch 4): MPPT priced on controller rating, not array Wp, with no client-facing rationale
 
 **Section affected:** Pricing
 **Source:** `src/scripts/app.js:29101–29121` (`mpptBasisW = max(arrayWattage, controllerW)`)
@@ -264,7 +265,7 @@ Setting `quoteCurrencyLabel` to `NGN` changes the **label only** — values rema
 
 ---
 
-### #13 — LOW: Battery diagram uses `batt.bankVoltage` (correct) but catalog labels hard-code "48V" for LiFePO4 products
+### #13 — ~~LOW~~ FIXED (2026-05-04 Batch 4): Battery diagram uses `batt.bankVoltage` (correct) but catalog labels hard-code "48V" for LiFePO4 products
 
 **Section affected:** Diagram / BOM labels
 **Source:** `src/scripts/app.js:35388, 35529` (SVG uses `batt.bankVoltage` — correct); lines 3669, 3727, 3741, 3744, 3761, 3779, 3797, 3818, 3827 (catalog product name strings hard-coded "48V")
@@ -277,7 +278,7 @@ The prior report's claim that the diagram renders "48V" (hardcoded) is **not con
 
 ---
 
-### #14 — LOW: Appliance name hard-truncated to 20 characters in PDF table
+### #14 — ~~LOW~~ FIXED (2026-05-03 Batch 1): Appliance name hard-truncated to 20 characters in PDF table
 
 **Section affected:** Reporting
 **Source:** `src/scripts/app.js:32290`
@@ -294,7 +295,7 @@ Hard cut without ellipsis. Same pattern at lines 32509–32511 (protection devic
 
 ---
 
-### #15 — LOW: `subTitle` text fields hard-capped at 40/45 characters
+### #15 — ~~LOW~~ FIXED (2026-05-04 Batch 4): SVG title fields hard-capped at 40/45 characters
 
 **Section affected:** Reporting
 **Source:** `src/scripts/app.js:35178, 35234, 37150`

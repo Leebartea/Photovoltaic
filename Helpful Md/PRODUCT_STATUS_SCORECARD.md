@@ -161,6 +161,17 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Bug fix batch 4 (2026-05-04)
+
+Six issues resolved and deployed (commit 78cfa10):
+
+- **Appliance table reconciliation note** — Three reconciliation rows (`Appliance subtotal (pre-margin)`, `+ Design allowance (margin & derating)`, `= Daily energy total`) inserted under the PDF appliance table inside the `appliances.length > 0` guard. Bridges the ~8–12% gap between the per-appliance Wh column and the headline daily energy total.
+- **MPPT quantity label** — Both BOM locations (supplier refresh brief and commercial estimate `describeRateBasis`) now show `Wp array | W controller` when the controller is oversized vs the array. Unchanged when controller equals array size. Tooltip for the standalone MPPT line updated to reflect the oversized-controller rationale.
+- **FX gap in finance panel** — `const fxRate = options.fxRate || 1` added to `renderCommercialFinancePanel`. All 25 `formatProposalMoney` calls and both `formatCommercialUnitRate` calls in that function now pass `fxRate`. All three call sites updated with `fxRate: commercial.inputs.effectiveFxRate || 1`. Direct `formatProposalMoney` calls inside `capitalStackSummary` and `comparisonDetail` strings (lines 17728–17729) also updated. FX conversion is now complete across the full commercial finance HTML output.
+- **LiFePO4 badge text** — `badge: '48V lithium'` corrected to `badge: '51.2V lithium'` in both `lifepo4_5kwh_rack` and `lifepo4_7kwh_rack` catalog entries in `00-defaults.ts`. Matches the actual `unitVoltage: 51.2` value already used for sizing.
+- **SVG title adaptive font** — Mixed battery title desc cap raised from 40 to 70 characters (with proper `…` ellipsis). PV mismatch group description no longer truncated at all. `pvTitleFontSize` updated to 3-tier threshold `length > 70 ? 8 : length > 40 ? 9 : 11`. Uniform battery bank title font in both hybrid and off-grid SVG branches changed from box-width-based to title-length-based 3-tier threshold — both use the same `length > 70 ? 8 : length > 40 ? 9 : 11` rule.
+- **Advisory coping bar gate** — Entire coping bar block on the PDF advisory page (lines 20975–21009) now gated with `if (inv.isManualOverride || batt.isManualOverride)`, symmetric with the coping score box gate at line 20910. Auto-design sessions no longer render a coping bar that always shows 100% battery autonomy.
+
 ### Bug fix + feature batch 3 (2026-05-04)
 
 Two MEDIUM issues resolved and deployed (commit 7b9a8d6):

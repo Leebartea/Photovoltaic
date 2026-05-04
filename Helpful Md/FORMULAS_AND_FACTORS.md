@@ -1416,7 +1416,7 @@ Mixing chemistries with different voltage profiles causes one type to be chronic
 
 ---
 
-*Document generated from `pv_calculator_ui.html`. All formulas verified against source code. Updated for v3.1.0 features (mixed panel wattage correction, dynamic grouped panel input, mixed battery bank topology analysis, battery chemistry/age advisory system, PDF advisory limit removal) Round 3 additions (adaptive surge, inverter technology, SVG overflow, battery mixed bank fixes), and Round 4 additions (panel orientation/tilt correction factors, system confidence score, PV orientation advisory).*
+*Document generated from `pv_calculator_ui.html`. All formulas verified against source code. Updated for v3.1.0 features (mixed panel wattage correction, dynamic grouped panel input, mixed battery bank topology analysis, battery chemistry/age advisory system, PDF advisory limit removal) Round 3 additions (adaptive surge, inverter technology, SVG overflow, battery mixed bank fixes), Round 4 additions (panel orientation/tilt correction factors, system confidence score, PV orientation advisory), and Batch 4 additions (appliance reconciliation note, MPPT dual-label, FX finance panel completion, LiFePO4 badge correction, SVG 3-tier adaptive font, coping bar gate).*
 
 ---
 
@@ -3062,3 +3062,84 @@ This round does not change:
 - PV sizing math
 - compliance scoring formula
 - utility-grade feeder-study or protection calculations
+
+---
+
+## Batch 4 Polish And Reporting Fixes (2026-05-04)
+
+No electrical sizing formulas changed in this batch.
+
+### Appliance Table Reconciliation Note
+
+After the appliance table in the PDF detailed load page, three reconciliation rows now appear:
+
+```
+appSubtotalWh = sum(last column of appRows)      // pre-margin per-appliance Wh
+marginWh      = round(agg.dailyEnergyWh) - appSubtotalWh
+```
+
+Displayed as:
+```
+Appliance subtotal (pre-margin):    appSubtotalWh Wh
++ Design allowance (margin & derating):  +|marginWh| Wh   (omitted if marginWh == 0)
+= Daily energy total:               agg.dailyEnergyWh Wh
+```
+
+The `marginWh` delta captures the full effect of `designMargin` and any upstream derating, bridging the gap between the per-appliance column and the headline daily energy.
+
+### MPPT Dual-Label (Oversized Controller)
+
+When `usesStandaloneMPPT` and `mpptBasisW > pv.arrayWattage`, two BOM locations now show both figures:
+
+```
+if mpptBasisW > pv.arrayWattage:
+    label = "${arrayWattage}Wp array | ${mpptBasisW}W controller"
+else:
+    label = "${mpptBasisW}W"
+```
+
+Applies in:
+- supplier refresh brief quantity field (line 16995)
+- commercial estimate `describeRateBasis` first argument (line 17949)
+
+### FX Conversion — Finance Panel Completion
+
+`renderCommercialFinancePanel` now accepts `options.fxRate` and applies it to all money outputs:
+
+```
+const fxRate = options.fxRate || 1;
+
+// Applied to all formatProposalMoney and formatCommercialUnitRate calls
+formatProposalMoney(value, currencyLabel, fxRate)
+formatCommercialUnitRate(value, currencyLabel, fxRate)
+```
+
+Call sites pass `fxRate: commercial.inputs.effectiveFxRate || 1`. The finance engine's pre-formatted strings (`capitalStackSummary`, `comparisonDetail`) also use `inputs.effectiveFxRate || 1`. Installer mode forces `effectiveFxRate = 1.0`; client mode uses the profile FX rate.
+
+### Coping Bar Gate
+
+The advisory-page coping bar is now conditional:
+
+```
+if (inv.isManualOverride || batt.isManualOverride) {
+    // draw coping score bar + 3-component breakdown
+}
+```
+
+Auto-design sessions do not render the bar. Mirrors the identical gate on the coping score box rendered earlier in the PDF at line 20910.
+
+### SVG Title Adaptive Font (3-Tier)
+
+Battery bank title font size is now length-based in both hybrid and off-grid SVG branches:
+
+```
+const _battTitle = `Battery Bank — ${chemistry} | ${voltage}V / ${ah}Ah`;
+const battTitleFont = _battTitle.length > 70 ? 8 : _battTitle.length > 40 ? 9 : 11;
+```
+
+PV array title:
+```
+const pvTitleFontSize = pvTitleFull.length > 70 ? 8 : pvTitleFull.length > 40 ? 9 : 11;
+```
+
+Mixed battery title desc cap: raised from 40 to 70 characters. PV mismatch group description: no longer truncated (font size handles overflow).
