@@ -161,6 +161,15 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Bug fix + feature batch 3 (2026-05-04)
+
+Two MEDIUM issues resolved and deployed (commit 7b9a8d6):
+
+- **VAT by country** — `vatPct` added to 8 `REGION_PROFILES` entries (Nigeria 7.5%, Kenya 16%, Ghana 15%, EU Central 20%, EU South 22%, India 18%, UAE 5%, Australia 10%). `applyCommercialDefaultsByLocation` now auto-fills the tax input on location change. `buildLegacyFormState` restored to use `??` chain preserving deliberate zero. `RegionProfile` TypeScript interface extended in `pv-types.d.ts`.
+- **FX currency conversion** — `currencyDisplay` and `fxRateToUSD` added to 9 profiles. New `FX Rate (1 USD = ?)` input with `oninput` handler and help text. `getProposalPricingInputs` adds `fxRateToUSD` and `effectiveFxRate` (installer mode always returns 1.0 — stays USD; client mode converts). `formatProposalMoney` and `formatCommercialUnitRate` accept `fxRate` parameter. `formatPdfMoney` and `money` closures thread `effectiveFxRate` — client PDF shows local currency, installer PDF stays in USD. `formatSupplierRate` unchanged (rate cards always USD).
+
+**Known gap:** Direct `formatProposalMoney` calls in financial summary card (~lines 11125–11183) still use `fxRate = 1`. Scoped to Batch 4.
+
 ### Bug fix batch 2 (2026-05-03)
 
 Three CRITICAL bugs fixed and deployed (commit ea59036):

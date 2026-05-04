@@ -31,6 +31,7 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 |---|---|---|---|
 | 2026-05-03 | Batch 1 | #3, #4, #6, #9, #10 | 3c8aece |
 | 2026-05-03 | Batch 2 | #1, #2, #5 | ea59036 |
+| 2026-05-04 | Batch 3 | #11, #12 | 7b9a8d6 |
 
 ---
 
@@ -39,9 +40,11 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 | Severity | Open | Fixed |
 |---|---|---|
 | CRITICAL | 1 | 5 (#1, #2, #3, #4, #5, #6) |
-| MEDIUM | 4 | 2 (#9, #10) |
+| MEDIUM | 2 | 4 (#9, #10, #11, #12) |
 | LOW | 3 | — |
 | INFO | 3 | — |
+
+**Known gap (Batch 3):** Direct `formatProposalMoney` calls in the financial summary card (~lines 11125–11183) still use `fxRate = 1`. Only the PDF closure (`formatPdfMoney`) and HTML commercial report closure (`money`) are FX-converted. Flagged for Batch 4.
 
 ---
 
@@ -229,7 +232,7 @@ The `2.2` divisor is a heuristic character-width estimate. Installer names in na
 
 ---
 
-### #11 — MEDIUM: No country→VAT mapping; all region groups default `taxPct: 0`
+### #11 — ~~MEDIUM~~ FIXED (2026-05-04 Batch 3): No country→VAT mapping; all region groups default `taxPct: 0`
 
 **Section affected:** Pricing / Compliance
 **Source:** `src/scripts/app.js:1261–1266`
@@ -248,7 +251,7 @@ Expected automatic rates (Nigeria 7.5% / South Africa 15% / Kenya 16% / France 2
 
 ---
 
-### #12 — MEDIUM: No client/installer currency split; both PDFs share `currencyLabel: 'USD'`
+### #12 — ~~MEDIUM~~ FIXED (2026-05-04 Batch 3): No client/installer currency split; both PDFs share `currencyLabel: 'USD'`
 
 **Section affected:** Pricing / Reporting
 **Source:** `src/scripts/app.js:1261–1266` (currencyLabel defaults to USD); line 16002 (saved value pass-through, no FX step)
