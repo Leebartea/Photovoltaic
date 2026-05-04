@@ -11109,6 +11109,7 @@ const PVCalculator = {
         const maxNotes = options.maxNotes || (compact ? 4 : 6);
         const notes = [...(finance.notes || []), ...(finance.warnings || [])].slice(0, maxNotes);
         const scenarioComparison = finance.scenarioComparison || null;
+        const fxRate = options.fxRate || 1;
 
         return `
             <div class="executive-panel compliance-panel${compact ? ' compact' : ''}">
@@ -11122,7 +11123,7 @@ const PVCalculator = {
                 <div class="compliance-panel-meta">
                     <div class="compliance-meta-card">
                         <div class="compliance-meta-label">Annual Value</div>
-                        <div class="compliance-meta-value">${this.escapeHtml(this.formatProposalMoney(finance.annualSavings || 0, options.currencyLabel || 'USD'))}</div>
+                        <div class="compliance-meta-value">${this.escapeHtml(this.formatProposalMoney(finance.annualSavings || 0, options.currencyLabel || 'USD', fxRate))}</div>
                     </div>
                     <div class="compliance-meta-card">
                         <div class="compliance-meta-label">Simple Payback</div>
@@ -11134,7 +11135,7 @@ const PVCalculator = {
                     </div>
                     <div class="compliance-meta-card">
                         <div class="compliance-meta-label">10Y Net After Finance</div>
-                        <div class="compliance-meta-value">${this.escapeHtml(this.formatProposalMoney(finance.tenYearNetAfterFinance || finance.tenYearNetAfterLifecycle || 0, options.currencyLabel || 'USD'))}</div>
+                        <div class="compliance-meta-value">${this.escapeHtml(this.formatProposalMoney(finance.tenYearNetAfterFinance || finance.tenYearNetAfterLifecycle || 0, options.currencyLabel || 'USD', fxRate))}</div>
                     </div>
                 </div>
                 <div class="compliance-document-strip">
@@ -11143,7 +11144,7 @@ const PVCalculator = {
                 </div>
                 <div class="compliance-document-strip">
                     <strong>Lifecycle allowances:</strong>
-                    O&amp;M ${finance.annualMaintenancePct ?? 0}% (${this.escapeHtml(this.formatProposalMoney(finance.annualMaintenanceCost || 0, options.currencyLabel || 'USD'))}/yr) | Inverter reserve ${finance.inverterRefreshPct ?? 0}% in year ${finance.inverterRefreshYear ?? 10} | Battery reserve ${finance.batteryRefreshPct ?? 0}% in year ${finance.batteryRefreshYear ?? 10}
+                    O&amp;M ${finance.annualMaintenancePct ?? 0}% (${this.escapeHtml(this.formatProposalMoney(finance.annualMaintenanceCost || 0, options.currencyLabel || 'USD', fxRate))}/yr) | Inverter reserve ${finance.inverterRefreshPct ?? 0}% in year ${finance.inverterRefreshYear ?? 10} | Battery reserve ${finance.batteryRefreshPct ?? 0}% in year ${finance.batteryRefreshYear ?? 10}
                 </div>
                 <div class="compliance-document-strip">
                     <strong>Capital stack:</strong>
@@ -11155,14 +11156,14 @@ const PVCalculator = {
                         <div class="finance-scenario-grid">
                             <div class="finance-scenario-card">
                                 <div class="finance-scenario-label">${this.escapeHtml(scenarioComparison.cashPurchase.label)}</div>
-                                <div class="finance-scenario-value">Upfront ${this.escapeHtml(this.formatProposalMoney(scenarioComparison.cashPurchase.upfrontCost || 0, options.currencyLabel || 'USD'))}</div>
-                                <div class="finance-scenario-copy">Year 1 ${this.escapeHtml(this.formatProposalMoney(scenarioComparison.cashPurchase.firstYearNet || 0, options.currencyLabel || 'USD'))} | 5Y ${this.escapeHtml(this.formatProposalMoney(scenarioComparison.cashPurchase.fiveYearNet || 0, options.currencyLabel || 'USD'))} | 10Y ${this.escapeHtml(this.formatProposalMoney(scenarioComparison.cashPurchase.tenYearNet || 0, options.currencyLabel || 'USD'))}</div>
+                                <div class="finance-scenario-value">Upfront ${this.escapeHtml(this.formatProposalMoney(scenarioComparison.cashPurchase.upfrontCost || 0, options.currencyLabel || 'USD', fxRate))}</div>
+                                <div class="finance-scenario-copy">Year 1 ${this.escapeHtml(this.formatProposalMoney(scenarioComparison.cashPurchase.firstYearNet || 0, options.currencyLabel || 'USD', fxRate))} | 5Y ${this.escapeHtml(this.formatProposalMoney(scenarioComparison.cashPurchase.fiveYearNet || 0, options.currencyLabel || 'USD', fxRate))} | 10Y ${this.escapeHtml(this.formatProposalMoney(scenarioComparison.cashPurchase.tenYearNet || 0, options.currencyLabel || 'USD', fxRate))}</div>
                                 <div class="finance-scenario-note">${this.escapeHtml(scenarioComparison.cashPurchase.note || '')}</div>
                             </div>
                             <div class="finance-scenario-card accent">
                                 <div class="finance-scenario-label">${this.escapeHtml(scenarioComparison.financedPurchase.label)}</div>
-                                <div class="finance-scenario-value">Upfront ${this.escapeHtml(this.formatProposalMoney(scenarioComparison.financedPurchase.upfrontCost || 0, options.currencyLabel || 'USD'))}</div>
-                                <div class="finance-scenario-copy">Year 1 ${this.escapeHtml(this.formatProposalMoney(scenarioComparison.financedPurchase.firstYearNet || 0, options.currencyLabel || 'USD'))} | 5Y ${this.escapeHtml(this.formatProposalMoney(scenarioComparison.financedPurchase.fiveYearNet || 0, options.currencyLabel || 'USD'))} | 10Y ${this.escapeHtml(this.formatProposalMoney(scenarioComparison.financedPurchase.tenYearNet || 0, options.currencyLabel || 'USD'))}</div>
+                                <div class="finance-scenario-value">Upfront ${this.escapeHtml(this.formatProposalMoney(scenarioComparison.financedPurchase.upfrontCost || 0, options.currencyLabel || 'USD', fxRate))}</div>
+                                <div class="finance-scenario-copy">Year 1 ${this.escapeHtml(this.formatProposalMoney(scenarioComparison.financedPurchase.firstYearNet || 0, options.currencyLabel || 'USD', fxRate))} | 5Y ${this.escapeHtml(this.formatProposalMoney(scenarioComparison.financedPurchase.fiveYearNet || 0, options.currencyLabel || 'USD', fxRate))} | 10Y ${this.escapeHtml(this.formatProposalMoney(scenarioComparison.financedPurchase.tenYearNet || 0, options.currencyLabel || 'USD', fxRate))}</div>
                                 <div class="finance-scenario-note">${this.escapeHtml(scenarioComparison.financedPurchase.note || '')}</div>
                             </div>
                         </div>
@@ -11173,15 +11174,15 @@ const PVCalculator = {
                     <strong>Value summary</strong>
                     <ul>
                         <li>${this.escapeHtml(finance.detail || 'Advisory commercial value outlook based on the current supported-load story.')}</li>
-                        <li>Annual self-consumed energy value: ${Math.round(finance.annualSelfConsumedKWh || 0).toLocaleString()} kWh/year at ${this.escapeHtml(this.formatCommercialUnitRate(finance.energyRatePerKWh || 0, options.currencyLabel || 'USD'))}/kWh.</li>
-                        <li>Annual export credit: ${Math.round(finance.annualExportKWh || 0).toLocaleString()} kWh/year at ${this.escapeHtml(this.formatCommercialUnitRate(finance.exportCreditPerKWh || 0, options.currencyLabel || 'USD'))}/kWh.</li>
-                        <li>5-year gross value: ${this.escapeHtml(this.formatProposalMoney(finance.fiveYearGrossValue || 0, options.currencyLabel || 'USD'))}. 10-year gross value: ${this.escapeHtml(this.formatProposalMoney(finance.tenYearGrossValue || 0, options.currencyLabel || 'USD'))}.</li>
-                        <li>5-year net after quote: ${this.escapeHtml(this.formatProposalMoney(finance.fiveYearNetAfterQuote || 0, options.currencyLabel || 'USD'))}. 10-year net after quote: ${this.escapeHtml(this.formatProposalMoney(finance.tenYearNetAfterQuote || 0, options.currencyLabel || 'USD'))}.</li>
-                        <li>5-year lifecycle cost allowance: ${this.escapeHtml(this.formatProposalMoney(finance.fiveYearLifecycleCost || 0, options.currencyLabel || 'USD'))}. 10-year lifecycle cost allowance: ${this.escapeHtml(this.formatProposalMoney(finance.tenYearLifecycleCost || 0, options.currencyLabel || 'USD'))}.</li>
-                        <li>5-year net after lifecycle: ${this.escapeHtml(this.formatProposalMoney(finance.fiveYearNetAfterLifecycle || 0, options.currencyLabel || 'USD'))}. 10-year net after lifecycle: ${this.escapeHtml(this.formatProposalMoney(finance.tenYearNetAfterLifecycle || 0, options.currencyLabel || 'USD'))}.</li>
-                        <li>Equity contribution: ${this.escapeHtml(this.formatProposalMoney(finance.equityContribution || 0, options.currencyLabel || 'USD'))}. Financed amount: ${this.escapeHtml(this.formatProposalMoney(finance.financedAmount || 0, options.currencyLabel || 'USD'))}. Annual debt service: ${this.escapeHtml(this.formatProposalMoney(finance.annualDebtService || 0, options.currencyLabel || 'USD'))}.</li>
-                        <li>First-year net after debt: ${this.escapeHtml(this.formatProposalMoney(finance.firstYearNetAfterDebt || 0, options.currencyLabel || 'USD'))}. 5-year net after finance: ${this.escapeHtml(this.formatProposalMoney(finance.fiveYearNetAfterFinance || 0, options.currencyLabel || 'USD'))}. 10-year net after finance: ${this.escapeHtml(this.formatProposalMoney(finance.tenYearNetAfterFinance || 0, options.currencyLabel || 'USD'))}.</li>
-                        <li>Tax benefit: ${this.escapeHtml(this.formatProposalMoney(finance.taxBenefitAmount || 0, options.currencyLabel || 'USD'))}. Total interest: ${this.escapeHtml(this.formatProposalMoney(finance.totalInterest || 0, options.currencyLabel || 'USD'))}. Residual value: ${this.escapeHtml(this.formatProposalMoney(finance.residualValueAmount || 0, options.currencyLabel || 'USD'))}.</li>
+                        <li>Annual self-consumed energy value: ${Math.round(finance.annualSelfConsumedKWh || 0).toLocaleString()} kWh/year at ${this.escapeHtml(this.formatCommercialUnitRate(finance.energyRatePerKWh || 0, options.currencyLabel || 'USD', fxRate))}/kWh.</li>
+                        <li>Annual export credit: ${Math.round(finance.annualExportKWh || 0).toLocaleString()} kWh/year at ${this.escapeHtml(this.formatCommercialUnitRate(finance.exportCreditPerKWh || 0, options.currencyLabel || 'USD', fxRate))}/kWh.</li>
+                        <li>5-year gross value: ${this.escapeHtml(this.formatProposalMoney(finance.fiveYearGrossValue || 0, options.currencyLabel || 'USD', fxRate))}. 10-year gross value: ${this.escapeHtml(this.formatProposalMoney(finance.tenYearGrossValue || 0, options.currencyLabel || 'USD', fxRate))}.</li>
+                        <li>5-year net after quote: ${this.escapeHtml(this.formatProposalMoney(finance.fiveYearNetAfterQuote || 0, options.currencyLabel || 'USD', fxRate))}. 10-year net after quote: ${this.escapeHtml(this.formatProposalMoney(finance.tenYearNetAfterQuote || 0, options.currencyLabel || 'USD', fxRate))}.</li>
+                        <li>5-year lifecycle cost allowance: ${this.escapeHtml(this.formatProposalMoney(finance.fiveYearLifecycleCost || 0, options.currencyLabel || 'USD', fxRate))}. 10-year lifecycle cost allowance: ${this.escapeHtml(this.formatProposalMoney(finance.tenYearLifecycleCost || 0, options.currencyLabel || 'USD', fxRate))}.</li>
+                        <li>5-year net after lifecycle: ${this.escapeHtml(this.formatProposalMoney(finance.fiveYearNetAfterLifecycle || 0, options.currencyLabel || 'USD', fxRate))}. 10-year net after lifecycle: ${this.escapeHtml(this.formatProposalMoney(finance.tenYearNetAfterLifecycle || 0, options.currencyLabel || 'USD', fxRate))}.</li>
+                        <li>Equity contribution: ${this.escapeHtml(this.formatProposalMoney(finance.equityContribution || 0, options.currencyLabel || 'USD', fxRate))}. Financed amount: ${this.escapeHtml(this.formatProposalMoney(finance.financedAmount || 0, options.currencyLabel || 'USD', fxRate))}. Annual debt service: ${this.escapeHtml(this.formatProposalMoney(finance.annualDebtService || 0, options.currencyLabel || 'USD', fxRate))}.</li>
+                        <li>First-year net after debt: ${this.escapeHtml(this.formatProposalMoney(finance.firstYearNetAfterDebt || 0, options.currencyLabel || 'USD', fxRate))}. 5-year net after finance: ${this.escapeHtml(this.formatProposalMoney(finance.fiveYearNetAfterFinance || 0, options.currencyLabel || 'USD', fxRate))}. 10-year net after finance: ${this.escapeHtml(this.formatProposalMoney(finance.tenYearNetAfterFinance || 0, options.currencyLabel || 'USD', fxRate))}.</li>
+                        <li>Tax benefit: ${this.escapeHtml(this.formatProposalMoney(finance.taxBenefitAmount || 0, options.currencyLabel || 'USD', fxRate))}. Total interest: ${this.escapeHtml(this.formatProposalMoney(finance.totalInterest || 0, options.currencyLabel || 'USD', fxRate))}. Residual value: ${this.escapeHtml(this.formatProposalMoney(finance.residualValueAmount || 0, options.currencyLabel || 'USD', fxRate))}.</li>
                     </ul>
                 </div>
                 <div class="compliance-list-block">
@@ -16992,9 +16993,17 @@ const PVCalculator = {
             if (mpptBasisW > 0) {
                 pushLine(
                     usesStandaloneMPPT ? 'MPPT / charge controller' : 'Integrated PV electronics',
-                    usesStandaloneMPPT ? `${Math.round(mpptBasisW)}W` : `${Math.round(mpptBasisW)}Wp array basis`,
+                    usesStandaloneMPPT
+                        ? (mpptBasisW > (pv.arrayWattage || 0)
+                            ? `${Math.round(pv.arrayWattage || 0)}Wp array | ${Math.round(mpptBasisW)}W controller`
+                            : `${Math.round(mpptBasisW)}W`)
+                        : `${Math.round(mpptBasisW)}Wp array basis`,
                     usesStandaloneMPPT ? 'Request /W supplier rate' : 'Confirm integrated PV-electronics allowance',
-                    usesStandaloneMPPT ? 'Use controller power or array basis, whichever governs the supply quote.' : 'Use only if the supplier separates inverter PV-stage pricing.'
+                    usesStandaloneMPPT
+                        ? (mpptBasisW > (pv.arrayWattage || 0)
+                            ? 'Controller is oversized vs array — controller W governs the supply quote; array Wp shown for reference.'
+                            : 'Use controller power or array basis, whichever governs the supply quote.')
+                        : 'Use only if the supplier separates inverter PV-stage pricing.'
                 );
             }
             if ((pv.arrayWattage || 0) > 0) {
@@ -17719,14 +17728,14 @@ const PVCalculator = {
             || 'Confirm the actual site energy cost and operating pattern before treating this value outlook as a selling commitment.';
         const advancedAssumptionsActive = taxBenefitAmount > 0 || financedAmount > 0 || residualValueAmount > 0;
         const capitalStackSummary = financedAmount > 0
-            ? `Equity ${this.formatProposalMoney(equityContribution, inputs.currencyLabel)} | Debt ${debtSharePct.toFixed(1)}% (${this.formatProposalMoney(financedAmount, inputs.currencyLabel)}) @ ${debtAprPct.toFixed(1)}% for ${debtTermYears}y`
+            ? `Equity ${this.formatProposalMoney(equityContribution, inputs.currencyLabel, inputs.effectiveFxRate || 1)} | Debt ${debtSharePct.toFixed(1)}% (${this.formatProposalMoney(financedAmount, inputs.currencyLabel, inputs.effectiveFxRate || 1)}) @ ${debtAprPct.toFixed(1)}% for ${debtTermYears}y`
             : `All-equity view | No debt service modeled | Tax benefit ${taxBenefitPct.toFixed(1)}% | Residual ${residualValuePct.toFixed(1)}%`;
         let scenarioComparison = null;
         if (financedAmount > 0) {
             const fiveYearDelta = roundValue(fiveYearNetAfterFinance - cashFiveYearNet, 2);
             const tenYearDelta = roundValue(tenYearNetAfterFinance - cashTenYearNet, 2);
             let comparisonHeadline = 'Financed posture improves short-term owner cash position under the current assumptions.';
-            let comparisonDetail = `At 5 years the financed case sits ${this.formatProposalMoney(Math.abs(fiveYearDelta), inputs.currencyLabel)} ${fiveYearDelta >= 0 ? 'above' : 'below'} the cash-purchase case, and at 10 years it sits ${this.formatProposalMoney(Math.abs(tenYearDelta), inputs.currencyLabel)} ${tenYearDelta >= 0 ? 'above' : 'below'} it.`;
+            let comparisonDetail = `At 5 years the financed case sits ${this.formatProposalMoney(Math.abs(fiveYearDelta), inputs.currencyLabel, inputs.effectiveFxRate || 1)} ${fiveYearDelta >= 0 ? 'above' : 'below'} the cash-purchase case, and at 10 years it sits ${this.formatProposalMoney(Math.abs(tenYearDelta), inputs.currencyLabel, inputs.effectiveFxRate || 1)} ${tenYearDelta >= 0 ? 'above' : 'below'} it.`;
             if (fiveYearDelta >= 0 && tenYearDelta < 0) {
                 comparisonHeadline = 'Financing helps the early cash story, but the long-run value needs review.';
             } else if (fiveYearDelta < 0 && tenYearDelta < 0) {
@@ -17940,7 +17949,9 @@ const PVCalculator = {
                     usesStandaloneMPPT ? 'MPPT / charge controller' : 'Integrated PV input electronics',
                     usesStandaloneMPPT
                         ? describeRateBasis(
-                            `${Math.round(mpptBasisW)}W`,
+                            mpptBasisW > (pv.arrayWattage || 0)
+                                ? `${Math.round(pv.arrayWattage || 0)}Wp array | ${Math.round(mpptBasisW)}W controller`
+                                : `${Math.round(mpptBasisW)}W`,
                             pricingSource.resolvedRates.mpptPerW,
                             rateDefinitions.find(definition => definition.key === 'mpptPerW'),
                             getProfileMultiplier(profile, 'mpptPerW'),
@@ -20964,8 +20975,8 @@ const PVCalculator = {
             sectionTitle('Advisory — Practical Usage Tips');
             y += 1;
 
-            // Coping score bar at top of advisory page
-            {
+            // Coping score bar — only shown when manual override is active
+            if (inv.isManualOverride || batt.isManualOverride) {
                 const invUsableW_adv = (inv.recommendedSizeVA || 0) * DEFAULTS.INVERTER_DERATING;
                 const contNeeded_adv = agg.designContinuousVA || agg.peakSimultaneousVA || 0;
                 const invRatio_adv = contNeeded_adv > 0 ? Math.min(invUsableW_adv / contNeeded_adv, 1.0) : 1.0;
@@ -21227,6 +21238,15 @@ const PVCalculator = {
                         Math.round(LoadEngine.calculateDailyEnergyWh(a))
                     ]);
                     drawTable(appHeaders, appRows, phaseAllocation ? [32, 12, 18, 16, 16, 18, 30, 20] : [38, 14, 22, 18, 18, 22, 24]);
+                    y += 3;
+                    const appSubtotalWh = appRows.reduce((sum, row) => sum + row[row.length - 1], 0);
+                    const marginWh = Math.round(agg.dailyEnergyWh) - appSubtotalWh;
+                    labelValue('Appliance subtotal (pre-margin):', `${appSubtotalWh.toLocaleString()} Wh`);
+                    if (marginWh !== 0) {
+                        labelValue('+ Design allowance (margin & derating):', `+${Math.abs(marginWh).toLocaleString()} Wh`);
+                    }
+                    labelValue('= Daily energy total:', `${Math.round(agg.dailyEnergyWh).toLocaleString()} Wh`);
+                    y += 2;
                 }
 
                 // ── INVERTER DETAIL ──
@@ -23628,7 +23648,7 @@ const PVCalculator = {
                     ${this.renderCommercialArchitecturePanel(architecture, { compact: true, title: 'Commercial Power Architecture', maxNotes: 3 })}
                     ${this.renderPlantScopingPanel(plantScoping, { compact: true, title: 'Plant / Mini-Grid Scope', maxNotes: 3 })}
                     ${this.renderCommercialSupportPanel(supportSummary, { compact: true, title: 'Supported Load Story', maxNotes: 3, maxItems: 4 })}
-                    ${this.renderCommercialFinancePanel(finance, { compact: true, title: 'Commercial Value Outlook', maxNotes: 4, currencyLabel: commercial.inputs.currencyLabel })}
+                    ${this.renderCommercialFinancePanel(finance, { compact: true, title: 'Commercial Value Outlook', maxNotes: 4, currencyLabel: commercial.inputs.currencyLabel, fxRate: commercial.inputs.effectiveFxRate || 1 })}
                     ${this.renderCompliancePanel(compliance, { compact: true, title: 'Regional Compliance Path', maxOpenItems: 3 })}
                     ${this.renderSubmissionPackPanel(submissionPack, { compact: true, title: 'Submission Pack Readiness', maxOpenItems: 2, maxFocusDeliverables: 4 })}
                     ${this.renderEquipmentReferencePanel(detailContext)}
@@ -23964,7 +23984,7 @@ const PVCalculator = {
                         </div>
                     `).join('')}
                 </div>
-                ${this.renderCommercialFinancePanel(finance, { compact: isClientMode, title: 'Commercial Value Outlook', maxNotes: isClientMode ? 4 : 6, currencyLabel: commercial.inputs.currencyLabel })}
+                ${this.renderCommercialFinancePanel(finance, { compact: isClientMode, title: 'Commercial Value Outlook', maxNotes: isClientMode ? 4 : 6, currencyLabel: commercial.inputs.currencyLabel, fxRate: commercial.inputs.effectiveFxRate || 1 })}
                 ${quoteStructureHtml}
                 <div class="proposal-assumptions">
                     <div class="executive-panel">
@@ -24116,7 +24136,7 @@ const PVCalculator = {
             const ahCounts = {};
             perBatteryUnits.forEach(u => { ahCounts[u.ah] = (ahCounts[u.ah] || 0) + 1; });
             battMixedTitleDesc = Object.entries(ahCounts).map(([ah, c]) => `${c}\u00d7${ah}Ah`).join(' + ');
-            if (battMixedTitleDesc.length > 40) battMixedTitleDesc = battMixedTitleDesc.substring(0, 37) + '...';
+            if (battMixedTitleDesc.length > 70) battMixedTitleDesc = battMixedTitleDesc.substring(0, 67) + '…';
         }
 
         // ===== FULL VISUAL SYSTEM OVERVIEW =====
@@ -24172,11 +24192,11 @@ const PVCalculator = {
         if (pv.isMismatchCorrected && mismatchData && mismatchData.groups) {
             const groupParts = Object.entries(mismatchData.groups).map(([w, c]) => `${c}\u00d7${w}W`);
             const groupDesc = groupParts.join(' + ');
-            pvTitleDesc = groupDesc.length > 45 ? groupDesc.substring(0, 42) + '...' : groupDesc;
+            pvTitleDesc = groupDesc;
         }
         // PV title: reduce font when text is long to prevent overflow
         const pvTitleFull = `PV Array \u2014 ${pvTitleDesc} = ${pv.arrayWattage}Wp (${pv.panelsInSeries}S x ${pv.stringsInParallel}P)`;
-        const pvTitleFontSize = pvTitleFull.length > 55 ? 9 : 11;
+        const pvTitleFontSize = pvTitleFull.length > 70 ? 8 : pvTitleFull.length > 40 ? 9 : 11;
         svg += `<text x="${pvBoxX + pvBoxW/2}" y="${Y+16}" text-anchor="middle" font-size="${pvTitleFontSize}" font-weight="bold" fill="#92400e">${pvTitleFull}</text>`;
         // Orientation/tilt subtitle in SVG when non-optimal
         if (pv.combinedPVFactor && pv.combinedPVFactor < 1.0) {
@@ -24325,8 +24345,9 @@ const PVCalculator = {
                 svg += `<text x="${leftBranchX}" y="${Y+12}" text-anchor="middle" font-size="10" font-weight="bold" fill="#166534">Battery Bank \u2014 ${batt.chemistryName}</text>`;
                 svg += `<text x="${leftBranchX}" y="${Y+23}" text-anchor="middle" font-size="8.5" fill="#166534">${battMixedTitleDesc} = ${batt.bankVoltage}V/${Math.round(batt.totalCapacityAh)}Ah</text>`;
             } else {
-                const battTitleFont = battBoxW < 300 ? 9 : 11;
-                svg += `<text x="${leftBranchX}" y="${Y+15}" text-anchor="middle" font-size="${battTitleFont}" font-weight="bold" fill="#166534">Battery Bank \u2014 ${batt.chemistryName} | ${batt.bankVoltage}V / ${actualBankAh}Ah</text>`;
+                const _battTitle = `Battery Bank \u2014 ${batt.chemistryName} | ${batt.bankVoltage}V / ${actualBankAh}Ah`;
+                const battTitleFont = _battTitle.length > 70 ? 8 : _battTitle.length > 40 ? 9 : 11;
+                svg += `<text x="${leftBranchX}" y="${Y+15}" text-anchor="middle" font-size="${battTitleFont}" font-weight="bold" fill="#166534">${_battTitle}</text>`;
             }
 
             // Draw every battery — centered within the (possibly wider) box
@@ -24466,8 +24487,9 @@ const PVCalculator = {
                 svg += `<text x="${battBranchX}" y="${battBankY+12}" text-anchor="middle" font-size="10" font-weight="bold" fill="#166534">Battery Bank \u2014 ${batt.chemistryName}</text>`;
                 svg += `<text x="${battBranchX}" y="${battBankY+23}" text-anchor="middle" font-size="8.5" fill="#166534">${battMixedTitleDesc} = ${batt.bankVoltage}V/${Math.round(batt.totalCapacityAh)}Ah</text>`;
             } else {
-                const battTitleFont2 = battBoxW < 300 ? 9 : 11;
-                svg += `<text x="${battBranchX}" y="${battBankY+15}" text-anchor="middle" font-size="${battTitleFont2}" font-weight="bold" fill="#166534">Battery Bank \u2014 ${batt.chemistryName} | ${batt.bankVoltage}V / ${actualBankAh}Ah</text>`;
+                const _battTitle2 = `Battery Bank \u2014 ${batt.chemistryName} | ${batt.bankVoltage}V / ${actualBankAh}Ah`;
+                const battTitleFont2 = _battTitle2.length > 70 ? 8 : _battTitle2.length > 40 ? 9 : 11;
+                svg += `<text x="${battBranchX}" y="${battBankY+15}" text-anchor="middle" font-size="${battTitleFont2}" font-weight="bold" fill="#166534">${_battTitle2}</text>`;
             }
 
             // Draw every battery — centered within the (possibly wider) box
@@ -24593,7 +24615,7 @@ const PVCalculator = {
             html += this.renderCommercialSupportPanel(supportSummary, { compact: true, title: 'Supported Load Snapshot', maxNotes: 3, maxItems: 4 });
         }
         if (finance) {
-            html += this.renderCommercialFinancePanel(finance, { compact: true, title: 'Commercial Value Snapshot', maxNotes: 4, currencyLabel: commercial.inputs.currencyLabel });
+            html += this.renderCommercialFinancePanel(finance, { compact: true, title: 'Commercial Value Snapshot', maxNotes: 4, currencyLabel: commercial.inputs.currencyLabel, fxRate: commercial.inputs.effectiveFxRate || 1 });
         }
         html += svg;
 

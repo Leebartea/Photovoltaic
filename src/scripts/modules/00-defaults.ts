@@ -3976,7 +3976,7 @@ const DEFAULTS = {
         batteries: {
             lifepo4_5kwh_rack: {
                 label: '5.12kWh Rack Module',
-                badge: '48V lithium',
+                badge: '51.2V lithium',
                 chemistry: 'lifepo4',
                 unitVoltage: 51.2,
                 unitAh: 100,
@@ -3985,7 +3985,7 @@ const DEFAULTS = {
             },
             lifepo4_7kwh_rack: {
                 label: '7.68kWh Rack Module',
-                badge: '48V lithium',
+                badge: '51.2V lithium',
                 chemistry: 'lifepo4',
                 unitVoltage: 51.2,
                 unitAh: 150,
