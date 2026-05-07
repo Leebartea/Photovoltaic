@@ -33551,14 +33551,10 @@ const PVCalculator = {
                 return;
             }
 
-            const savedTime = new Date(snapshot.meta.updatedAt || snapshot.meta.createdAt).toLocaleString();
-            const message = `Found an autosaved draft for "${snapshot.meta.name}" from ${savedTime}${applianceCount ? ` with ${applianceCount} appliance${applianceCount === 1 ? '' : 's'}` : ''}. Restore it?`;
-            if (confirm(message)) {
-                this.applyProjectSnapshot(snapshot, {
-                    statusMessage: `Restored autosaved draft "${snapshot.meta.name}". Save it to browser storage if you want it in the named project list.`,
-                    statusTone: 'draft'
-                });
-            }
+            this.applyProjectSnapshot(snapshot, {
+                statusMessage: `Restored autosaved draft "${snapshot.meta.name}". Save it to browser storage if you want it in the named project list.`,
+                statusTone: 'draft'
+            });
         } catch (e) {
             // Ignore malformed autosave data
         }
@@ -38718,7 +38714,7 @@ const PVCalculator = {
         // Scroll spy via IntersectionObserver
         const sections = [
             'systemConfigCard', 'projectWorkspaceCard', 'workflowGuideCard',
-            'proposalIdentityCard', 'proposalPricingCard', 'applianceInputCard', 'equipmentSpecsCard'
+            'proposalIdentityCard', 'applianceInputCard', 'equipmentSpecsCard', 'proposalPricingCard'
         ];
 
         const observer = new IntersectionObserver((entries) => {
@@ -38844,6 +38840,14 @@ const PVCalculator = {
         }
     }
 };
+
+function debounce(fn, wait) {
+    let timer;
+    return function (...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), wait);
+    };
+}
 
 // Inline event handlers in the generated HTML expect a window-global controller.
 window.PVCalculator = PVCalculator;
@@ -39079,7 +39083,7 @@ document.addEventListener('DOMContentLoaded', () => {
         control.addEventListener('change', () => PVCalculator.saveToLocalStorageAuto());
         control.addEventListener('focus', () => PVCalculator.setWorkflowGuideFocus(control.id, 'field'));
         if (control.tagName !== 'SELECT' && control.type !== 'checkbox') {
-            control.addEventListener('input', () => PVCalculator.saveToLocalStorageAuto());
+            control.addEventListener('input', debounce(() => PVCalculator.saveToLocalStorageAuto(), 150));
         }
     });
 

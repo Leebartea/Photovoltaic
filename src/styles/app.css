@@ -626,22 +626,22 @@ textarea {
     grid-template-columns: 1fr 1fr 1fr;
 }
 
-@media (max-width: 900px) {
+.form-row.two {
+    grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 1023px) {
     .form-row.three,
     .form-row.four {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-    }
-    .form-row.three > *,
-    .form-row.four > * {
-        flex: 1 1 200px;
-        min-width: 200px;
+        grid-template-columns: 1fr 1fr;
     }
 }
 
 @media (max-width: 600px) {
-    .form-row, .form-row.three {
+    .form-row,
+    .form-row.two,
+    .form-row.three,
+    .form-row.four {
         grid-template-columns: 1fr;
     }
 }

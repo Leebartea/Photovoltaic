@@ -27452,7 +27452,7 @@ const PVCalculator = {
         // Scroll spy via IntersectionObserver
         const sections = [
             'systemConfigCard', 'projectWorkspaceCard', 'workflowGuideCard',
-            'proposalIdentityCard', 'proposalPricingCard', 'applianceInputCard', 'equipmentSpecsCard'
+            'proposalIdentityCard', 'applianceInputCard', 'equipmentSpecsCard', 'proposalPricingCard'
         ];
 
         const observer = new IntersectionObserver((entries) => {

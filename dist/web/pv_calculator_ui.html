@@ -43,14 +43,14 @@
                 <a class="section-nav-item" href="#proposalIdentityCard" data-section="proposalIdentityCard">
                     <span class="sni-num">4</span><span class="sni-label">Identity</span>
                 </a>
-                <a class="section-nav-item" href="#proposalPricingCard" data-section="proposalPricingCard">
-                    <span class="sni-num">5</span><span class="sni-label">Pricing</span>
-                </a>
                 <a class="section-nav-item" href="#applianceInputCard" data-section="applianceInputCard">
-                    <span class="sni-num">6</span><span class="sni-label">Loads</span>
+                    <span class="sni-num">5</span><span class="sni-label">Loads</span>
                 </a>
                 <a class="section-nav-item" href="#equipmentSpecsCard" data-section="equipmentSpecsCard">
-                    <span class="sni-num">7</span><span class="sni-label">Equipment</span>
+                    <span class="sni-num">6</span><span class="sni-label">Equipment</span>
+                </a>
+                <a class="section-nav-item" href="#proposalPricingCard" data-section="proposalPricingCard">
+                    <span class="sni-num">7</span><span class="sni-label">Pricing</span>
                 </a>
             </div>
         </nav>
@@ -480,16 +480,20 @@
                         </div>
                     </div>
 
-                    <div class="form-row" id="installerTemperatureRow">
-                        <div class="form-group">
-                            <label for="ambientTempMin">Min Temperature (C)</label>
-                            <input type="number" id="ambientTempMin" value="20" min="-40" max="60">
+                    <details class="advanced-finance-block">
+                        <summary>Ambient temperature range (optional)</summary>
+                        <div class="advanced-finance-copy">Site temperature window for panel derating. Region defaults apply — override only when site-specific data is available.</div>
+                        <div class="form-row" id="installerTemperatureRow">
+                            <div class="form-group">
+                                <label for="ambientTempMin">Min Temperature (C)</label>
+                                <input type="number" id="ambientTempMin" value="20" min="-40" max="60">
+                            </div>
+                            <div class="form-group">
+                                <label for="ambientTempMax">Max Temperature (C)</label>
+                                <input type="number" id="ambientTempMax" value="35" min="-40" max="60">
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="ambientTempMax">Max Temperature (C)</label>
-                            <input type="number" id="ambientTempMax" value="35" min="-40" max="60">
-                        </div>
-                    </div>
+                    </details>
 
                     <div class="form-row">
                         <div class="form-group">
@@ -515,27 +519,31 @@
                         </div>
                     </div>
 
-                    <div class="form-row" id="installerEngineeringRow">
-                        <div class="form-group">
-                            <label for="designMargin">Design Margin (%)</label>
-                            <input type="number" id="designMargin" value="125" min="100" max="200">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="IEC/NEC standard: 125% for continuous loads">i</button><small class="field-help">IEC/NEC standard: 125% for continuous loads</small></span>
+                    <details class="advanced-finance-block">
+                        <summary>Engineering overrides (optional)</summary>
+                        <div class="advanced-finance-copy">Design margin, inverter surge headroom, and topology. IEC/NEC defaults applied — open only to override for a specific site or inverter spec sheet.</div>
+                        <div class="form-row" id="installerEngineeringRow">
+                            <div class="form-group">
+                                <label for="designMargin">Design Margin (%)</label>
+                                <input type="number" id="designMargin" value="125" min="100" max="200">
+                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="IEC/NEC standard: 125% for continuous loads">i</button><small class="field-help">IEC/NEC standard: 125% for continuous loads</small></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="inverterSurgeMultiplier">Inverter Surge Multiplier</label>
+                                <input type="number" id="inverterSurgeMultiplier" value="2.0" step="0.1" min="1.5" max="5">
+                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Typical: 2.0x rated capacity">i</button><small class="field-help">Typical: 2.0x rated capacity</small></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="inverterTechnology">Inverter Technology</label>
+                                <select id="inverterTechnology" onchange="var v=this.value,el=document.getElementById('inverterSurgeMultiplier');if(el){if(v==='transformer')el.value='2.5';else el.value='2.0';}if(PVCalculator.results)PVCalculator.calculate();">
+                                    <option value="unknown">Unknown / Default (2.0x surge tolerance)</option>
+                                    <option value="transformer">Transformer-based / Low-frequency (2.5x surge tolerance)</option>
+                                    <option value="transformerless">Transformerless / High-frequency (2.0x surge tolerance)</option>
+                                </select>
+                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Transformer inverters handle motor surge better due to heavier copper windings">i</button><small class="field-help">Transformer inverters handle motor surge better due to heavier copper windings</small></span>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="inverterSurgeMultiplier">Inverter Surge Multiplier</label>
-                            <input type="number" id="inverterSurgeMultiplier" value="2.0" step="0.1" min="1.5" max="5">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Typical: 2.0x rated capacity">i</button><small class="field-help">Typical: 2.0x rated capacity</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="inverterTechnology">Inverter Technology</label>
-                            <select id="inverterTechnology" onchange="var v=this.value,el=document.getElementById('inverterSurgeMultiplier');if(el){if(v==='transformer')el.value='2.5';else el.value='2.0';}if(PVCalculator.results)PVCalculator.calculate();">
-                                <option value="unknown">Unknown / Default (2.0x surge tolerance)</option>
-                                <option value="transformer">Transformer-based / Low-frequency (2.5x surge tolerance)</option>
-                                <option value="transformerless">Transformerless / High-frequency (2.0x surge tolerance)</option>
-                            </select>
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Transformer inverters handle motor surge better due to heavier copper windings">i</button><small class="field-help">Transformer inverters handle motor surge better due to heavier copper windings</small></span>
-                        </div>
-                    </div>
+                    </details>
 
                     <div id="audienceModeHint" class="audience-hint" aria-live="polite"></div>
                 </div>
@@ -1254,345 +1262,6 @@
                     </div>
                 </div>
 
-                <div class="card" id="proposalPricingCard">
-                    <h2>Proposal Pricing</h2>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="commercialPresetSelect">Commercial Preset</label>
-                            <div class="inline-action-group">
-                                <select id="commercialPresetSelect" onchange="PVCalculator.onCommercialPresetSelectionChange()"></select>
-                                <button type="button" class="btn btn-secondary inline-action-button" id="applyCommercialPresetBtn" onclick="PVCalculator.applySelectedCommercialPreset()">Apply Preset</button>
-                            </div>
-                            <input type="hidden" id="commercialPresetAppliedId" value="">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Applies only pricing, finance sensitivity, commercial terms, and scope wording. Load and engineering inputs stay unchang">i</button><small class="field-help">Applies only pricing, finance sensitivity, commercial terms, and scope wording. Load and engineering inputs stay unchanged.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label>Commercial Preset Preview</label>
-                            <div id="commercialPresetPreview" class="supplier-pack-preview" aria-live="polite"></div>
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Use this as a proposal shortcut, then tune any field manually for the actual job.">i</button><small class="field-help">Use this as a proposal shortcut, then tune any field manually for the actual job.</small></span>
-                        </div>
-                    </div>
-                    <div class="form-row three">
-                        <div class="form-group">
-                            <label for="quoteCurrencyLabel">Quote Currency Label</label>
-                            <input type="text" id="quoteCurrencyLabel" value="USD" maxlength="8" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Reference label shown in the BOM and proposal totals.">i</button><small class="field-help">Reference label shown in the BOM and proposal totals.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="quoteFxRateToUSD">FX Rate (1 USD = ?)</label>
-                            <input type="number" id="quoteFxRateToUSD" min="0.0001" step="0.01" placeholder="e.g. 1550 for NGN" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Local currency units per 1 USD. Leave blank to use the region default. Applies to client-facing PDF totals only — supplier rate cards stay in USD.">i</button><small class="field-help">Local currency units per 1 USD. Leave blank to use the region default. Applies to client-facing PDF totals only — supplier rate cards stay in USD.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="pricingProfile">Pricing Basis</label>
-                            <select id="pricingProfile" onchange="PVCalculator.onProposalPricingChange()">
-                                <option value="value">Value Install</option>
-                                <option value="standard" selected>Standard Install</option>
-                                <option value="premium">Premium Install</option>
-                            </select>
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Adjusts component quality level and quote spread.">i</button><small class="field-help">Adjusts component quality level and quote spread.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="regionalPriceFactor">Regional Market Multiplier</label>
-                            <input type="number" id="regionalPriceFactor" value="1.00" step="0.01" min="0.5" max="3" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Use this to tune the reference BOM for import costs, distributor markup, and local market conditions.">i</button><small class="field-help">Use this to tune the reference BOM for import costs, distributor markup, and local market conditions.</small></span>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="supplierPricePack">Supplier Reference Pack</label>
-                            <select id="supplierPricePack" onchange="PVCalculator.onProposalPricingChange()"></select>
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Offline regional benchmark pack used as the base component pricing layer before package posture and market multiplier ar">i</button><small class="field-help">Offline regional benchmark pack used as the base component pricing layer before package posture and market multiplier are applied.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label>Supplier Pricing Preview</label>
-                            <div id="supplierPackPreview" class="supplier-pack-preview" aria-live="polite"></div>
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Shows the current benchmark source, active battery chemistry rate, and whether manual overrides are in play.">i</button><small class="field-help">Shows the current benchmark source, active battery chemistry rate, and whether manual overrides are in play.</small></span>
-                        </div>
-                    </div>
-                    <div class="form-row three">
-                        <div class="form-group">
-                            <label for="supplierQuoteStatus">Supplier Quote Status</label>
-                            <select id="supplierQuoteStatus" onchange="PVCalculator.onProposalPricingChange()"></select>
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Tells the proposal whether pricing is still benchmark-only or already tied to live supplier numbers.">i</button><small class="field-help">Tells the proposal whether pricing is still benchmark-only or already tied to live supplier numbers.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="supplierQuoteDate">Supplier Quote Date</label>
-                            <input type="date" id="supplierQuoteDate" onchange="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Use the most recent supplier reference date that actually supports the current quote.">i</button><small class="field-help">Use the most recent supplier reference date that actually supports the current quote.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="supplierRefreshWindowDays">Refresh Window (days)</label>
-                            <input type="number" id="supplierRefreshWindowDays" value="14" step="1" min="1" max="90" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="After this window, the quote should be treated as aging and due for supplier refresh.">i</button><small class="field-help">After this window, the quote should be treated as aging and due for supplier refresh.</small></span>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="supplierQuoteReference">Supplier Quote Reference</label>
-                            <input type="text" id="supplierQuoteReference" maxlength="120" placeholder="Optional vendor quote number or note" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Optional vendor quote number, spreadsheet reference, or internal sourcing note.">i</button><small class="field-help">Optional vendor quote number, spreadsheet reference, or internal sourcing note.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label>Supplier Quote Freshness</label>
-                            <div id="supplierQuoteFreshnessPreview" class="supplier-pack-preview" aria-live="polite"></div>
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Shows whether the current commercial story is benchmark-only, fresh, aging, or stale for quote issue.">i</button><small class="field-help">Shows whether the current commercial story is benchmark-only, fresh, aging, or stale for quote issue.</small></span>
-                        </div>
-                    </div>
-                    <details class="advanced-finance-block">
-                        <summary>Request refreshed supplier quote (optional)</summary>
-                        <div class="advanced-finance-copy">
-                            Generate a clean supplier refresh brief from the current recommended design, the current quote freshness state, and the active pricing posture. This stays offline and does not change the engineering design or pricing fields.
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Supplier Refresh Brief</label>
-                                <div id="supplierRefreshRequestPreview" class="supplier-pack-preview" aria-live="polite"></div>
-                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Use this when the quote is aging or stale, or any time you want to reconfirm live supplier numbers from the current desi">i</button><small class="field-help">Use this when the quote is aging or stale, or any time you want to reconfirm live supplier numbers from the current design without retyping the commercial basis.</small></span>
-                                <div class="inline-action-group mt-10">
-                                    <button type="button" class="btn btn-secondary inline-action-button btn-small" id="copySupplierRefreshRequestBtn" onclick="PVCalculator.copySupplierRefreshRequest()">Copy Refresh Brief</button>
-                                </div>
-                            </div>
-                        </div>
-                    </details>
-                    <details class="advanced-finance-block">
-                        <summary>Import supplier quote (optional)</summary>
-                        <div class="advanced-finance-copy">
-                            Paste a simple supplier email, WhatsApp text, or spreadsheet rows here. The assistant will extract recognized unit rates, quote reference, and quote date into the existing supplier quote fields without changing the engineering design.
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="supplierQuoteImportText">Supplier Quote Paste</label>
-                                <textarea id="supplierQuoteImportText" class="supplier-import-textarea" placeholder="Quote Ref: SUP-449&#10;Quote Date: 2026-03-19&#10;Currency: USD&#10;PV Modules: 0.41 /Wp&#10;Inverter: 0.12 /VA&#10;Battery: 310 /kWh" oninput="PVCalculator.onSupplierQuoteImportInput()"></textarea>
-                                <input type="file" id="supplierQuoteImportFile" aria-label="Import supplier quote file" class="sr-only" accept=".txt,.csv,.json,.quote,.supplierquote.json" onchange="PVCalculator.importSupplierQuoteFromFile(event)">
-                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Works best with one line per component, simple CSV-like rows, or structured JSON quote files. The importer only fills re">i</button><small class="field-help">Works best with one line per component, simple CSV-like rows, or structured JSON quote files. The importer only fills recognized commercial fields.</small></span>
-                                <div class="inline-action-group mt-10">
-                                    <button type="button" class="btn btn-secondary inline-action-button btn-small" onclick="PVCalculator.triggerSupplierQuoteImportFile()">Load Quote File</button>
-                                    <button type="button" class="btn btn-secondary inline-action-button btn-small" id="applySupplierQuoteImportBtn" onclick="PVCalculator.applySupplierQuoteImport()">Apply Imported Quote</button>
-                                    <button type="button" class="btn btn-secondary inline-action-button btn-small" onclick="PVCalculator.clearSupplierQuoteImport()">Clear Paste</button>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Import Review</label>
-                                <div id="supplierQuoteImportPreview" class="supplier-pack-preview" aria-live="polite"></div>
-                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Review the matched component rates and metadata before writing them into the live pricing fields.">i</button><small class="field-help">Review the matched component rates and metadata before writing them into the live pricing fields.</small></span>
-                            </div>
-                        </div>
-                    </details>
-                    <div class="form-row three">
-                        <div class="form-group">
-                            <label for="supplierPvPerWp">PV Module Rate (/Wp)</label>
-                            <input type="number" id="supplierPvPerWp" placeholder="Pack default" step="0.001" min="0" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Optional manual override. Leave blank to inherit the selected pack.">i</button><small class="field-help">Optional manual override. Leave blank to inherit the selected pack.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="supplierInverterPerVA">Inverter Rate (/VA)</label>
-                            <input type="number" id="supplierInverterPerVA" placeholder="Pack default" step="0.001" min="0" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Useful when a live inverter quote is known but the rest of the BOM is still benchmarked.">i</button><small class="field-help">Useful when a live inverter quote is known but the rest of the BOM is still benchmarked.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="supplierBatteryPerKWh">Battery Rate (/kWh)</label>
-                            <input type="number" id="supplierBatteryPerKWh" placeholder="Pack default" step="1" min="0" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Applies to the currently selected battery chemistry.">i</button><small class="field-help">Applies to the currently selected battery chemistry.</small></span>
-                        </div>
-                    </div>
-                    <div class="form-row three">
-                        <div class="form-group">
-                            <label for="supplierMpptPerW">MPPT / PV Electronics Rate (/W)</label>
-                            <input type="number" id="supplierMpptPerW" placeholder="Pack default" step="0.001" min="0" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Used for standalone MPPT or reduced hybrid PV electronics allowances.">i</button><small class="field-help">Used for standalone MPPT or reduced hybrid PV electronics allowances.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="supplierMountingPerWp">Mounting &amp; BOS Rate (/Wp)</label>
-                            <input type="number" id="supplierMountingPerWp" placeholder="Pack default" step="0.001" min="0" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Rails, clamps, brackets, roof hardware, and mechanical BOS.">i</button><small class="field-help">Rails, clamps, brackets, roof hardware, and mechanical BOS.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="supplierProtectionPerWp">Protection Rate (/Wp)</label>
-                            <input type="number" id="supplierProtectionPerWp" placeholder="Pack default" step="0.001" min="0" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Breakers, fuses, isolators, SPD, enclosures, and earthing accessories.">i</button><small class="field-help">Breakers, fuses, isolators, SPD, enclosures, and earthing accessories.</small></span>
-                        </div>
-                    </div>
-                    <div class="form-row three">
-                        <div class="form-group">
-                            <label for="supplierCablePerKg">Cable Rate (/kg Cu)</label>
-                            <input type="number" id="supplierCablePerKg" placeholder="Pack default" step="0.1" min="0" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Used against the estimated copper mass from the cable engine.">i</button><small class="field-help">Used against the estimated copper mass from the cable engine.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="supplierMonitoringFlat">Commissioning &amp; Monitoring Flat</label>
-                            <input type="number" id="supplierMonitoringFlat" placeholder="Pack default" step="1" min="0" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Commissioning, labels, monitoring setup, and handover allowance.">i</button><small class="field-help">Commissioning, labels, monitoring setup, and handover allowance.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label>Supplier Override Guidance</label>
-                            <div class="supplier-override-note">
-                                Override only the line items you already have supplier numbers for. Blank fields continue to inherit the selected pack so you can mix live quotes with the offline benchmark safely.
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-row three">
-                        <div class="form-group">
-                            <label for="laborPct">Install &amp; Labor (%)</label>
-                            <input type="number" id="laborPct" value="18" step="0.5" min="0" max="100" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Applies to equipment subtotal.">i</button><small class="field-help">Applies to equipment subtotal.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="softCostPct">Soft Costs &amp; Permitting (%)</label>
-                            <input type="number" id="softCostPct" value="8" step="0.5" min="0" max="100" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Transport, permitting, site prep, and consumables.">i</button><small class="field-help">Transport, permitting, site prep, and consumables.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="proposalMarginPct">Target Margin (%)</label>
-                            <input type="number" id="proposalMarginPct" value="12" step="0.5" min="0" max="100" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Installer gross margin before tax.">i</button><small class="field-help">Installer gross margin before tax.</small></span>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="proposalTaxPct">Tax / VAT (%)</label>
-                            <input type="number" id="proposalTaxPct" value="0" step="0.5" min="0" max="100" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Applied after margin. Leave at 0% if tax is handled separately.">i</button><small class="field-help">Applied after margin. Leave at 0% if tax is handled separately.</small></span>
-                        </div>
-                    </div>
-                    <div class="form-row three">
-                        <div class="form-group">
-                            <label for="financeValueBasis">Value Basis</label>
-                            <select id="financeValueBasis" onchange="PVCalculator.onProposalPricingChange()">
-                                <option value="grid_tariff_offset">Grid Tariff Offset</option>
-                                <option value="generator_energy_offset">Generator Energy Offset</option>
-                                <option value="blended_site_energy" selected>Blended Site Energy</option>
-                            </select>
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Sets what the displaced kWh value represents in the ROI and payback summary.">i</button><small class="field-help">Sets what the displaced kWh value represents in the ROI and payback summary.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="financeEnergyRatePerKWh">Avoided Energy Rate (/kWh)</label>
-                            <input type="number" id="financeEnergyRatePerKWh" value="0.18" step="0.001" min="0" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Use the client bill, generator-derived kWh cost, or a blended site energy cost. This is advisory, not a live tariff feed">i</button><small class="field-help">Use the client bill, generator-derived kWh cost, or a blended site energy cost. This is advisory, not a live tariff feed.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="financeExportCreditPerKWh">Export Credit (/kWh)</label>
-                            <input type="number" id="financeExportCreditPerKWh" value="0.03" step="0.001" min="0" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Used only when there is meaningful surplus value or feed-in credit. Leave low or zero when export is not monetized.">i</button><small class="field-help">Used only when there is meaningful surplus value or feed-in credit. Leave low or zero when export is not monetized.</small></span>
-                        </div>
-                    </div>
-                    <div class="form-row three">
-                        <div class="form-group">
-                            <label for="financeOperatingDaysPerWeek">Operating Days / Week</label>
-                            <input type="number" id="financeOperatingDaysPerWeek" value="6" step="0.5" min="1" max="7" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Set the real weekly operating rhythm for the business value model.">i</button><small class="field-help">Set the real weekly operating rhythm for the business value model.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="financeAnnualEscalationPct">Annual Energy Escalation (%)</label>
-                            <input type="number" id="financeAnnualEscalationPct" value="4" step="0.5" min="0" max="25" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Used for the 5-year and 10-year gross value outlook, not for the simple payback headline.">i</button><small class="field-help">Used for the 5-year and 10-year gross value outlook, not for the simple payback headline.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label>Finance Guidance</label>
-                            <div class="supplier-override-note">
-                                The ROI layer is a commercial planning aid. Replace the avoided-energy rate with the client’s real tariff or generator-derived kWh cost before presenting the payback as final.
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-row three">
-                        <div class="form-group">
-                            <label for="financeAnnualMaintenancePct">Annual O&amp;M Allowance (%)</label>
-                            <input type="number" id="financeAnnualMaintenancePct" value="1.5" step="0.1" min="0" max="15" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Applied to the modeled quote for lifecycle sensitivity. Use this for routine service, cleaning, and maintenance planning">i</button><small class="field-help">Applied to the modeled quote for lifecycle sensitivity. Use this for routine service, cleaning, and maintenance planning.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="financeInverterRefreshPct">Inverter Refresh Allowance (%)</label>
-                            <input type="number" id="financeInverterRefreshPct" value="35" step="1" min="0" max="150" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Percent of the current inverter line reserved for a mid-life electronics refresh. The lifecycle view assumes this around">i</button><small class="field-help">Percent of the current inverter line reserved for a mid-life electronics refresh. The lifecycle view assumes this around year 10.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="financeBatteryRefreshPct">Battery Refresh Allowance (%)</label>
-                            <input type="number" id="financeBatteryRefreshPct" value="35" step="1" min="0" max="150" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Percent of the current battery line reserved for augmentation or replacement. Timing follows the active battery chemistr">i</button><small class="field-help">Percent of the current battery line reserved for augmentation or replacement. Timing follows the active battery chemistry.</small></span>
-                        </div>
-                    </div>
-                    <details class="advanced-finance-block">
-                        <summary>Advanced finance sensitivity (optional)</summary>
-                        <div class="advanced-finance-copy">
-                            Use this only when the client needs an advisory capital-stack view. It is still not a lender-grade finance model.
-                        </div>
-                        <div class="form-row three">
-                            <div class="form-group">
-                                <label for="financeTaxBenefitPct">Tax Benefit / Incentive (%)</label>
-                                <input type="number" id="financeTaxBenefitPct" value="0" step="0.5" min="0" max="60" oninput="PVCalculator.onProposalPricingChange()">
-                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Optional tax relief, grant-equivalent, or first-year incentive expressed as a percent of the quoted amount.">i</button><small class="field-help">Optional tax relief, grant-equivalent, or first-year incentive expressed as a percent of the quoted amount.</small></span>
-                            </div>
-                            <div class="form-group">
-                                <label for="financeDebtSharePct">Debt Share (%)</label>
-                                <input type="number" id="financeDebtSharePct" value="0" step="1" min="0" max="95" oninput="PVCalculator.onProposalPricingChange()">
-                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Percent of the quote assumed to be financed instead of paid up-front as equity.">i</button><small class="field-help">Percent of the quote assumed to be financed instead of paid up-front as equity.</small></span>
-                            </div>
-                            <div class="form-group">
-                                <label for="financeDebtAprPct">Debt APR (%)</label>
-                                <input type="number" id="financeDebtAprPct" value="0" step="0.5" min="0" max="40" oninput="PVCalculator.onProposalPricingChange()">
-                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Annual borrowing rate for sensitivity only. Leave at 0 when the project is modeled as all-equity.">i</button><small class="field-help">Annual borrowing rate for sensitivity only. Leave at 0 when the project is modeled as all-equity.</small></span>
-                            </div>
-                        </div>
-                        <div class="form-row two">
-                            <div class="form-group">
-                                <label for="financeDebtTermYears">Debt Term (years)</label>
-                                <input type="number" id="financeDebtTermYears" value="5" step="1" min="1" max="20" oninput="PVCalculator.onProposalPricingChange()">
-                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Used to spread debt service in the 5-year and 10-year advisory view.">i</button><small class="field-help">Used to spread debt service in the 5-year and 10-year advisory view.</small></span>
-                            </div>
-                            <div class="form-group">
-                                <label for="financeResidualValuePct">Residual Equipment Value (%)</label>
-                                <input type="number" id="financeResidualValuePct" value="0" step="0.5" min="0" max="40" oninput="PVCalculator.onProposalPricingChange()">
-                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Optional end-of-horizon salvage or retained asset value applied to the equipment subtotal only.">i</button><small class="field-help">Optional end-of-horizon salvage or retained asset value applied to the equipment subtotal only.</small></span>
-                            </div>
-                        </div>
-                    </details>
-                    <div class="form-row three">
-                        <div class="form-group">
-                            <label for="proposalDepositPct">Deposit (%)</label>
-                            <input type="number" id="proposalDepositPct" value="60" step="1" min="10" max="90" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Upfront payment used in the proposal payment plan.">i</button><small class="field-help">Upfront payment used in the proposal payment plan.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="proposalValidityDays">Quote Validity (days)</label>
-                            <input type="number" id="proposalValidityDays" value="14" step="1" min="1" max="120" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="How long the estimate can be held before supplier prices are refreshed.">i</button><small class="field-help">How long the estimate can be held before supplier prices are refreshed.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="proposalInstallWindowDays">Install Window (working days)</label>
-                            <input type="number" id="proposalInstallWindowDays" value="7" step="1" min="1" max="60" oninput="PVCalculator.onProposalPricingChange()">
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Reference site time after materials and access are ready.">i</button><small class="field-help">Reference site time after materials and access are ready.</small></span>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="proposalIncludedScope">Included Scope</label>
-                            <textarea id="proposalIncludedScope" oninput="PVCalculator.onProposalPricingChange()">Supply and sizing of PV modules, inverter, battery storage, BOS, and protection devices.
-Standard installation, commissioning, labeling, and client handover for the recommended system.
-Basic monitoring setup and performance verification allowance at handover.</textarea>
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="One line per included item. These lines appear in the commercial summary and client PDF.">i</button><small class="field-help">One line per included item. These lines appear in the commercial summary and client PDF.</small></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="proposalExclusions">Exclusions &amp; Client-Supplied Items</label>
-                            <textarea id="proposalExclusions" oninput="PVCalculator.onProposalPricingChange()">Structural roof repairs, major civil works, and concealed cable-route remediation.
-Utility approvals, permit fees, meter upgrades, and utility interconnection charges unless added separately.
-Lightning protection upgrades, generator integration, and internet service for remote monitoring unless specified.</textarea>
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Use this to keep the estimate commercially honest and avoid hidden-scope disputes.">i</button><small class="field-help">Use this to keep the estimate commercially honest and avoid hidden-scope disputes.</small></span>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="proposalNextSteps">Next Steps</label>
-                            <textarea id="proposalNextSteps" oninput="PVCalculator.onProposalPricingChange()">Confirm site-survey measurements, cable routes, and mounting layout.
-Lock exact equipment brands and supplier pricing before procurement.
-Confirm installation date, payment schedule, and handover checklist with the client.</textarea>
-                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="These become the proposal close-out actions shown to the installer and client.">i</button><small class="field-help">These become the proposal close-out actions shown to the installer and client.</small></span>
-                        </div>
-                    </div>
-                    <div class="pricing-note">
-                        <strong>Commercial Model:</strong> This uses offline supplier benchmark packs plus optional manual overrides, not a live distributor feed. Lock actual brands and distributor quotes before procurement or contract issue.
-                    </div>
-                </div>
-
                 <!-- APPLIANCE INPUT -->
                 <div class="card" id="applianceInputCard">
                     <h2>Add Appliance</h2>
@@ -1746,52 +1415,55 @@ Confirm installation date, payment schedule, and handover checklist with the cli
                             </div>
                         </div>
 
-                        <!-- Managed Practical Behavior Attributes -->
-                        <div class="form-row three mt-4">
-                            <div class="form-group">
-                                <label for="appDutyFrequency">Duty Frequency</label>
-                                <select id="appDutyFrequency">
-                                    <option value="daily">Daily (every day)</option>
-                                    <option value="continuous">Continuous (24/7)</option>
-                                    <option value="weekly">Weekly (1-2x/week)</option>
-                                    <option value="rare">Rare (monthly/seasonal)</option>
-                                </select>
-                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="How often is this load used? Affects managed mode sizing.">i</button><small class="field-help">How often is this load used? Affects managed mode sizing.</small></span>
+                        <details class="advanced-finance-block">
+                            <summary>Managed-mode load attributes (optional)</summary>
+                            <div class="advanced-finance-copy">Used for managed-mode sizing, outage prioritization, and daytime-only scheduling. Defaults are inferred from machine archetype and load type.</div>
+                            <div class="form-row three mt-4">
+                                <div class="form-group">
+                                    <label for="appDutyFrequency">Duty Frequency</label>
+                                    <select id="appDutyFrequency">
+                                        <option value="daily">Daily (every day)</option>
+                                        <option value="continuous">Continuous (24/7)</option>
+                                        <option value="weekly">Weekly (1-2x/week)</option>
+                                        <option value="rare">Rare (monthly/seasonal)</option>
+                                    </select>
+                                    <span class="field-help-wrap"><button type="button" class="field-help-icon" title="How often is this load used? Affects managed mode sizing.">i</button><small class="field-help">How often is this load used? Affects managed mode sizing.</small></span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="appCanStagger">Can Stagger Start?</label>
+                                    <select id="appCanStagger">
+                                        <option value="yes">Yes — Can wait 30-60s</option>
+                                        <option value="no">No — Starts on its own</option>
+                                        <option value="na">N/A — Non-motor</option>
+                                    </select>
+                                    <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Can operator delay this load's startup? Fridge/freezer = No (thermostat). Motors = Yes.">i</button><small class="field-help">Can operator delay this load's startup? Fridge/freezer = No (thermostat). Motors = Yes.</small></span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="appDaytimeOnly">Daytime Only?</label>
+                                    <select id="appDaytimeOnly">
+                                        <option value="no">No — Runs anytime</option>
+                                        <option value="yes">Yes — Sun hours only (6am-6pm)</option>
+                                    </select>
+                                    <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Load ONLY runs during daylight? Iron, sewing, workshop tools = Yes.">i</button><small class="field-help">Load ONLY runs during daylight? Iron, sewing, workshop tools = Yes.</small></span>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label for="appCanStagger">Can Stagger Start?</label>
-                                <select id="appCanStagger">
-                                    <option value="yes">Yes — Can wait 30-60s</option>
-                                    <option value="no">No — Starts on its own</option>
-                                    <option value="na">N/A — Non-motor</option>
-                                </select>
-                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Can operator delay this load's startup? Fridge/freezer = No (thermostat). Motors = Yes.">i</button><small class="field-help">Can operator delay this load's startup? Fridge/freezer = No (thermostat). Motors = Yes.</small></span>
+                            <div class="form-row mt-4">
+                                <div class="form-group">
+                                    <label for="appLoadRole">Load Role</label>
+                                    <select id="appLoadRole">
+                                        <!-- Populated dynamically from LOAD_ROLE_DEFINITIONS in init() -->
+                                    </select>
+                                    <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Classifies whether this is a base, process, refrigeration, peak, or discretionary load.">i</button><small class="field-help">Classifies whether this is a base, process, refrigeration, peak, or discretionary load.</small></span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="appLoadCriticality">Load Priority</label>
+                                    <select id="appLoadCriticality">
+                                        <!-- Populated dynamically from LOAD_CRITICALITY_DEFINITIONS in init() -->
+                                    </select>
+                                    <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Use this to tell the bot what must survive outages, what should survive, and what can wait.">i</button><small class="field-help">Use this to tell the bot what must survive outages, what should survive, and what can wait.</small></span>
+                                </div>
                             </div>
-                            <div class="form-group">
-                                <label for="appDaytimeOnly">Daytime Only?</label>
-                                <select id="appDaytimeOnly">
-                                    <option value="no">No — Runs anytime</option>
-                                    <option value="yes">Yes — Sun hours only (6am-6pm)</option>
-                                </select>
-                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Load ONLY runs during daylight? Iron, sewing, workshop tools = Yes.">i</button><small class="field-help">Load ONLY runs during daylight? Iron, sewing, workshop tools = Yes.</small></span>
-                            </div>
-                        </div>
-                        <div class="form-row mt-4">
-                            <div class="form-group">
-                                <label for="appLoadRole">Load Role</label>
-                                <select id="appLoadRole">
-                                    <!-- Populated dynamically from LOAD_ROLE_DEFINITIONS in init() -->
-                                </select>
-                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Classifies whether this is a base, process, refrigeration, peak, or discretionary load.">i</button><small class="field-help">Classifies whether this is a base, process, refrigeration, peak, or discretionary load.</small></span>
-                            </div>
-                            <div class="form-group">
-                                <label for="appLoadCriticality">Load Priority</label>
-                                <select id="appLoadCriticality">
-                                    <!-- Populated dynamically from LOAD_CRITICALITY_DEFINITIONS in init() -->
-                                </select>
-                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Use this to tell the bot what must survive outages, what should survive, and what can wait.">i</button><small class="field-help">Use this to tell the bot what must survive outages, what should survive, and what can wait.</small></span>
-                            </div>
-                        </div>
+                        </details>
                     </div>
 
                     <div class="checkbox-group">
@@ -2444,26 +2116,369 @@ Confirm installation date, payment schedule, and handover checklist with the cli
                         </div>
                     </div>
 
-                    <h3>Cable Lengths</h3>
+                    <details class="advanced-finance-block">
+                        <summary>Cable lengths (optional)</summary>
+                        <div class="advanced-finance-copy">Override only when actual run distances are known. Defaults match a typical compact installation.</div>
+                        <h3>Cable Lengths</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="cablePVtoMPPT">PV to MPPT (m)</label>
+                                <input type="number" id="cablePVtoMPPT" value="10" min="1">
+                            </div>
+                            <div class="form-group">
+                                <label for="cableMPPTtoBatt">MPPT to Battery (m)</label>
+                                <input type="number" id="cableMPPTtoBatt" value="2" min="0.5">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="cableBattToInv">Battery to Inverter (m)</label>
+                                <input type="number" id="cableBattToInv" value="1.5" min="0.5">
+                            </div>
+                            <div class="form-group">
+                                <label for="cableInvToLoad">Inverter to Load (m)</label>
+                                <input type="number" id="cableInvToLoad" value="10" min="1">
+                            </div>
+                        </div>
+                    </details>
+                </div>
+
+                <div class="card" id="proposalPricingCard">
+                    <h2>Proposal Pricing</h2>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="cablePVtoMPPT">PV to MPPT (m)</label>
-                            <input type="number" id="cablePVtoMPPT" value="10" min="1">
+                            <label for="commercialPresetSelect">Commercial Preset</label>
+                            <div class="inline-action-group">
+                                <select id="commercialPresetSelect" onchange="PVCalculator.onCommercialPresetSelectionChange()"></select>
+                                <button type="button" class="btn btn-secondary inline-action-button" id="applyCommercialPresetBtn" onclick="PVCalculator.applySelectedCommercialPreset()">Apply Preset</button>
+                            </div>
+                            <input type="hidden" id="commercialPresetAppliedId" value="">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Applies only pricing, finance sensitivity, commercial terms, and scope wording. Load and engineering inputs stay unchang">i</button><small class="field-help">Applies only pricing, finance sensitivity, commercial terms, and scope wording. Load and engineering inputs stay unchanged.</small></span>
                         </div>
                         <div class="form-group">
-                            <label for="cableMPPTtoBatt">MPPT to Battery (m)</label>
-                            <input type="number" id="cableMPPTtoBatt" value="2" min="0.5">
+                            <label>Commercial Preset Preview</label>
+                            <div id="commercialPresetPreview" class="supplier-pack-preview" aria-live="polite"></div>
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Use this as a proposal shortcut, then tune any field manually for the actual job.">i</button><small class="field-help">Use this as a proposal shortcut, then tune any field manually for the actual job.</small></span>
+                        </div>
+                    </div>
+                    <div class="form-row three">
+                        <div class="form-group">
+                            <label for="quoteCurrencyLabel">Quote Currency Label</label>
+                            <input type="text" id="quoteCurrencyLabel" value="USD" maxlength="8" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Reference label shown in the BOM and proposal totals.">i</button><small class="field-help">Reference label shown in the BOM and proposal totals.</small></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="quoteFxRateToUSD">FX Rate (1 USD = ?)</label>
+                            <input type="number" id="quoteFxRateToUSD" min="0.0001" step="0.01" placeholder="e.g. 1550 for NGN" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Local currency units per 1 USD. Leave blank to use the region default. Applies to client-facing PDF totals only — supplier rate cards stay in USD.">i</button><small class="field-help">Local currency units per 1 USD. Leave blank to use the region default. Applies to client-facing PDF totals only — supplier rate cards stay in USD.</small></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="pricingProfile">Pricing Basis</label>
+                            <select id="pricingProfile" onchange="PVCalculator.onProposalPricingChange()">
+                                <option value="value">Value Install</option>
+                                <option value="standard" selected>Standard Install</option>
+                                <option value="premium">Premium Install</option>
+                            </select>
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Adjusts component quality level and quote spread.">i</button><small class="field-help">Adjusts component quality level and quote spread.</small></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="regionalPriceFactor">Regional Market Multiplier</label>
+                            <input type="number" id="regionalPriceFactor" value="1.00" step="0.01" min="0.5" max="3" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Use this to tune the reference BOM for import costs, distributor markup, and local market conditions.">i</button><small class="field-help">Use this to tune the reference BOM for import costs, distributor markup, and local market conditions.</small></span>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="cableBattToInv">Battery to Inverter (m)</label>
-                            <input type="number" id="cableBattToInv" value="1.5" min="0.5">
+                            <label for="supplierPricePack">Supplier Reference Pack</label>
+                            <select id="supplierPricePack" onchange="PVCalculator.onProposalPricingChange()"></select>
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Offline regional benchmark pack used as the base component pricing layer before package posture and market multiplier ar">i</button><small class="field-help">Offline regional benchmark pack used as the base component pricing layer before package posture and market multiplier are applied.</small></span>
                         </div>
                         <div class="form-group">
-                            <label for="cableInvToLoad">Inverter to Load (m)</label>
-                            <input type="number" id="cableInvToLoad" value="10" min="1">
+                            <label>Supplier Pricing Preview</label>
+                            <div id="supplierPackPreview" class="supplier-pack-preview" aria-live="polite"></div>
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Shows the current benchmark source, active battery chemistry rate, and whether manual overrides are in play.">i</button><small class="field-help">Shows the current benchmark source, active battery chemistry rate, and whether manual overrides are in play.</small></span>
                         </div>
+                    </div>
+                    <div class="form-row three">
+                        <div class="form-group">
+                            <label for="supplierQuoteStatus">Supplier Quote Status</label>
+                            <select id="supplierQuoteStatus" onchange="PVCalculator.onProposalPricingChange()"></select>
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Tells the proposal whether pricing is still benchmark-only or already tied to live supplier numbers.">i</button><small class="field-help">Tells the proposal whether pricing is still benchmark-only or already tied to live supplier numbers.</small></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="supplierQuoteDate">Supplier Quote Date</label>
+                            <input type="date" id="supplierQuoteDate" onchange="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Use the most recent supplier reference date that actually supports the current quote.">i</button><small class="field-help">Use the most recent supplier reference date that actually supports the current quote.</small></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="supplierRefreshWindowDays">Refresh Window (days)</label>
+                            <input type="number" id="supplierRefreshWindowDays" value="14" step="1" min="1" max="90" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="After this window, the quote should be treated as aging and due for supplier refresh.">i</button><small class="field-help">After this window, the quote should be treated as aging and due for supplier refresh.</small></span>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="supplierQuoteReference">Supplier Quote Reference</label>
+                            <input type="text" id="supplierQuoteReference" maxlength="120" placeholder="Optional vendor quote number or note" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Optional vendor quote number, spreadsheet reference, or internal sourcing note.">i</button><small class="field-help">Optional vendor quote number, spreadsheet reference, or internal sourcing note.</small></span>
+                        </div>
+                        <div class="form-group">
+                            <label>Supplier Quote Freshness</label>
+                            <div id="supplierQuoteFreshnessPreview" class="supplier-pack-preview" aria-live="polite"></div>
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Shows whether the current commercial story is benchmark-only, fresh, aging, or stale for quote issue.">i</button><small class="field-help">Shows whether the current commercial story is benchmark-only, fresh, aging, or stale for quote issue.</small></span>
+                        </div>
+                    </div>
+                    <details class="advanced-finance-block">
+                        <summary>Request refreshed supplier quote (optional)</summary>
+                        <div class="advanced-finance-copy">
+                            Generate a clean supplier refresh brief from the current recommended design, the current quote freshness state, and the active pricing posture. This stays offline and does not change the engineering design or pricing fields.
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Supplier Refresh Brief</label>
+                                <div id="supplierRefreshRequestPreview" class="supplier-pack-preview" aria-live="polite"></div>
+                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Use this when the quote is aging or stale, or any time you want to reconfirm live supplier numbers from the current desi">i</button><small class="field-help">Use this when the quote is aging or stale, or any time you want to reconfirm live supplier numbers from the current design without retyping the commercial basis.</small></span>
+                                <div class="inline-action-group mt-10">
+                                    <button type="button" class="btn btn-secondary inline-action-button btn-small" id="copySupplierRefreshRequestBtn" onclick="PVCalculator.copySupplierRefreshRequest()">Copy Refresh Brief</button>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+                    <details class="advanced-finance-block">
+                        <summary>Import supplier quote (optional)</summary>
+                        <div class="advanced-finance-copy">
+                            Paste a simple supplier email, WhatsApp text, or spreadsheet rows here. The assistant will extract recognized unit rates, quote reference, and quote date into the existing supplier quote fields without changing the engineering design.
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="supplierQuoteImportText">Supplier Quote Paste</label>
+                                <textarea id="supplierQuoteImportText" class="supplier-import-textarea" placeholder="Quote Ref: SUP-449&#10;Quote Date: 2026-03-19&#10;Currency: USD&#10;PV Modules: 0.41 /Wp&#10;Inverter: 0.12 /VA&#10;Battery: 310 /kWh" oninput="PVCalculator.onSupplierQuoteImportInput()"></textarea>
+                                <input type="file" id="supplierQuoteImportFile" aria-label="Import supplier quote file" class="sr-only" accept=".txt,.csv,.json,.quote,.supplierquote.json" onchange="PVCalculator.importSupplierQuoteFromFile(event)">
+                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Works best with one line per component, simple CSV-like rows, or structured JSON quote files. The importer only fills re">i</button><small class="field-help">Works best with one line per component, simple CSV-like rows, or structured JSON quote files. The importer only fills recognized commercial fields.</small></span>
+                                <div class="inline-action-group mt-10">
+                                    <button type="button" class="btn btn-secondary inline-action-button btn-small" onclick="PVCalculator.triggerSupplierQuoteImportFile()">Load Quote File</button>
+                                    <button type="button" class="btn btn-secondary inline-action-button btn-small" id="applySupplierQuoteImportBtn" onclick="PVCalculator.applySupplierQuoteImport()">Apply Imported Quote</button>
+                                    <button type="button" class="btn btn-secondary inline-action-button btn-small" onclick="PVCalculator.clearSupplierQuoteImport()">Clear Paste</button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Import Review</label>
+                                <div id="supplierQuoteImportPreview" class="supplier-pack-preview" aria-live="polite"></div>
+                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Review the matched component rates and metadata before writing them into the live pricing fields.">i</button><small class="field-help">Review the matched component rates and metadata before writing them into the live pricing fields.</small></span>
+                            </div>
+                        </div>
+                    </details>
+                    <div class="form-row three">
+                        <div class="form-group">
+                            <label for="supplierPvPerWp">PV Module Rate (/Wp)</label>
+                            <input type="number" id="supplierPvPerWp" placeholder="Pack default" step="0.001" min="0" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Optional manual override. Leave blank to inherit the selected pack.">i</button><small class="field-help">Optional manual override. Leave blank to inherit the selected pack.</small></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="supplierInverterPerVA">Inverter Rate (/VA)</label>
+                            <input type="number" id="supplierInverterPerVA" placeholder="Pack default" step="0.001" min="0" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Useful when a live inverter quote is known but the rest of the BOM is still benchmarked.">i</button><small class="field-help">Useful when a live inverter quote is known but the rest of the BOM is still benchmarked.</small></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="supplierBatteryPerKWh">Battery Rate (/kWh)</label>
+                            <input type="number" id="supplierBatteryPerKWh" placeholder="Pack default" step="1" min="0" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Applies to the currently selected battery chemistry.">i</button><small class="field-help">Applies to the currently selected battery chemistry.</small></span>
+                        </div>
+                    </div>
+                    <div class="form-row three">
+                        <div class="form-group">
+                            <label for="supplierMpptPerW">MPPT / PV Electronics Rate (/W)</label>
+                            <input type="number" id="supplierMpptPerW" placeholder="Pack default" step="0.001" min="0" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Used for standalone MPPT or reduced hybrid PV electronics allowances.">i</button><small class="field-help">Used for standalone MPPT or reduced hybrid PV electronics allowances.</small></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="supplierMountingPerWp">Mounting &amp; BOS Rate (/Wp)</label>
+                            <input type="number" id="supplierMountingPerWp" placeholder="Pack default" step="0.001" min="0" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Rails, clamps, brackets, roof hardware, and mechanical BOS.">i</button><small class="field-help">Rails, clamps, brackets, roof hardware, and mechanical BOS.</small></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="supplierProtectionPerWp">Protection Rate (/Wp)</label>
+                            <input type="number" id="supplierProtectionPerWp" placeholder="Pack default" step="0.001" min="0" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Breakers, fuses, isolators, SPD, enclosures, and earthing accessories.">i</button><small class="field-help">Breakers, fuses, isolators, SPD, enclosures, and earthing accessories.</small></span>
+                        </div>
+                    </div>
+                    <div class="form-row three">
+                        <div class="form-group">
+                            <label for="supplierCablePerKg">Cable Rate (/kg Cu)</label>
+                            <input type="number" id="supplierCablePerKg" placeholder="Pack default" step="0.1" min="0" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Used against the estimated copper mass from the cable engine.">i</button><small class="field-help">Used against the estimated copper mass from the cable engine.</small></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="supplierMonitoringFlat">Commissioning &amp; Monitoring Flat</label>
+                            <input type="number" id="supplierMonitoringFlat" placeholder="Pack default" step="1" min="0" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Commissioning, labels, monitoring setup, and handover allowance.">i</button><small class="field-help">Commissioning, labels, monitoring setup, and handover allowance.</small></span>
+                        </div>
+                        <div class="form-group">
+                            <label>Supplier Override Guidance</label>
+                            <div class="supplier-override-note">
+                                Override only the line items you already have supplier numbers for. Blank fields continue to inherit the selected pack so you can mix live quotes with the offline benchmark safely.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row three">
+                        <div class="form-group">
+                            <label for="laborPct">Install &amp; Labor (%)</label>
+                            <input type="number" id="laborPct" value="18" step="0.5" min="0" max="100" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Applies to equipment subtotal.">i</button><small class="field-help">Applies to equipment subtotal.</small></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="softCostPct">Soft Costs &amp; Permitting (%)</label>
+                            <input type="number" id="softCostPct" value="8" step="0.5" min="0" max="100" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Transport, permitting, site prep, and consumables.">i</button><small class="field-help">Transport, permitting, site prep, and consumables.</small></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="proposalMarginPct">Target Margin (%)</label>
+                            <input type="number" id="proposalMarginPct" value="12" step="0.5" min="0" max="100" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Installer gross margin before tax.">i</button><small class="field-help">Installer gross margin before tax.</small></span>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="proposalTaxPct">Tax / VAT (%)</label>
+                            <input type="number" id="proposalTaxPct" value="0" step="0.5" min="0" max="100" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Applied after margin. Leave at 0% if tax is handled separately.">i</button><small class="field-help">Applied after margin. Leave at 0% if tax is handled separately.</small></span>
+                        </div>
+                    </div>
+                    <div class="form-row three">
+                        <div class="form-group">
+                            <label for="financeValueBasis">Value Basis</label>
+                            <select id="financeValueBasis" onchange="PVCalculator.onProposalPricingChange()">
+                                <option value="grid_tariff_offset">Grid Tariff Offset</option>
+                                <option value="generator_energy_offset">Generator Energy Offset</option>
+                                <option value="blended_site_energy" selected>Blended Site Energy</option>
+                            </select>
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Sets what the displaced kWh value represents in the ROI and payback summary.">i</button><small class="field-help">Sets what the displaced kWh value represents in the ROI and payback summary.</small></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="financeEnergyRatePerKWh">Avoided Energy Rate (/kWh)</label>
+                            <input type="number" id="financeEnergyRatePerKWh" value="0.18" step="0.001" min="0" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Use the client bill, generator-derived kWh cost, or a blended site energy cost. This is advisory, not a live tariff feed">i</button><small class="field-help">Use the client bill, generator-derived kWh cost, or a blended site energy cost. This is advisory, not a live tariff feed.</small></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="financeExportCreditPerKWh">Export Credit (/kWh)</label>
+                            <input type="number" id="financeExportCreditPerKWh" value="0.03" step="0.001" min="0" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Used only when there is meaningful surplus value or feed-in credit. Leave low or zero when export is not monetized.">i</button><small class="field-help">Used only when there is meaningful surplus value or feed-in credit. Leave low or zero when export is not monetized.</small></span>
+                        </div>
+                    </div>
+                    <div class="form-row three">
+                        <div class="form-group">
+                            <label for="financeOperatingDaysPerWeek">Operating Days / Week</label>
+                            <input type="number" id="financeOperatingDaysPerWeek" value="6" step="0.5" min="1" max="7" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Set the real weekly operating rhythm for the business value model.">i</button><small class="field-help">Set the real weekly operating rhythm for the business value model.</small></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="financeAnnualEscalationPct">Annual Energy Escalation (%)</label>
+                            <input type="number" id="financeAnnualEscalationPct" value="4" step="0.5" min="0" max="25" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Used for the 5-year and 10-year gross value outlook, not for the simple payback headline.">i</button><small class="field-help">Used for the 5-year and 10-year gross value outlook, not for the simple payback headline.</small></span>
+                        </div>
+                        <div class="form-group">
+                            <label>Finance Guidance</label>
+                            <div class="supplier-override-note">
+                                The ROI layer is a commercial planning aid. Replace the avoided-energy rate with the client’s real tariff or generator-derived kWh cost before presenting the payback as final.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row three">
+                        <div class="form-group">
+                            <label for="financeAnnualMaintenancePct">Annual O&amp;M Allowance (%)</label>
+                            <input type="number" id="financeAnnualMaintenancePct" value="1.5" step="0.1" min="0" max="15" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Applied to the modeled quote for lifecycle sensitivity. Use this for routine service, cleaning, and maintenance planning">i</button><small class="field-help">Applied to the modeled quote for lifecycle sensitivity. Use this for routine service, cleaning, and maintenance planning.</small></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="financeInverterRefreshPct">Inverter Refresh Allowance (%)</label>
+                            <input type="number" id="financeInverterRefreshPct" value="35" step="1" min="0" max="150" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Percent of the current inverter line reserved for a mid-life electronics refresh. The lifecycle view assumes this around">i</button><small class="field-help">Percent of the current inverter line reserved for a mid-life electronics refresh. The lifecycle view assumes this around year 10.</small></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="financeBatteryRefreshPct">Battery Refresh Allowance (%)</label>
+                            <input type="number" id="financeBatteryRefreshPct" value="35" step="1" min="0" max="150" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Percent of the current battery line reserved for augmentation or replacement. Timing follows the active battery chemistr">i</button><small class="field-help">Percent of the current battery line reserved for augmentation or replacement. Timing follows the active battery chemistry.</small></span>
+                        </div>
+                    </div>
+                    <details class="advanced-finance-block">
+                        <summary>Advanced finance sensitivity (optional)</summary>
+                        <div class="advanced-finance-copy">
+                            Use this only when the client needs an advisory capital-stack view. It is still not a lender-grade finance model.
+                        </div>
+                        <div class="form-row three">
+                            <div class="form-group">
+                                <label for="financeTaxBenefitPct">Tax Benefit / Incentive (%)</label>
+                                <input type="number" id="financeTaxBenefitPct" value="0" step="0.5" min="0" max="60" oninput="PVCalculator.onProposalPricingChange()">
+                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Optional tax relief, grant-equivalent, or first-year incentive expressed as a percent of the quoted amount.">i</button><small class="field-help">Optional tax relief, grant-equivalent, or first-year incentive expressed as a percent of the quoted amount.</small></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="financeDebtSharePct">Debt Share (%)</label>
+                                <input type="number" id="financeDebtSharePct" value="0" step="1" min="0" max="95" oninput="PVCalculator.onProposalPricingChange()">
+                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Percent of the quote assumed to be financed instead of paid up-front as equity.">i</button><small class="field-help">Percent of the quote assumed to be financed instead of paid up-front as equity.</small></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="financeDebtAprPct">Debt APR (%)</label>
+                                <input type="number" id="financeDebtAprPct" value="0" step="0.5" min="0" max="40" oninput="PVCalculator.onProposalPricingChange()">
+                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Annual borrowing rate for sensitivity only. Leave at 0 when the project is modeled as all-equity.">i</button><small class="field-help">Annual borrowing rate for sensitivity only. Leave at 0 when the project is modeled as all-equity.</small></span>
+                            </div>
+                        </div>
+                        <div class="form-row two">
+                            <div class="form-group">
+                                <label for="financeDebtTermYears">Debt Term (years)</label>
+                                <input type="number" id="financeDebtTermYears" value="5" step="1" min="1" max="20" oninput="PVCalculator.onProposalPricingChange()">
+                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Used to spread debt service in the 5-year and 10-year advisory view.">i</button><small class="field-help">Used to spread debt service in the 5-year and 10-year advisory view.</small></span>
+                            </div>
+                            <div class="form-group">
+                                <label for="financeResidualValuePct">Residual Equipment Value (%)</label>
+                                <input type="number" id="financeResidualValuePct" value="0" step="0.5" min="0" max="40" oninput="PVCalculator.onProposalPricingChange()">
+                                <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Optional end-of-horizon salvage or retained asset value applied to the equipment subtotal only.">i</button><small class="field-help">Optional end-of-horizon salvage or retained asset value applied to the equipment subtotal only.</small></span>
+                            </div>
+                        </div>
+                    </details>
+                    <div class="form-row three">
+                        <div class="form-group">
+                            <label for="proposalDepositPct">Deposit (%)</label>
+                            <input type="number" id="proposalDepositPct" value="60" step="1" min="10" max="90" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Upfront payment used in the proposal payment plan.">i</button><small class="field-help">Upfront payment used in the proposal payment plan.</small></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="proposalValidityDays">Quote Validity (days)</label>
+                            <input type="number" id="proposalValidityDays" value="14" step="1" min="1" max="120" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="How long the estimate can be held before supplier prices are refreshed.">i</button><small class="field-help">How long the estimate can be held before supplier prices are refreshed.</small></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="proposalInstallWindowDays">Install Window (working days)</label>
+                            <input type="number" id="proposalInstallWindowDays" value="7" step="1" min="1" max="60" oninput="PVCalculator.onProposalPricingChange()">
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Reference site time after materials and access are ready.">i</button><small class="field-help">Reference site time after materials and access are ready.</small></span>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="proposalIncludedScope">Included Scope</label>
+                            <textarea id="proposalIncludedScope" oninput="PVCalculator.onProposalPricingChange()">Supply and sizing of PV modules, inverter, battery storage, BOS, and protection devices.
+Standard installation, commissioning, labeling, and client handover for the recommended system.
+Basic monitoring setup and performance verification allowance at handover.</textarea>
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="One line per included item. These lines appear in the commercial summary and client PDF.">i</button><small class="field-help">One line per included item. These lines appear in the commercial summary and client PDF.</small></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="proposalExclusions">Exclusions &amp; Client-Supplied Items</label>
+                            <textarea id="proposalExclusions" oninput="PVCalculator.onProposalPricingChange()">Structural roof repairs, major civil works, and concealed cable-route remediation.
+Utility approvals, permit fees, meter upgrades, and utility interconnection charges unless added separately.
+Lightning protection upgrades, generator integration, and internet service for remote monitoring unless specified.</textarea>
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Use this to keep the estimate commercially honest and avoid hidden-scope disputes.">i</button><small class="field-help">Use this to keep the estimate commercially honest and avoid hidden-scope disputes.</small></span>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="proposalNextSteps">Next Steps</label>
+                            <textarea id="proposalNextSteps" oninput="PVCalculator.onProposalPricingChange()">Confirm site-survey measurements, cable routes, and mounting layout.
+Lock exact equipment brands and supplier pricing before procurement.
+Confirm installation date, payment schedule, and handover checklist with the client.</textarea>
+                            <span class="field-help-wrap"><button type="button" class="field-help-icon" title="These become the proposal close-out actions shown to the installer and client.">i</button><small class="field-help">These become the proposal close-out actions shown to the installer and client.</small></span>
+                        </div>
+                    </div>
+                    <div class="pricing-note">
+                        <strong>Commercial Model:</strong> This uses offline supplier benchmark packs plus optional manual overrides, not a live distributor feed. Lock actual brands and distributor quotes before procurement or contract issue.
                     </div>
                 </div>
 
