@@ -17495,7 +17495,7 @@ const PVCalculator = {
      */
     formatProposalMoney(value, currencyLabel, fxRate = 1) {
         const numeric = Number.isFinite(value) ? value : 0;
-        const converted = Math.round(numeric * fxRate);
+        const converted = Math.round(numeric);
         return `${currencyLabel} ${converted.toLocaleString()}`;
     },
 
@@ -17507,8 +17507,7 @@ const PVCalculator = {
 
     formatCommercialUnitRate(value, currencyLabel, fxRate = 1) {
         const numeric = Number.isFinite(value) ? value : 0;
-        const converted = numeric * fxRate;
-        return `${currencyLabel} ${converted.toFixed(2)}`;
+        return `${currencyLabel} ${numeric.toFixed(2)}`;
     },
 
     calculateCommercialFinanceSummary(results, estimate, context = {}) {
@@ -21351,7 +21350,10 @@ const PVCalculator = {
                 labelValue('Total Capacity:', `${Math.round(batt.totalCapacityAh)} Ah  (${Math.round(batt.totalCapacityWh)} Wh)`);
                 labelValue('Usable Capacity:', `${Math.round(batt.usableCapacityWh)} Wh  (${Math.round(DEFAULTS.BATTERY_SPECS[batt.chemistry].maxDoD * 100)}% DoD)`);
                 labelValue('Configuration:', `${batt.cellsInSeries}S x ${batt.stringsInParallel}P = ${batt.totalCells} cells/units`);
-                labelValue('Ah per Unit:', `${batt.recommendedAhPerCell} Ah`);
+                const _ahPerUnit = (batt.isManualOverride || batt.isUnitCountOverride)
+                    ? Math.round(batt.totalCapacityAh / Math.max(1, batt.stringsInParallel || 1))
+                    : batt.recommendedAhPerCell;
+                labelValue('Ah per Unit:', `${_ahPerUnit} Ah`);
                 labelValue('Max Discharge:', `${batt.maxDischargeCurrent} A  (${DEFAULTS.BATTERY_SPECS[batt.chemistry].maxDischargeRate}C)`);
                 labelValue('Max Charge:', `${batt.maxChargeCurrent} A  (${DEFAULTS.BATTERY_SPECS[batt.chemistry].maxChargeRate}C)`);
                 labelValue('Cycle Life:', `${DEFAULTS.BATTERY_SPECS[batt.chemistry].cycleLife}+ cycles at ${Math.round(DEFAULTS.BATTERY_SPECS[batt.chemistry].maxDoD * 100)}% DoD`);
@@ -22678,6 +22680,14 @@ const PVCalculator = {
                     battery.seriesStrings = parseInt(manualSeriesSelect.value);
                     battery.isSeriesOverride = true;
                 }
+            }
+
+            // Re-emit unit-count warning with final totalCapacityAh after all overrides settle.
+            if (battery.isUnitCountOverride && userBatteryUnitCount > 0 && userBatteryUnitCount < (battery.autoSuggestedStrings || 0)) {
+                battery.warnings = (battery.warnings || []).filter(w => !/You selected \d+ battery unit/.test(w));
+                battery.warnings.push(
+                    `You selected ${userBatteryUnitCount} battery unit(s) (${battery.totalCapacityAh}Ah). Auto-suggested: ${battery.autoSuggestedStrings} units. Autonomy and cycle life may be reduced.`
+                );
             }
 
             // Mixed battery bank analysis (if enabled — check both old and new toggle)
@@ -25478,7 +25488,7 @@ const PVCalculator = {
                 </div>
                 <div class="result-row">
                     <span class="result-label">Recommended Cell Rating</span>
-                    <span class="result-value">${battery.recommendedAhPerCell} Ah</span>
+                    <span class="result-value">${(battery.isManualOverride || battery.isUnitCountOverride) ? Math.round(battery.totalCapacityAh / Math.max(1, battery.stringsInParallel || 1)) : battery.recommendedAhPerCell} Ah</span>
                 </div>
                 <div class="result-row">
                     <span class="result-label">Max Discharge Current</span>
