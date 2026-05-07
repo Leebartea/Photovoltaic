@@ -35,6 +35,7 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 | 2026-05-04 | Batch 4 | #7, #8, #13, #15 + Batch 3 FX gap | 78cfa10 |
 | 2026-05-07 | Batch 5 | #19, #20, #21 | 6ec4a22 |
 | 2026-05-07 | Batch 6 | #22, #23 | 4d3e179 |
+| 2026-05-07 | Batch 7 | #24 | f0627cf |
 
 ---
 
@@ -46,7 +47,7 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 | MEDIUM | 1 | 7 (#7, #8, #9, #10, #11, #12, #19, #20, #21) |
 | LOW | 0 | 3 (#13, #14, #15) |
 | INFO | 3 | — (#16, #17, #18 remain open) |
-| POST-AUDIT (new) | 1 open (#24) | 5 fixed (#19, #20, #21, #22, #23) |
+| POST-AUDIT (new) | 0 open | 6 fixed (#19, #20, #21, #22, #23, #24) |
 
 **Batch 3 FX gap — RESOLVED (Batch 4):** All `formatProposalMoney` and `formatCommercialUnitRate` calls in `renderCommercialFinancePanel` now pass `fxRate`. All three call sites pass `fxRate: commercial.inputs.effectiveFxRate || 1`. Direct calls at `capitalStackSummary` and `comparisonDetail` also updated.
 
@@ -113,12 +114,12 @@ When the user selects a 6000VA inverter, `dcInputCurrentSurge` is still set from
 
 ---
 
-### #24 — MEDIUM OPEN: Installer-mode PDF shows USD-magnitude values with NGN currency label
+### #24 — ~~MEDIUM~~ FIXED (2026-05-07 Batch 7): Installer-mode PDF shows USD-magnitude values with NGN currency label
 
 **Section affected:** All money outputs in installer-mode PDF
-**Source:** `30-controller.js` `effectiveFxRate` IIFE (~line 17393), all `inputs.currencyLabel` references
+**Source:** `30-controller.js` — 6 display-function groups (~lines 16861, 17730, 17848, 19735, 23518, 23708)
 **Severity:** MEDIUM
-**Status:** OPEN — scheduled Batch 7
+**Status:** FIXED
 
 In installer mode `effectiveFxRate = 1.0`, so all money values stay at their raw USD-denominated magnitudes. The currency label (user-chosen, e.g., "NGN") is applied unchanged. The PDF shows "NGN 8,724" for a system that is actually $8,724 USD — the label is wrong. Fix: derive `displayCurrencyLabel = effectiveFxRate > 1 ? userLabel : 'USD'` and use it at all money-output call sites.
 
