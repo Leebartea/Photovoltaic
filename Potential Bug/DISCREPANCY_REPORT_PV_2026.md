@@ -34,6 +34,7 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 | 2026-05-04 | Batch 3 | #11, #12 | 7b9a8d6 |
 | 2026-05-04 | Batch 4 | #7, #8, #13, #15 + Batch 3 FX gap | 78cfa10 |
 | 2026-05-07 | Batch 5 | #19, #20, #21 | 6ec4a22 |
+| 2026-05-07 | Batch 6 | #22, #23 | 4d3e179 |
 
 ---
 
@@ -45,7 +46,7 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 | MEDIUM | 1 | 7 (#7, #8, #9, #10, #11, #12, #19, #20, #21) |
 | LOW | 0 | 3 (#13, #14, #15) |
 | INFO | 3 | — (#16, #17, #18 remain open) |
-| POST-AUDIT (new) | 3 open | 3 fixed (see #19–#24) |
+| POST-AUDIT (new) | 1 open (#24) | 5 fixed (#19, #20, #21, #22, #23) |
 
 **Batch 3 FX gap — RESOLVED (Batch 4):** All `formatProposalMoney` and `formatCommercialUnitRate` calls in `renderCommercialFinancePanel` now pass `fxRate`. All three call sites pass `fxRate: commercial.inputs.effectiveFxRate || 1`. Direct calls at `capitalStackSummary` and `comparisonDetail` also updated.
 
@@ -90,23 +91,23 @@ The unit-count override path emitted its warning using `battery.totalCapacityAh`
 
 ---
 
-### #22 — HIGH OPEN: Heavy cloud/rain energy shows array wattage (Wh) instead of 25% of clear-day yield
+### #22 — ~~HIGH~~ FIXED (2026-05-07 Batch 6): Heavy cloud/rain energy shows array wattage (Wh) instead of 25% of clear-day yield
 
 **Section affected:** Advisory / Seasonal Performance
-**Source:** `10-engines.ts` lines 5562–5564
+**Source:** `10-engines.ts` line 5562
 **Severity:** HIGH
-**Status:** OPEN — scheduled Batch 6
+**Status:** FIXED
 
 `cloudDayWh = arrayWattage × 0.25 × PSH`. When PSH ≈ 4 and arrayWattage = 4640W, this evaluates to 4640 Wh — the array nameplate in watts. Correct formula: `cloudDayWh = pv.dailyEnergyWh × 0.25`. With a clear-day yield of 30,466 Wh, the correct heavy-cloud value is 7,617 Wh, not 4,640 Wh.
 
 ---
 
-### #23 — HIGH OPEN: Battery-to-Inverter cable sized for load-side surge, not actual inverter capability
+### #23 — ~~HIGH~~ FIXED (2026-05-07 Batch 6): Battery-to-Inverter cable sized for load-side surge, not actual inverter capability
 
 **Section affected:** Cable Sizing / BOM
-**Source:** `30-controller.js` manual inverter override block (~line 22546)
+**Source:** `30-controller.js` lines 22568–22575
 **Severity:** HIGH
-**Status:** OPEN — scheduled Batch 6
+**Status:** FIXED
 
 When the user selects a 6000VA inverter, `dcInputCurrentSurge` is still set from the load-side `surgeVARequired` (12,160VA), producing 316.6A. A 6000VA inverter at 48V can deliver at most ~150–170A on surge. Cable is over-specified by ~2×. Fix: cap `dcInputCurrentSurge` at `(manualVA × surgeMultiplier) / dcVoltage` unconditionally after the manual-VA override is applied.
 

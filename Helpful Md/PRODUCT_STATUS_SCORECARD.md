@@ -161,6 +161,15 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Bug fix batch 6 (2026-05-07)
+
+Two engine math issues resolved and deployed (commit 4d3e179):
+
+- **Cloud-day energy formula corrected** — `cloudDayWh` was computed as `arrayWattage × 0.25 × PSH`, which omits the system derating factor and evaluates to roughly array nameplate Wh when PSH ≈ 4. The advisory message claimed "25% output on a heavy cloud day" but the figure was inflated. Fixed to `pv.dailyEnergyWh × 0.25` (with a fallback of `arrayWattage × PSH × 0.8 × 0.25` when `dailyEnergyWh` is unavailable), so the cloud-day estimate correctly reflects 25% of the derated daily yield.
+- **Inverter DC current cap** — When a manual inverter VA is set, `dcInputCurrentSurge` and `dcInputCurrentContinuous` were derived solely from the load-side VA requirements. On undersized manual inverters these could exceed what the physical inverter can pass. A cap block now clamps `dcInputCurrentSurge` to `(manualVA × inverterSurgeMultiplier) / dcBusVoltage` and `dcInputCurrentContinuous` to `manualVA / INVERTER_DERATING / dcBusVoltage`, applied unconditionally inside manual mode after all voltage/VA overrides settle.
+
+---
+
 ### Bug fix batch 5 (2026-05-07)
 
 Three issues resolved and deployed (commit 6ec4a22):
