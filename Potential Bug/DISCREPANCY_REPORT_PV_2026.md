@@ -39,6 +39,8 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 | 2026-05-07 | Batch 8 | FX rate companion fields | 7701aa5 |
 | 2026-05-07 | Batch 9 | #25a/b/c, #26a/b | 2361b34 |
 | 2026-05-07 | Batch 10 | #27, #28a–e | 980ec06 |
+| 2026-05-07 | Batch 11 | UX-A, UX-G | 0fd0b54 |
+| 2026-05-07 | Batch 12 | UX-H1 (scoped), UX-C | 56393c2 |
 
 ---
 
@@ -212,6 +214,80 @@ Same root cause as #26a. Nigeria export credit = 0.02 × 1385 = 27.7 NGN/kWh, ca
 - **Inverter sizing Basis** (line 21295): Basis column 68→100mm — full basis descriptions now visible.
 - **Battery tier Module/Config** (line 21416): Config column 56→84mm — module labels no longer clipped.
 - **Protection devices** (lines 21490–21495): Removed double-truncation (pre-clip substrings at 25/38/34 chars eliminated). Type/Rating column 60→78mm. All three columns now let drawTable handle overflow with its own ellipsis at the corrected threshold.
+
+---
+
+**Issue #29 — UX-A: No audience mode indicator (Batch 11)**
+- **Severity:** HIGH
+- **Symptom:** Users set NGN rates in Client mode but forget they are in Client
+  mode when returning to the app. No persistent visual cue exists.
+- **Root cause:** Audience mode selector is a plain `<select>` with no persistent
+  status indicator. `data-audience-mode` body attribute was set but not used by CSS.
+- **Fix (commit 0fd0b54):**
+  - Added `<div id="audienceModeBanner">` between `<header>` and `<nav>` in template.html.
+  - `updateAudienceMode()` now populates the banner text ("Installer Mode" / "Client Mode")
+    and sets `data-mode` attribute after every mode change.
+  - Installer-appendix PDF checkbox (`pdfIncludeDetails`) auto-disabled when mode is client.
+  - CSS: `.mode-banner` styled green for Installer, blue for Client; sticky top-0 z-50;
+    dark-mode variants included. Disabled-checkbox opacity/cursor rule added.
+
+---
+
+**Issue #30 — UX-G: Client PDF quality gaps (Batch 11)**
+- **Severity:** HIGH
+- **Symptom:** (a) MANAGED PRACTICAL DISCLAIMER could still appear in client PDFs
+  if the installer-appendix checkbox was re-enabled. (b) No payment schedule or
+  signature section in client PDFs — clients received an incomplete document.
+- **Root cause:** Disclaimer was gated only by `if (pdfManaged)`, not by `!clientExport`.
+  No acceptance section existed in exportPDF.
+- **Fix (commit 0fd0b54):**
+  - `if (pdfManaged)` changed to `if (pdfManaged && !clientExport)` at the disclaimer block.
+  - New `if (clientExport && commercial?.paymentPlan)` block added before the final
+    disclaimer loop: renders a Payment Schedule page (quote total, deposit, completion
+    amounts, validity, install window, currency label) followed by an Acceptance section
+    (client name, site, quote reference, date, two signature lines).
+  - All required variables (`formatPdfMoney`, `proposalContext`, `proposalDisplay`,
+    `displayCurrencyLabel`) confirmed in scope at insertion point.
+
+---
+
+**Issue #31 — UX-H1: toLocaleString() not locale-aware (Batch 12, scoped)**
+- **Severity:** HIGH (affects European/Brazilian users; comma-vs-period decimal separator)
+- **Symptom:** Currency amounts formatted with bare `.toLocaleString()` use the
+  browser's OS locale, not the app's selected region. A German user sees "1,500.00"
+  instead of "1.500,00".
+- **Root cause:** No `currencyLocale` field existed in REGION_PROFILES. All 64
+  `.toLocaleString()` calls passed no locale argument.
+- **Fix (commit 56393c2, scoped to currency helpers):**
+  - Added `currencyLocale?: string` to `RegionProfile` / `DefaultsRegionProfile` TypeScript interface.
+  - Added `currencyLocale` BCP-47 string to all 12 REGION_PROFILES entries
+    (en-NG, en-KE, en-GH, en-US × 3, pt-BR, de-DE, es-ES, en-IN, en-AE, en-AU).
+  - New standalone `getDisplayLocale()` reads `#location` select and returns the
+    profile's `currencyLocale` (fallback: `'en-US'`).
+  - `formatProposalMoney`, `formatCommercialMoney`, `formatSupplierRate` now call
+    `.toLocaleString(getDisplayLocale())` — all currency amounts use the correct locale.
+  - `getConfig()` now attaches `config.currencyLocale = getDisplayLocale()` for
+    downstream use. The remaining ~61 engineering-number inline calls (VA, Wh cycle counts)
+    are deferred to a later pass.
+
+---
+
+**Issue #32 — UX-C: Raw Wh/VA/Wp values in PDF (Batch 12)**
+- **Severity:** MEDIUM
+- **Symptom:** PDF shows "14336 Wh", "8500 VA", "4000 Wp" — unscaled values that
+  are hard to read, especially for non-technical clients.
+- **Root cause:** No unit-scaling helpers existed. Every value was written to PDF
+  as raw integer + unit string.
+- **Fix (commit 56393c2):**
+  - Five one-liner closures added inside `exportPDF()` after the existing helper block:
+    `fmtEnergy(wh)`, `fmtApparent(va)`, `fmtPower(w)`, `fmtWp(wp)`, `fmtAh(ah)`.
+    Each promotes to the kilo-unit at ≥ 1000 with 1 decimal place (e.g. 14336 → 14.3 kWh).
+  - 23 PDF expressions in `labelValue`, `bulletItem`, and `bodyText` calls replaced:
+    energy (Wh→kWh): 13 sites; apparent power (VA→kVA): 7 sites; peak watts (Wp→kWp): 4 sites;
+    real power (W→kW): 1 site.
+  - `drawTable` data arrays deliberately left unchanged (column header/cell unit
+    consistency would require dynamic header rewriting — deferred).
+  - Per-panel Wp line (≈ 400 Wp, never scales) left unchanged.
 
 ---
 

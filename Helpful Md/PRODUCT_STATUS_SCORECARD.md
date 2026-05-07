@@ -161,6 +161,39 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 12 — Locale Formatting + PDF Unit Scaling (commit 56393c2 — 2026-05-07)
+
+**UX-H1 — Locale-aware currency formatting (scoped fix)**
+- Added `currencyLocale` BCP-47 string to all 12 REGION_PROFILES (en-NG for Nigeria, de-DE for Central Europe, pt-BR for Brazil, etc.)
+- New standalone `getDisplayLocale()` function reads active region from DOM, returns the profile's locale (fallback: en-US)
+- `formatProposalMoney`, `formatCommercialMoney`, `formatSupplierRate` all updated to call `.toLocaleString(getDisplayLocale())`
+- `getConfig()` now sets `config.currencyLocale` for downstream use
+- Remaining ~61 engineering-number inline `toLocaleString()` calls deferred
+
+**UX-C — PDF unit auto-scaling**
+- Five unit-scaler closures inside `exportPDF()`: `fmtEnergy`, `fmtApparent`, `fmtPower`, `fmtWp`, `fmtAh`
+- Threshold: values ≥ 1000 auto-promote to kilo-unit with 1 decimal (e.g. 14.3 kWh, 8.5 kVA, 4.0 kWp)
+- 23 PDF label/bullet/body expressions replaced across load analysis, battery, and PV detail sections
+- `drawTable` data arrays and per-panel Wp line left unchanged
+
+---
+
+### Batch 11 — Audience Mode Banner + Client PDF Improvements (commit 0fd0b54 — 2026-05-07)
+
+**UX-A — Persistent audience mode indicator**
+- Sticky banner inserted between `<header>` and `<nav>` — always visible while scrolling
+- Green ("Installer Mode") / Blue ("Client Mode") with dark-mode variants
+- `updateAudienceMode()` populates banner text and `data-mode` attribute on every mode change
+- Installer-appendix PDF checkbox auto-disabled (opacity 0.45 + `cursor: not-allowed`) in client mode
+
+**UX-G — Client PDF quality**
+- MANAGED PRACTICAL DISCLAIMER gated with `!clientExport` — cannot leak even if appendix checkbox is re-enabled
+- New Payment Schedule & Acceptance page added to client PDFs:
+  Quote total, deposit amount, completion amount, validity, install window, currency label
+  + Acceptance section with client name, site, quote reference, date, and two signature lines
+
+---
+
 ### Bug fix batch 10 (2026-05-07)
 
 Five PDF display issues resolved and deployed (commit 980ec06):
