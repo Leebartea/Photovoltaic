@@ -16863,7 +16863,7 @@ const PVCalculator = {
         const rateCards = this.getSupplierRateDefinitions().map(definition => `
             <div class="supplier-rate-card">
                 <div class="supplier-rate-label">${this.escapeHtml(definition.shortLabel)}</div>
-                <div class="supplier-rate-value">${this.escapeHtml(this.formatSupplierRate(source.resolvedRates[definition.key], definition, displayCurrencyLabel))}</div>
+                <div class="supplier-rate-value">${this.escapeHtml(this.formatSupplierRate(source.resolvedRates[definition.key], definition, 'USD'))}</div>
                 <div class="supplier-rate-note">${source.overrides[definition.key] ? 'Manual override' : 'Pack default'}</div>
             </div>
         `).join('');
@@ -17354,6 +17354,13 @@ const PVCalculator = {
             const value = parseInt(raw, 10);
             return clampNumber(value, fallback, min, max);
         };
+        const fxScalar = (() => {
+            const audience = document.getElementById('audienceMode')?.value || '';
+            if (audience === 'installer') return 1.0;
+            const domVal = parseFloat(document.getElementById('quoteFxRateToUSD')?.value);
+            if (Number.isFinite(domVal) && domVal > 0) return domVal;
+            return DEFAULTS.REGION_PROFILES[locationKey]?.fxRateToUSD ?? 1.0;
+        })();
         return {
             commercialPresetId: document.getElementById('commercialPresetAppliedId')?.value || '',
             currencyLabel: (document.getElementById('quoteCurrencyLabel')?.value || 'USD').trim().toUpperCase() || 'USD',
@@ -17369,8 +17376,8 @@ const PVCalculator = {
             marginPct: parseFloat(document.getElementById('proposalMarginPct')?.value) || 12,
             taxPct: parseFloat(document.getElementById('proposalTaxPct')?.value) || 0,
             financeValueBasis: document.getElementById('financeValueBasis')?.value || regionDefaults.financeMode || 'blended_site_energy',
-            energyRatePerKWh: parseFinanceRate('financeEnergyRatePerKWh', regionDefaults.energyRatePerKWh || 0.18, { min: 0.01, max: 5 }),
-            exportCreditPerKWh: parseFinanceRate('financeExportCreditPerKWh', regionDefaults.exportCreditPerKWh || 0, { min: 0, max: 2 }),
+            energyRatePerKWh: parseFinanceRate('financeEnergyRatePerKWh', regionDefaults.energyRatePerKWh || 0.18, { min: 0.01, max: Math.max(5, 5 * fxScalar) }),
+            exportCreditPerKWh: parseFinanceRate('financeExportCreditPerKWh', regionDefaults.exportCreditPerKWh || 0, { min: 0, max: Math.max(2, 2 * fxScalar) }),
             operatingDaysPerWeek: parseFinanceInteger('financeOperatingDaysPerWeek', scheduleDays, { min: 1, max: 7 }),
             annualEscalationPct: parseFinanceRate('financeAnnualEscalationPct', regionDefaults.annualEscalationPct || 4, { min: 0, max: 25 }),
             annualMaintenancePct: parseFinanceRate('financeAnnualMaintenancePct', regionDefaults.annualMaintenancePct || DEFAULTS.PROPOSAL_PRICING.lifecycleDefaults.annualMaintenancePct || 1.5, { min: 0, max: 15 }),
@@ -17506,6 +17513,12 @@ const PVCalculator = {
         return `${currencyLabel} ${converted.toLocaleString()}`;
     },
 
+    formatCommercialMoney(valueUSD, currencyLabel, fxRate = 1) {
+        const numeric = Number.isFinite(valueUSD) ? valueUSD : 0;
+        const converted = Math.round(numeric * (Number(fxRate) > 0 ? Number(fxRate) : 1));
+        return `${currencyLabel} ${converted.toLocaleString()}`;
+    },
+
     formatFinancePayback(value) {
         if (!Number.isFinite(value) || value <= 0) return 'Strategic / verify';
         if (value >= 25) return '>25 yrs';
@@ -17560,7 +17573,9 @@ const PVCalculator = {
         const annualEscalationPct = Math.min(25, Math.max(0, Number(inputs.annualEscalationPct) || 0));
         const annualSavings = roundValue((annualSelfConsumedKWh * energyRatePerKWh) + (annualExportKWh * exportCreditPerKWh), 2);
         const finalQuote = totals.finalQuote || 0;
-        const simplePaybackYears = annualSavings > 0 ? roundValue(finalQuote / annualSavings, 2) : null;
+        const fxRate = Number(inputs.effectiveFxRate) > 0 ? Number(inputs.effectiveFxRate) : 1;
+        const finalQuoteLocal = roundValue(finalQuote * fxRate, 2);
+        const simplePaybackYears = annualSavings > 0 ? roundValue(finalQuoteLocal / annualSavings, 2) : null;
         const lifecycleDefaults = DEFAULTS.PROPOSAL_PRICING.lifecycleDefaults || {};
         const annualMaintenancePct = Math.max(0, Number(inputs.annualMaintenancePct) || 0);
         const inverterRefreshPct = Math.max(0, Number(inputs.inverterRefreshPct) || 0);
@@ -17575,9 +17590,12 @@ const PVCalculator = {
         const inverterCost = Math.max(0, Number(totals.inverterCost) || 0);
         const batteryCost = Math.max(0, Number(totals.batteryCost) || 0);
         const equipmentSubtotal = Math.max(0, Number(totals.equipmentSubtotal) || 0);
-        const annualMaintenanceCost = roundValue(finalQuote * (annualMaintenancePct / 100), 2);
-        const inverterRefreshReserve = roundValue(inverterCost * (inverterRefreshPct / 100), 2);
-        const batteryRefreshReserve = roundValue(batteryCost * (batteryRefreshPct / 100), 2);
+        const inverterCostLocal = roundValue(inverterCost * fxRate, 2);
+        const batteryCostLocal = roundValue(batteryCost * fxRate, 2);
+        const equipmentSubtotalLocal = roundValue(equipmentSubtotal * fxRate, 2);
+        const annualMaintenanceCost = roundValue(finalQuoteLocal * (annualMaintenancePct / 100), 2);
+        const inverterRefreshReserve = roundValue(inverterCostLocal * (inverterRefreshPct / 100), 2);
+        const batteryRefreshReserve = roundValue(batteryCostLocal * (batteryRefreshPct / 100), 2);
         const annualValueForYear = (year) => annualSavings * Math.pow(1 + (annualEscalationPct / 100), year - 1);
         const sumYearValue = (years) => {
             let total = 0;
@@ -17588,8 +17606,8 @@ const PVCalculator = {
         };
         const fiveYearGrossValue = sumYearValue(5);
         const tenYearGrossValue = sumYearValue(10);
-        const fiveYearNetAfterQuote = roundValue(fiveYearGrossValue - finalQuote, 2);
-        const tenYearNetAfterQuote = roundValue(tenYearGrossValue - finalQuote, 2);
+        const fiveYearNetAfterQuote = roundValue(fiveYearGrossValue - finalQuoteLocal, 2);
+        const tenYearNetAfterQuote = roundValue(tenYearGrossValue - finalQuoteLocal, 2);
         const sumLifecycleCosts = (years) => {
             let total = annualMaintenanceCost * years;
             if (inverterRefreshYear <= years) total += inverterRefreshReserve;
@@ -17598,12 +17616,12 @@ const PVCalculator = {
         };
         const fiveYearLifecycleCost = sumLifecycleCosts(5);
         const tenYearLifecycleCost = sumLifecycleCosts(10);
-        const fiveYearNetAfterLifecycle = roundValue(fiveYearGrossValue - finalQuote - fiveYearLifecycleCost, 2);
-        const tenYearNetAfterLifecycle = roundValue(tenYearGrossValue - finalQuote - tenYearLifecycleCost, 2);
-        const taxBenefitAmount = roundValue(finalQuote * (taxBenefitPct / 100), 2);
-        const financedAmount = roundValue(finalQuote * (debtSharePct / 100), 2);
-        const equityContribution = roundValue(Math.max(0, finalQuote - financedAmount), 2);
-        const residualValueAmount = roundValue(equipmentSubtotal * (residualValuePct / 100), 2);
+        const fiveYearNetAfterLifecycle = roundValue(fiveYearGrossValue - finalQuoteLocal - fiveYearLifecycleCost, 2);
+        const tenYearNetAfterLifecycle = roundValue(tenYearGrossValue - finalQuoteLocal - tenYearLifecycleCost, 2);
+        const taxBenefitAmount = roundValue(finalQuoteLocal * (taxBenefitPct / 100), 2);
+        const financedAmount = roundValue(finalQuoteLocal * (debtSharePct / 100), 2);
+        const equityContribution = roundValue(Math.max(0, finalQuoteLocal - financedAmount), 2);
+        const residualValueAmount = roundValue(equipmentSubtotalLocal * (residualValuePct / 100), 2);
         let annualDebtService = 0;
         if (financedAmount > 0) {
             if (debtAprPct > 0) {
@@ -17626,8 +17644,8 @@ const PVCalculator = {
         const tenYearDebtService = roundValue(annualDebtService * debtYearsInTen, 2);
         const fiveYearNetAfterFinance = roundValue(fiveYearGrossValue - fiveYearLifecycleCost - equityContribution - fiveYearDebtService + taxBenefitAmount, 2);
         const tenYearNetAfterFinance = roundValue(tenYearGrossValue - tenYearLifecycleCost - equityContribution - tenYearDebtService + taxBenefitAmount + residualValueAmount, 2);
-        const cashFiveYearNet = roundValue(fiveYearGrossValue - finalQuote - fiveYearLifecycleCost + taxBenefitAmount, 2);
-        const cashTenYearNet = roundValue(tenYearGrossValue - finalQuote - tenYearLifecycleCost + taxBenefitAmount + residualValueAmount, 2);
+        const cashFiveYearNet = roundValue(fiveYearGrossValue - finalQuoteLocal - fiveYearLifecycleCost + taxBenefitAmount, 2);
+        const cashTenYearNet = roundValue(tenYearGrossValue - finalQuoteLocal - tenYearLifecycleCost + taxBenefitAmount + residualValueAmount, 2);
         const loadOffsetPct = dailyWh > 0 ? roundValue((selfConsumedWh / dailyWh) * 100, 1) : 0;
         const onsiteSolarUsePct = pvDailyWh > 0 ? roundValue((capturedSolarWh / pvDailyWh) * 100, 1) : 0;
         const exportPct = pvDailyWh > 0 ? roundValue((exportWh / pvDailyWh) * 100, 1) : 0;
@@ -17901,7 +17919,7 @@ const PVCalculator = {
             return pricingSource.resolvedRates[key] * getProfileMultiplier(profile, key);
         };
         const describeRateBasis = (quantityLabel, baseRate, definition, profileMultiplier, marketMultiplier, options = {}) => {
-            const ratePart = `${quantityLabel} × ${this.formatSupplierRate(baseRate, definition, currencyLabel)} supplier rate`;
+            const ratePart = `${quantityLabel} × ${this.formatSupplierRate(baseRate, definition, 'USD')} supplier rate`;
             const profilePart = `${profileMultiplier.toFixed(2)} package factor`;
             const marketPart = `${marketMultiplier.toFixed(2)} market factor`;
             const extraPart = options.extraFactor ? ` × ${options.extraFactor}` : '';
@@ -19739,7 +19757,7 @@ const PVCalculator = {
             const GREEN_BG = [220, 252, 231];
             const readinessColorMap = { green: GREEN, blue: BLUE, amber: AMBER, red: RED };
             const displayCurrencyLabel = (commercial.inputs.effectiveFxRate > 1) ? (commercial.inputs.currencyLabel || 'USD') : 'USD';
-            const formatPdfMoney = (value) => this.formatProposalMoney(value, displayCurrencyLabel, commercial.inputs.effectiveFxRate || 1);
+            const formatPdfMoney = (value) => this.formatCommercialMoney(value, displayCurrencyLabel, commercial.inputs.effectiveFxRate || 1);
 
             // ---- SVG-to-Image capture helper (for embedding UI diagram in PDF) ----
             async function captureSvgAsImage(svgElement, maxWidthMm) {
@@ -20258,7 +20276,7 @@ const PVCalculator = {
                     const formattedRate = definition.decimals === 0
                         ? Math.round(rate).toLocaleString()
                         : rate.toFixed(definition.decimals);
-                    return `${definition.shortLabel} ${displayCurrencyLabel} ${formattedRate}${definition.unit}`;
+                    return `${definition.shortLabel} USD ${formattedRate}${definition.unit}`;
                 }).join('  |  ');
 
                 if (compact) {
@@ -23712,7 +23730,7 @@ const PVCalculator = {
             : null);
         const supportSummary = detailContext.supportSummary || this.getCommercialSupportSummary(detailContext);
         const displayCurrencyLabel = (commercial.inputs.effectiveFxRate > 1) ? (commercial.inputs.currencyLabel || 'USD') : 'USD';
-        const money = (value) => this.formatProposalMoney(value, displayCurrencyLabel, commercial.inputs.effectiveFxRate || 1);
+        const money = (value) => this.formatCommercialMoney(value, displayCurrencyLabel, commercial.inputs.effectiveFxRate || 1);
         const finance = commercial.finance || null;
         const quoteLabel = isClientMode ? 'Proposal Budget' : 'Commercial Estimate';
         const comparisonLabel = isClientMode ? 'Package Options' : 'Pricing Basis Comparison';
@@ -23800,7 +23818,7 @@ const PVCalculator = {
         const supplierRateCards = this.getSupplierRateDefinitions().map(definition => `
             <div class="supplier-rate-card">
                 <div class="supplier-rate-label">${this.escapeHtml(definition.shortLabel)}</div>
-                <div class="supplier-rate-value">${this.escapeHtml(this.formatSupplierRate(commercial.resolvedRates?.[definition.key], definition, displayCurrencyLabel))}</div>
+                <div class="supplier-rate-value">${this.escapeHtml(this.formatSupplierRate(commercial.resolvedRates?.[definition.key], definition, 'USD'))}</div>
                 <div class="supplier-rate-note">${pricingSource.overrides?.[definition.key] ? 'Manual base rate' : 'Pack-derived base rate'}</div>
             </div>
         `).join('');
