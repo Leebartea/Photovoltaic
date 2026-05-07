@@ -33,6 +33,7 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 | 2026-05-03 | Batch 2 | #1, #2, #5 | ea59036 |
 | 2026-05-04 | Batch 3 | #11, #12 | 7b9a8d6 |
 | 2026-05-04 | Batch 4 | #7, #8, #13, #15 + Batch 3 FX gap | 78cfa10 |
+| 2026-05-07 | Batch 5 | #19, #20, #21 | 6ec4a22 |
 
 ---
 
@@ -41,11 +42,84 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 | Severity | Open | Fixed |
 |---|---|---|
 | CRITICAL | 0 | 6 (#1, #2, #3, #4, #5, #6) |
-| MEDIUM | 0 | 6 (#7, #8, #9, #10, #11, #12) |
+| MEDIUM | 1 | 7 (#7, #8, #9, #10, #11, #12, #19, #20, #21) |
 | LOW | 0 | 3 (#13, #14, #15) |
 | INFO | 3 | — (#16, #17, #18 remain open) |
+| POST-AUDIT (new) | 3 open | 3 fixed (see #19–#24) |
 
-**Batch 3 FX gap — RESOLVED (Batch 4):** All `formatProposalMoney` and `formatCommercialUnitRate` calls in `renderCommercialFinancePanel` now pass `fxRate`. All three call sites pass `fxRate: commercial.inputs.effectiveFxRate || 1`. Direct calls at `capitalStackSummary` and `comparisonDetail` also updated. FX conversion is now complete across the full commercial finance output.
+**Batch 3 FX gap — RESOLVED (Batch 4):** All `formatProposalMoney` and `formatCommercialUnitRate` calls in `renderCommercialFinancePanel` now pass `fxRate`. All three call sites pass `fxRate: commercial.inputs.effectiveFxRate || 1`. Direct calls at `capitalStackSummary` and `comparisonDetail` also updated.
+
+**Batch 5 FX root fix — RESOLVED (Batch 5, 2026-05-07):** The `× fxRate` multiplication has been removed from both `formatProposalMoney` (line 17498) and `formatCommercialUnitRate` (line 17510). Finance engine outputs are already in the user's entered-rate currency; the multiply was inflating client-mode values by the full NGN/USD exchange rate (~1386×). fxRate parameters preserved for call-site compatibility.
+
+---
+
+## Post-Audit Issues (discovered 2026-05-07 from live PDF review)
+
+### #19 — ~~CRITICAL~~ FIXED (2026-05-07 Batch 5): FX double-multiply in finance formatters inflates client-mode annual savings by ×1386
+
+**Section affected:** Commercial Finance / PDF
+**Source:** `30-controller.js` — `formatProposalMoney` and `formatCommercialUnitRate`
+**Severity:** CRITICAL
+**Status:** FIXED
+
+`formatProposalMoney` multiplied every finance value by `effectiveFxRate` (e.g., 1386 NGN/USD). The finance engine does not internally normalize to USD — `annualSavings = kWh × energyRatePerKWh` outputs in whatever currency the rate was entered in. The double-multiply caused client-mode PDFs to show ₦794,062/year when the correct value for the given rate was ₦573/year (a 1386× inflation). Installer-mode PDFs showed the correct raw value with a wrong currency label.
+
+**Fix:** Removed `* fxRate` from both formatters. fxRate parameters retained for backward compatibility.
+
+---
+
+### #20 — ~~HIGH~~ FIXED (2026-05-07 Batch 5): Battery "Ah per Unit" shows auto-recommended value when user overrides battery size
+
+**Section affected:** PDF Battery Detail + HTML Battery Panel
+**Source:** `30-controller.js` lines 21354, 25488
+**Severity:** HIGH
+**Status:** FIXED
+
+The PDF battery detail and HTML result panel both printed `batt.recommendedAhPerCell` (the auto-engine's per-unit Ah, e.g., 400Ah) regardless of what the user actually selected. When the user overrides to 150Ah, the field still showed 400Ah. Fixed at both sites: when `isManualOverride || isUnitCountOverride`, Ah per Unit is now derived as `round(totalCapacityAh / max(1, stringsInParallel))`.
+
+---
+
+### #21 — ~~MEDIUM~~ FIXED (2026-05-07 Batch 5): Battery unit-count warning quotes stale Ah before manual-Ah override settles
+
+**Section affected:** Warnings panel / PDF
+**Source:** `30-controller.js` lines 22622–22626 (emission), 22682 (re-emit fix)
+**Severity:** MEDIUM
+**Status:** FIXED
+
+The unit-count override path emitted its warning using `battery.totalCapacityAh` before the manual-Ah override path ran. If both overrides were active, the warning said "You selected 1 battery unit(s) (400Ah)" when the actual bank was 150Ah. Fixed by inserting a re-emit block after both override paths settle (before the mixed-bank analysis at line 22683): the stale warning is filtered out and replaced with the final Ah value.
+
+---
+
+### #22 — HIGH OPEN: Heavy cloud/rain energy shows array wattage (Wh) instead of 25% of clear-day yield
+
+**Section affected:** Advisory / Seasonal Performance
+**Source:** `10-engines.ts` lines 5562–5564
+**Severity:** HIGH
+**Status:** OPEN — scheduled Batch 6
+
+`cloudDayWh = arrayWattage × 0.25 × PSH`. When PSH ≈ 4 and arrayWattage = 4640W, this evaluates to 4640 Wh — the array nameplate in watts. Correct formula: `cloudDayWh = pv.dailyEnergyWh × 0.25`. With a clear-day yield of 30,466 Wh, the correct heavy-cloud value is 7,617 Wh, not 4,640 Wh.
+
+---
+
+### #23 — HIGH OPEN: Battery-to-Inverter cable sized for load-side surge, not actual inverter capability
+
+**Section affected:** Cable Sizing / BOM
+**Source:** `30-controller.js` manual inverter override block (~line 22546)
+**Severity:** HIGH
+**Status:** OPEN — scheduled Batch 6
+
+When the user selects a 6000VA inverter, `dcInputCurrentSurge` is still set from the load-side `surgeVARequired` (12,160VA), producing 316.6A. A 6000VA inverter at 48V can deliver at most ~150–170A on surge. Cable is over-specified by ~2×. Fix: cap `dcInputCurrentSurge` at `(manualVA × surgeMultiplier) / dcVoltage` unconditionally after the manual-VA override is applied.
+
+---
+
+### #24 — MEDIUM OPEN: Installer-mode PDF shows USD-magnitude values with NGN currency label
+
+**Section affected:** All money outputs in installer-mode PDF
+**Source:** `30-controller.js` `effectiveFxRate` IIFE (~line 17393), all `inputs.currencyLabel` references
+**Severity:** MEDIUM
+**Status:** OPEN — scheduled Batch 7
+
+In installer mode `effectiveFxRate = 1.0`, so all money values stay at their raw USD-denominated magnitudes. The currency label (user-chosen, e.g., "NGN") is applied unchanged. The PDF shows "NGN 8,724" for a system that is actually $8,724 USD — the label is wrong. Fix: derive `displayCurrencyLabel = effectiveFxRate > 1 ? userLabel : 'USD'` and use it at all money-output call sites.
 
 ---
 

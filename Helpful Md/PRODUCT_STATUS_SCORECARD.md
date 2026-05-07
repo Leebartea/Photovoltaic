@@ -161,6 +161,14 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Bug fix batch 5 (2026-05-07)
+
+Three issues resolved and deployed (commit 6ec4a22):
+
+- **FX double-multiply removed** — `formatProposalMoney` and `formatCommercialUnitRate` no longer multiply by `effectiveFxRate`. The finance engine does not normalize to USD internally, so the multiply was inflating client-mode annual savings by ~1386× (the NGN/USD FX rate). fxRate parameter preserved for call-site compatibility. This was the root cause of the ₦794,062/year vs ₦573/year discrepancy between client and installer PDFs.
+- **Battery Ah per Unit corrected** — PDF battery detail (line 21354) and HTML battery panel (line 25488) now derive Ah per Unit as `round(totalCapacityAh / stringsInParallel)` when manual or unit-count override is active, instead of always printing the auto-recommended `recommendedAhPerCell`. Prevents a 400Ah label on a 150Ah bank.
+- **Battery unit-count warning re-emitted with correct Ah** — A re-emit block inserted after both override paths settle (before mixed-bank analysis at line 22683) filters the stale unit-count warning and replaces it with the final `totalCapacityAh` value. Prevents the "You selected 1 battery unit(s) (400Ah)" message when the actual bank is 150Ah.
+
 ### Bug fix batch 4 (2026-05-04)
 
 Six issues resolved and deployed (commit 78cfa10):
