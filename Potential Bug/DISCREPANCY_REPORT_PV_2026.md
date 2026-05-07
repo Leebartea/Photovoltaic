@@ -41,6 +41,8 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 | 2026-05-07 | Batch 10 | #27, #28a–e | 980ec06 |
 | 2026-05-07 | Batch 11 | UX-A, UX-G | 0fd0b54 |
 | 2026-05-07 | Batch 12 | UX-H1 (scoped), UX-C | 56393c2 |
+| 2026-05-07 | Batch 13 | UX-H2 (autosave silent restore, debounce) | 9912003 |
+| 2026-05-07 | Batch 14 | UX-D (collapse advanced fields), UX-E (Pricing section reorder), UX-F (tablet layout) | abc7c21 |
 
 ---
 

@@ -161,6 +161,37 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 14 — Advanced Field Disclosure + Section Reorder + Tablet Layout (commit abc7c21 — 2026-05-07)
+
+**UX-D — Collapse rarely-used fields**
+- Temperature range (`ambientTempMin/Max`) collapsed into `<details>` — hidden by default, region defaults already applied
+- Engineering overrides (`designMargin`, `inverterSurgeMultiplier`, `inverterTechnology`) wrapped in separate `<details>`
+- Cable Lengths block wrapped in `<details>` — final-design override step, not a quick-estimate field
+- Managed-mode load attributes (`appDutyFrequency`, `appCanStagger`, `appDaytimeOnly`, `appLoadRole`, `appLoadCriticality`) wrapped in `<details>` — defaults inferred from machine archetype
+
+**UX-E — Pricing section reorder**
+- `proposalPricingCard` moved in DOM to after `equipmentSpecsCard` and before the Calculate button — users now define loads and equipment before being asked about pricing
+- Section nav renumbered: System(1) → Workspace(2) → Guide(3) → Identity(4) → **Loads(5) → Equipment(6) → Pricing(7)**
+- IntersectionObserver scroll-spy array in `30-controller.js` updated to match new DOM order
+
+**UX-F — Tablet responsive form layout**
+- Replaced `@media (max-width: 900px)` flex-wrap fallback with `@media (max-width: 1023px)` grid rule
+- `.form-row.three` and `.form-row.four` collapse to 2-column grid at ≤1023px, then 1-column at ≤600px
+- Added explicit `.form-row.two { grid-template-columns: 1fr 1fr; }` class
+- Eliminates inconsistent 2+1 / 3-per-row wrapping seen on tablet portrait and ~900–1024px viewports
+
+---
+
+### Batch 13 — Silent Autosave Restore + Input Debounce (commit 9912003 — 2026-05-07)
+
+**UX-H2 — localStorage autosave silent restore**
+- `checkAutoSave()` confirm-dialog gate removed — valid draft autosaves now restore silently without a cancellable prompt
+- `debounce(fn, wait)` utility added to `30-controller.js`
+- `40-init.js` `input` event listener wrapped with `debounce(150ms)` — eliminates redundant `saveToLocalStorageAuto()` calls on fast keystrokes
+- `change` event listener left synchronous (fires on committed value, must save immediately)
+
+---
+
 ### Batch 12 — Locale Formatting + PDF Unit Scaling (commit 56393c2 — 2026-05-07)
 
 **UX-H1 — Locale-aware currency formatting (scoped fix)**
