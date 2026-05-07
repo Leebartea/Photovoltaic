@@ -22565,6 +22565,14 @@ const PVCalculator = {
                     inverter.dcInputCurrentContinuous = Math.round(inverter.continuousVARequired / manualV * 10) / 10;
                     inverter.dcInputCurrentSurge = Math.round(inverter.surgeVARequired / manualV * 10) / 10;
                 }
+                // Cap DC currents by inverter's rated capability — load surge may exceed inverter physical limit
+                if (manualVA > 0) {
+                    const dcV = inverter.dcBusVoltage;
+                    const maxSurgeA = Math.round((manualVA * config.inverterSurgeMultiplier) / dcV * 10) / 10;
+                    const maxContA = Math.round(manualVA / (DEFAULTS.INVERTER_DERATING || 0.8) / dcV * 10) / 10;
+                    if (inverter.dcInputCurrentSurge > maxSurgeA) inverter.dcInputCurrentSurge = maxSurgeA;
+                    if (inverter.dcInputCurrentContinuous > maxContA) inverter.dcInputCurrentContinuous = maxContA;
+                }
             }
 
             // Also validate auto-selected voltage/size combos

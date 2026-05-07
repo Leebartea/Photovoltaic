@@ -5559,8 +5559,7 @@ const SmartAdvisoryEngine = {
         const pvDeratedW = pv.arrayWattage * 0.80;
         const requiredPVW = dailyEnergy / (config.avgPSH || 4.5);
         const overproductionPct = Math.round((pvToLoad - 1) * 100);
-        const cloudDayOutput = pv.arrayWattage * 0.25; // ~25% on heavy cloud
-        const cloudDayWh = cloudDayOutput * (config.avgPSH || 4.5);
+        const cloudDayWh = (pv.dailyEnergyWh || pv.arrayWattage * (config.avgPSH || 4.5) * 0.8) * 0.25;
         const cloudCoverage = Math.round(cloudDayWh / dailyEnergy * 100);
 
         if (pvToLoad > 1.5) {

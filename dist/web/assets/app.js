@@ -8950,8 +8950,7 @@ const SmartAdvisoryEngine = {
         const pvDeratedW = pv.arrayWattage * 0.80;
         const requiredPVW = dailyEnergy / (config.avgPSH || 4.5);
         const overproductionPct = Math.round((pvToLoad - 1) * 100);
-        const cloudDayOutput = pv.arrayWattage * 0.25; // ~25% on heavy cloud
-        const cloudDayWh = cloudDayOutput * (config.avgPSH || 4.5);
+        const cloudDayWh = (pv.dailyEnergyWh || pv.arrayWattage * (config.avgPSH || 4.5) * 0.8) * 0.25;
         const cloudCoverage = Math.round(cloudDayWh / dailyEnergy * 100);
         if (pvToLoad > 1.5) {
             advisories.push({
@@ -33815,6 +33814,14 @@ const PVCalculator = {
                     // Recalculate DC currents with new voltage
                     inverter.dcInputCurrentContinuous = Math.round(inverter.continuousVARequired / manualV * 10) / 10;
                     inverter.dcInputCurrentSurge = Math.round(inverter.surgeVARequired / manualV * 10) / 10;
+                }
+                // Cap DC currents by inverter's rated capability — load surge may exceed inverter physical limit
+                if (manualVA > 0) {
+                    const dcV = inverter.dcBusVoltage;
+                    const maxSurgeA = Math.round((manualVA * config.inverterSurgeMultiplier) / dcV * 10) / 10;
+                    const maxContA = Math.round(manualVA / (DEFAULTS.INVERTER_DERATING || 0.8) / dcV * 10) / 10;
+                    if (inverter.dcInputCurrentSurge > maxSurgeA) inverter.dcInputCurrentSurge = maxSurgeA;
+                    if (inverter.dcInputCurrentContinuous > maxContA) inverter.dcInputCurrentContinuous = maxContA;
                 }
             }
 
