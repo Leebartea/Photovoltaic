@@ -24643,6 +24643,7 @@ const PVCalculator = {
         if (supportSummary) {
             html += this.renderCommercialSupportPanel(supportSummary, { compact: true, title: 'Supported Load Snapshot', maxNotes: 3, maxItems: 4 });
         }
+        const displayCurrencyLabel = (commercial?.inputs?.effectiveFxRate > 1) ? (commercial?.inputs?.currencyLabel || 'USD') : 'USD';
         if (finance) {
             html += this.renderCommercialFinancePanel(finance, { compact: true, title: 'Commercial Value Snapshot', maxNotes: 4, currencyLabel: displayCurrencyLabel, fxRate: commercial.inputs.effectiveFxRate || 1 });
         }
