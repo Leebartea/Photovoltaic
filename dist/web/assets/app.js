@@ -501,7 +501,8 @@ const DEFAULTS = {
             gridNote: 'Unstable grid typical (140–260V swings). Use AVR before inverter. Utility supply may be unreliable.',
             vatPct: 7.5,
             currencyDisplay: 'NGN',
-            fxRateToUSD: 1550
+            fxRateToUSD: 1550,
+            currencyLocale: 'en-NG',
         },
         nairobi_ke: {
             name: 'Nairobi, Kenya',
@@ -517,7 +518,8 @@ const DEFAULTS = {
             regulatoryNote: 'Kenya Bureau of Standards (KEBS) solar regulations apply.',
             vatPct: 16,
             currencyDisplay: 'KES',
-            fxRateToUSD: 130
+            fxRateToUSD: 130,
+            currencyLocale: 'en-KE',
         },
         accra_gh: {
             name: 'Accra, Ghana',
@@ -533,7 +535,8 @@ const DEFAULTS = {
             regulatoryNote: 'Energy Commission of Ghana regulations apply.',
             vatPct: 15,
             currencyDisplay: 'GHS',
-            fxRateToUSD: 12.5
+            fxRateToUSD: 12.5,
+            currencyLocale: 'en-GH',
         },
         // --- Americas ---
         us_south: {
@@ -547,7 +550,8 @@ const DEFAULTS = {
             ambientTempMin: -5,
             ambientTempMax: 42,
             climate: 'hot_arid',
-            regulatoryNote: 'NEC 690 & 705 compliance suggested. Rapid shutdown per NEC 690.12 required in many jurisdictions.'
+            regulatoryNote: 'NEC 690 & 705 compliance suggested. Rapid shutdown per NEC 690.12 required in many jurisdictions.',
+            currencyLocale: 'en-US',
         },
         us_north: {
             name: 'Northern US / Canada',
@@ -560,7 +564,8 @@ const DEFAULTS = {
             ambientTempMin: -25,
             ambientTempMax: 35,
             climate: 'cold_temperate',
-            regulatoryNote: 'NEC 690 & 705 / CEC Part I compliance suggested. Cold-weather battery derating applies.'
+            regulatoryNote: 'NEC 690 & 705 / CEC Part I compliance suggested. Cold-weather battery derating applies.',
+            currencyLocale: 'en-US',
         },
         brazil: {
             name: 'Brazil (General)',
@@ -575,7 +580,8 @@ const DEFAULTS = {
             climate: 'tropical_hot',
             regulatoryNote: 'ABNT NBR 16690 (PV installations) applies. Check local utility interconnection rules.',
             currencyDisplay: 'BRL',
-            fxRateToUSD: 5.05
+            fxRateToUSD: 5.05,
+            currencyLocale: 'pt-BR',
         },
         // --- Europe ---
         eu_central: {
@@ -592,7 +598,8 @@ const DEFAULTS = {
             regulatoryNote: 'IEC 62109, EN 50549 apply. Check local feed-in regulations and grid codes.',
             vatPct: 20,
             currencyDisplay: 'EUR',
-            fxRateToUSD: 0.92
+            fxRateToUSD: 0.92,
+            currencyLocale: 'de-DE',
         },
         eu_south: {
             name: 'Southern Europe (ES, IT, GR)',
@@ -608,7 +615,8 @@ const DEFAULTS = {
             regulatoryNote: 'IEC 62109, EN 50549 apply. High ambient temperatures — derate accordingly.',
             vatPct: 22,
             currencyDisplay: 'EUR',
-            fxRateToUSD: 0.92
+            fxRateToUSD: 0.92,
+            currencyLocale: 'es-ES',
         },
         // --- Asia / Oceania ---
         india: {
@@ -625,7 +633,8 @@ const DEFAULTS = {
             regulatoryNote: 'CEA (Central Electricity Authority) technical standards and MNRE guidelines apply.',
             vatPct: 18,
             currencyDisplay: 'INR',
-            fxRateToUSD: 84
+            fxRateToUSD: 84,
+            currencyLocale: 'en-IN',
         },
         uae: {
             name: 'UAE / Middle East',
@@ -641,7 +650,8 @@ const DEFAULTS = {
             regulatoryNote: 'DEWA/ADDC regulations apply for grid-connected systems.',
             vatPct: 5,
             currencyDisplay: 'AED',
-            fxRateToUSD: 3.67
+            fxRateToUSD: 3.67,
+            currencyLocale: 'en-AE',
         },
         australia: {
             name: 'Australia',
@@ -657,7 +667,8 @@ const DEFAULTS = {
             regulatoryNote: 'AS/NZS 5033 (PV installations) and AS/NZS 4777 (grid connection) apply.',
             vatPct: 10,
             currencyDisplay: 'AUD',
-            fxRateToUSD: 1.52
+            fxRateToUSD: 1.52,
+            currencyLocale: 'en-AU',
         },
         // --- Catch-all ---
         generic: {
@@ -671,7 +682,8 @@ const DEFAULTS = {
             ambientTempMin: -10,
             ambientTempMax: 45,
             climate: 'mixed',
-            regulatoryNote: 'Consult local electrical codes and standards for your jurisdiction.'
+            regulatoryNote: 'Consult local electrical codes and standards for your jurisdiction.',
+            currencyLocale: 'en-US',
         }
     }),
     // Legacy alias for backward compatibility (localStorage migration)
@@ -22863,6 +22875,11 @@ const PVCalculator = {
         return DEFAULTS.REGION_PROFILES[locationKey]?.region || 'global';
     },
 
+    getDisplayLocale() {
+        const k = document.getElementById('location')?.value || 'generic';
+        return (DEFAULTS.REGION_PROFILES[k] || DEFAULTS.REGION_PROFILES.generic || {}).currencyLocale || 'en-US';
+    },
+
     getFinanceModeDefinitions() {
         return DEFAULTS.PROPOSAL_PRICING.financeModes || {};
     },
@@ -28039,7 +28056,7 @@ const PVCalculator = {
         const numeric = Number.isFinite(value) ? value : 0;
         const decimals = definition?.decimals ?? 2;
         const formatted = decimals === 0
-            ? Math.round(numeric).toLocaleString()
+            ? Math.round(numeric).toLocaleString(this.getDisplayLocale())
             : numeric.toFixed(decimals);
         return `${currencyLabel} ${formatted}${definition?.unit || ''}`;
     },
@@ -28767,13 +28784,13 @@ const PVCalculator = {
     formatProposalMoney(value, currencyLabel, fxRate = 1) {
         const numeric = Number.isFinite(value) ? value : 0;
         const converted = Math.round(numeric);
-        return `${currencyLabel} ${converted.toLocaleString()}`;
+        return `${currencyLabel} ${converted.toLocaleString(this.getDisplayLocale())}`;
     },
 
     formatCommercialMoney(valueUSD, currencyLabel, fxRate = 1) {
         const numeric = Number.isFinite(valueUSD) ? valueUSD : 0;
         const converted = Math.round(numeric * (Number(fxRate) > 0 ? Number(fxRate) : 1));
-        return `${currencyLabel} ${converted.toLocaleString()}`;
+        return `${currencyLabel} ${converted.toLocaleString(this.getDisplayLocale())}`;
     },
 
     formatFinancePayback(value) {
@@ -31326,6 +31343,12 @@ const PVCalculator = {
                 setColor(DARK);
             }
 
+            const fmtEnergy   = (wh) => wh   >= 1000 ? `${(wh   / 1000).toFixed(1)} kWh` : `${Math.round(wh)} Wh`;
+            const fmtApparent = (va) => va   >= 1000 ? `${(va   / 1000).toFixed(1)} kVA` : `${Math.round(va)} VA`;
+            const fmtPower    = (w)  => w    >= 1000 ? `${(w    / 1000).toFixed(1)} kW`  : `${Math.round(w)} W`;
+            const fmtWp       = (wp) => wp   >= 1000 ? `${(wp   / 1000).toFixed(1)} kWp` : `${Math.round(wp)} Wp`;
+            const fmtAh       = (ah) => ah   >= 1000 ? `${(ah   / 1000).toFixed(1)} kAh` : `${Math.round(ah)} Ah`;
+
             // Draw a filled rounded box with label/value (summary card)
             function summaryCard(x, yPos, w, h, label, value, accent) {
                 accent = accent || BLUE;
@@ -31783,15 +31806,15 @@ const PVCalculator = {
                 labelValue('Inverter:', `${inv.recommendedSizeVA} VA  (${InverterSizingEngine.formatMarketRange(inv.recommendedSizeVA)})`);
             }
             if (batt.isManualOverride || batt.isUnitCountOverride) {
-                labelValue('Battery (Your Input):', `${Math.round(batt.totalCapacityAh)} Ah  |  ${batt.cellsInSeries}S${batt.stringsInParallel}P  |  ${batt.chemistryName}  |  ${Math.round(batt.totalCapacityWh)}Wh`);
+                labelValue('Battery (Your Input):', `${Math.round(batt.totalCapacityAh)} Ah  |  ${batt.cellsInSeries}S${batt.stringsInParallel}P  |  ${batt.chemistryName}  |  ${fmtEnergy(batt.totalCapacityWh)}`);
                 if (batt.autoSuggestedAh || batt.autoSuggestedStrings) {
                     const autoAh = batt.autoSuggestedAh || (batt.autoSuggestedStrings ? batt.autoSuggestedStrings * batt.recommendedAhPerCell : 0);
                     if (autoAh > 0) labelValue('Battery (Auto-Rec):', `${Math.round(autoAh)} Ah  (auto-calculated for ${config.autonomyDays} day autonomy)`);
                 }
             } else {
-                labelValue('Battery Bank:', `${Math.round(batt.totalCapacityAh)} Ah  |  ${batt.cellsInSeries}S${batt.stringsInParallel}P  |  ${batt.chemistryName}  |  ${Math.round(batt.totalCapacityWh)}Wh`);
+                labelValue('Battery Bank:', `${Math.round(batt.totalCapacityAh)} Ah  |  ${batt.cellsInSeries}S${batt.stringsInParallel}P  |  ${batt.chemistryName}  |  ${fmtEnergy(batt.totalCapacityWh)}`);
             }
-            labelValue('PV Array:', `${pv.arrayWattage} Wp  |  ${pv.panelsInSeries}S × ${pv.stringsInParallel}P = ${pv.totalPanels} panels`);
+            labelValue('PV Array:', `${fmtWp(pv.arrayWattage)}  |  ${pv.panelsInSeries}S × ${pv.stringsInParallel}P = ${pv.totalPanels} panels`);
             labelValue('MPPT Validation:', R.mpptValidation.isValid ? 'PASS — All checks within limits' : 'ISSUES — See warnings below');
             labelValue('Total Appliances:', `${LoadEngine.appliances.length}  |  Daily: ${Math.round(agg.dailyEnergyWh)} Wh`);
             if (phaseAllocation) {
@@ -32010,7 +32033,7 @@ const PVCalculator = {
                 doc.setFontSize(7.5);
                 setColor(DARK);
                 doc.text(`${Math.round(batt.totalCapacityAh)}Ah @ ${batt.bankVoltage}V  |  ${batt.chemistryName}`, battX + boxW / 2, y + 11.5, { align: 'center' });
-                doc.text(`${batt.cellsInSeries}S x ${batt.stringsInParallel}P = ${batt.totalCells} units  |  ${Math.round(batt.totalCapacityWh)}Wh`, battX + boxW / 2, y + 15, { align: 'center' });
+                doc.text(`${batt.cellsInSeries}S x ${batt.stringsInParallel}P = ${batt.totalCells} units  |  ${fmtEnergy(batt.totalCapacityWh)}`, battX + boxW / 2, y + 15, { align: 'center' });
 
                 // Inverter box (right)
                 const invX = diagramCenterX + sideOffset - boxW / 2 - 8;
@@ -32462,14 +32485,14 @@ const PVCalculator = {
                 y += 1;
 
                 // Summary row
-                labelValue('Total Real Power:', `${Math.round(agg.totalRealPowerW || agg.designContinuousVA * 0.85)} W`);
-                labelValue('Total Apparent Power:', `${Math.round(agg.totalApparentPowerVA || agg.designContinuousVA)} VA`);
-                labelValue('Daily Energy:', `${Math.round(agg.dailyEnergyWh)} Wh`);
-                labelValue('Daytime Energy:', `${Math.round(agg.daytimeEnergyWh || 0)} Wh  (${Math.round((agg.daytimeEnergyWh || 0) / agg.dailyEnergyWh * 100)}%)`);
-                labelValue('Nighttime Energy:', `${Math.round(agg.nighttimeEnergyWh || agg.dailyEnergyWh)} Wh`);
-                labelValue('Worst-Case Surge:', `${Math.round(agg.highestSurgeVA || agg.designSurgeVA)} VA`);
+                labelValue('Total Real Power:', `${fmtPower(agg.totalRealPowerW || agg.designContinuousVA * 0.85)}`);
+                labelValue('Total Apparent Power:', `${fmtApparent(agg.totalApparentPowerVA || agg.designContinuousVA)}`);
+                labelValue('Daily Energy:', `${fmtEnergy(agg.dailyEnergyWh)}`);
+                labelValue('Daytime Energy:', `${fmtEnergy(agg.daytimeEnergyWh || 0)}  (${Math.round((agg.daytimeEnergyWh || 0) / agg.dailyEnergyWh * 100)}%)`);
+                labelValue('Nighttime Energy:', `${fmtEnergy(agg.nighttimeEnergyWh || agg.dailyEnergyWh)}`);
+                labelValue('Worst-Case Surge:', `${fmtApparent(agg.highestSurgeVA || agg.designSurgeVA)}`);
                 if (agg.designStaggeredSurgeVA) {
-                    labelValue('Staggered Surge:', `${Math.round(agg.designStaggeredSurgeVA)} VA`);
+                    labelValue('Staggered Surge:', `${fmtApparent(agg.designStaggeredSurgeVA)}`);
                 }
                 if (agg.complianceRisk && agg.complianceRisk !== 'low') {
                     labelValue('Compliance Risk:', `${agg.complianceRisk.toUpperCase()} — ${agg.complianceNote || ''}`);
@@ -32524,11 +32547,11 @@ const PVCalculator = {
                     y += 3;
                     const appSubtotalWh = appRows.reduce((sum, row) => sum + row[row.length - 1], 0);
                     const marginWh = Math.round(agg.dailyEnergyWh) - appSubtotalWh;
-                    labelValue('Appliance subtotal (pre-margin):', `${appSubtotalWh.toLocaleString()} Wh`);
+                    labelValue('Appliance subtotal (pre-margin):', `${fmtEnergy(appSubtotalWh)}`);
                     if (marginWh !== 0) {
-                        labelValue('+ Design allowance (margin & derating):', `+${Math.abs(marginWh).toLocaleString()} Wh`);
+                        labelValue('+ Design allowance (margin & derating):', `+${fmtEnergy(Math.abs(marginWh))}`);
                     }
-                    labelValue('= Daily energy total:', `${Math.round(agg.dailyEnergyWh).toLocaleString()} Wh`);
+                    labelValue('= Daily energy total:', `${fmtEnergy(agg.dailyEnergyWh)}`);
                     y += 2;
                 }
 
@@ -32591,9 +32614,9 @@ const PVCalculator = {
                     y += 3;
                     checkSpace(40);
                     subTitle('Managed Practical Alternative');
-                    labelValue('Managed Minimum:', `${pdfManaged.managedSizeVA} VA (${InverterSizingEngine.formatMarketRange(pdfManaged.managedSizeVA)})`);
-                    labelValue('Managed Continuous:', `${pdfManaged.managedContinuousVA} VA`);
-                    labelValue('Managed Surge:', `${pdfManaged.managedSurgeVA} VA`);
+                    labelValue('Managed Minimum:', `${fmtApparent(pdfManaged.managedSizeVA)} (${InverterSizingEngine.formatMarketRange(pdfManaged.managedSizeVA)})`);
+                    labelValue('Managed Continuous:', `${fmtApparent(pdfManaged.managedContinuousVA)}`);
+                    labelValue('Managed Surge:', `${fmtApparent(pdfManaged.managedSurgeVA)}`);
                     labelValue('Risk Level:', `${pdfManaged.riskLevel} — ${pdfManaged.riskLabel}`);
                     // Inverter technology impact on managed mode
                     const pdfManagedTech = pdfManaged.inverterTechnology || config.inverterTechnology || 'unknown';
@@ -32631,8 +32654,8 @@ const PVCalculator = {
                 y += 1;
                 labelValue('Chemistry:', batt.chemistryName);
                 labelValue('Bank Voltage:', `${batt.bankVoltage}V`);
-                labelValue('Total Capacity:', `${Math.round(batt.totalCapacityAh)} Ah  (${Math.round(batt.totalCapacityWh)} Wh)`);
-                labelValue('Usable Capacity:', `${Math.round(batt.usableCapacityWh)} Wh  (${Math.round(DEFAULTS.BATTERY_SPECS[batt.chemistry].maxDoD * 100)}% DoD)`);
+                labelValue('Total Capacity:', `${Math.round(batt.totalCapacityAh)} Ah  (${fmtEnergy(batt.totalCapacityWh)})`);
+                labelValue('Usable Capacity:', `${fmtEnergy(batt.usableCapacityWh)}  (${Math.round(DEFAULTS.BATTERY_SPECS[batt.chemistry].maxDoD * 100)}% DoD)`);
                 labelValue('Configuration:', `${batt.cellsInSeries}S x ${batt.stringsInParallel}P = ${batt.totalCells} cells/units`);
                 const _ahPerUnit = (batt.isManualOverride || batt.isUnitCountOverride)
                     ? Math.round(batt.totalCapacityAh / Math.max(1, batt.stringsInParallel || 1))
@@ -32689,7 +32712,7 @@ const PVCalculator = {
                     labelValue('Engineering:', `${pdfBattPrac.engineeringAh} Ah`);
                     labelValue('Practical:', `${pdfBattPrac.practicalAh} Ah (${pdfBattPrac.savings}% smaller, ${pdfBattPrac.practicalAutonomy} day autonomy)`);
                     labelValue('Risk:', `${pdfBattPrac.riskLevel} — ${pdfBattPrac.riskLabel}`);
-                    mutedText(`Nighttime essential: ${pdfBattPrac.nighttimeEssentialWh}Wh | Daytime-shifted: ${pdfBattPrac.daytimeHeavyWh}Wh`);
+                    mutedText(`Nighttime essential: ${fmtEnergy(pdfBattPrac.nighttimeEssentialWh)} | Daytime-shifted: ${fmtEnergy(pdfBattPrac.daytimeHeavyWh)}`);
                     y += 2;
                 }
 
@@ -32697,14 +32720,14 @@ const PVCalculator = {
                 checkSpace(50);
                 sectionTitle('PV Array Detail');
                 y += 1;
-                labelValue('Array Wattage:', `${pv.arrayWattage} Wp  (${pv.totalPanels} panels)`);
+                labelValue('Array Wattage:', `${fmtWp(pv.arrayWattage)}  (${pv.totalPanels} panels)`);
                 labelValue('Panel Wattage:', `${Math.round(pv.arrayWattage / pv.totalPanels)} Wp`);
                 labelValue('Configuration:', `${pv.panelsInSeries}S x ${pv.stringsInParallel}P`);
                 labelValue('String Vmp:', `${(pv.stringVmp || 0).toFixed(1)} V`);
                 labelValue('String Voc (cold):', `${(pv.stringVocCold || 0).toFixed(1)} V`);
                 labelValue('Array Imp:', `${(pv.arrayImp || 0).toFixed(1)} A`);
                 labelValue('Array Isc:', `${(pv.arrayIsc || 0).toFixed(1)} A`);
-                labelValue('Daily PV Energy:', `${Math.round(pv.dailyEnergyWh || pv.arrayWattage * (config.avgPSH || 4.5) * 0.8)} Wh`);
+                labelValue('Daily PV Energy:', `${fmtEnergy(pv.dailyEnergyWh || pv.arrayWattage * (config.avgPSH || 4.5) * 0.8)}`);
                 // Orientation/tilt in PDF
                 if (pv.combinedPVFactor && pv.combinedPVFactor < 1.0) {
                     const pdfOrientLabel = {south:'South',se_sw:'SE/SW',east_west:'East/West',flat:'Flat Roof',unknown:'Unknown'}[config.panelOrientation || 'unknown'] || 'Unknown';
@@ -32712,7 +32735,7 @@ const PVCalculator = {
                     labelValue('Orientation/Tilt:', `${pdfOrientLabel} + ${pdfTiltLabel} = ${Math.round(pv.combinedPVFactor * 100)}% effective output`);
                 }
                 if (pv.isManualOverride && pv.autoSuggested) {
-                    mutedText(`Auto-suggested: ${pv.autoSuggested.totalPanels} panels (${pv.autoSuggested.panelsInSeries}S x ${pv.autoSuggested.stringsInParallel}P = ${pv.autoSuggested.arrayWattage}Wp)`);
+                    mutedText(`Auto-suggested: ${pv.autoSuggested.totalPanels} panels (${pv.autoSuggested.panelsInSeries}S x ${pv.autoSuggested.stringsInParallel}P = ${fmtWp(pv.autoSuggested.arrayWattage)})`);
                 }
 
                 // PV Practical in PDF
@@ -32721,10 +32744,10 @@ const PVCalculator = {
                     y += 3;
                     checkSpace(25);
                     subTitle('Practical PV Alternative');
-                    labelValue('Engineering:', `${pdfPvPrac.engineeringPanels} panels (${pdfPvPrac.engineeringWp}Wp)`);
-                    labelValue('Practical:', `${pdfPvPrac.practicalPanels} panels (${pdfPvPrac.practicalArrayWp}Wp, ${pdfPvPrac.savings}% fewer)`);
+                    labelValue('Engineering:', `${pdfPvPrac.engineeringPanels} panels (${fmtWp(pdfPvPrac.engineeringWp)})`);
+                    labelValue('Practical:', `${pdfPvPrac.practicalPanels} panels (${fmtWp(pdfPvPrac.practicalArrayWp)}, ${pdfPvPrac.savings}% fewer)`);
                     labelValue('Risk:', `${pdfPvPrac.riskLevel} — ${pdfPvPrac.riskLabel}`);
-                    mutedText(`Daytime direct: ${pdfPvPrac.daytimeDirectWh}Wh | Nighttime via battery: ${pdfPvPrac.nighttimeViasBattery}Wh`);
+                    mutedText(`Daytime direct: ${fmtEnergy(pdfPvPrac.daytimeDirectWh)} | Nighttime via battery: ${fmtEnergy(pdfPvPrac.nighttimeViasBattery)}`);
                     y += 2;
                 }
 
@@ -33574,6 +33597,7 @@ const PVCalculator = {
             audienceMode: this.getAudienceMode(),
             location: locationKey,
             locationProfile: locationProfile,
+            currencyLocale: this.getDisplayLocale(),
             systemType: document.getElementById('systemType').value,
             businessProfile: document.getElementById('businessProfile')?.value || 'custom_mixed_site',
             operatingIntent: document.getElementById('operatingIntent')?.value || 'backup_only',

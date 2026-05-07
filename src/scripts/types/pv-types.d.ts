@@ -332,6 +332,7 @@ export interface RegionProfile {
     vatPct?: number;
     currencyDisplay?: string;
     fxRateToUSD?: number;
+    currencyLocale?: string;
 }
 
 export interface BusinessContextIntentSummary {

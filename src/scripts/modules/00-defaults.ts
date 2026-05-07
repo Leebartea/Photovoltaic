@@ -575,7 +575,8 @@ const DEFAULTS = {
             gridNote: 'Unstable grid typical (140–260V swings). Use AVR before inverter. Utility supply may be unreliable.',
             vatPct: 7.5,
             currencyDisplay: 'NGN',
-            fxRateToUSD: 1550
+            fxRateToUSD: 1550,
+            currencyLocale: 'en-NG',
         },
         nairobi_ke: {
             name: 'Nairobi, Kenya',
@@ -591,7 +592,8 @@ const DEFAULTS = {
             regulatoryNote: 'Kenya Bureau of Standards (KEBS) solar regulations apply.',
             vatPct: 16,
             currencyDisplay: 'KES',
-            fxRateToUSD: 130
+            fxRateToUSD: 130,
+            currencyLocale: 'en-KE',
         },
         accra_gh: {
             name: 'Accra, Ghana',
@@ -607,7 +609,8 @@ const DEFAULTS = {
             regulatoryNote: 'Energy Commission of Ghana regulations apply.',
             vatPct: 15,
             currencyDisplay: 'GHS',
-            fxRateToUSD: 12.5
+            fxRateToUSD: 12.5,
+            currencyLocale: 'en-GH',
         },
         // --- Americas ---
         us_south: {
@@ -621,7 +624,8 @@ const DEFAULTS = {
             ambientTempMin: -5,
             ambientTempMax: 42,
             climate: 'hot_arid',
-            regulatoryNote: 'NEC 690 & 705 compliance suggested. Rapid shutdown per NEC 690.12 required in many jurisdictions.'
+            regulatoryNote: 'NEC 690 & 705 compliance suggested. Rapid shutdown per NEC 690.12 required in many jurisdictions.',
+            currencyLocale: 'en-US',
         },
         us_north: {
             name: 'Northern US / Canada',
@@ -634,7 +638,8 @@ const DEFAULTS = {
             ambientTempMin: -25,
             ambientTempMax: 35,
             climate: 'cold_temperate',
-            regulatoryNote: 'NEC 690 & 705 / CEC Part I compliance suggested. Cold-weather battery derating applies.'
+            regulatoryNote: 'NEC 690 & 705 / CEC Part I compliance suggested. Cold-weather battery derating applies.',
+            currencyLocale: 'en-US',
         },
         brazil: {
             name: 'Brazil (General)',
@@ -649,7 +654,8 @@ const DEFAULTS = {
             climate: 'tropical_hot',
             regulatoryNote: 'ABNT NBR 16690 (PV installations) applies. Check local utility interconnection rules.',
             currencyDisplay: 'BRL',
-            fxRateToUSD: 5.05
+            fxRateToUSD: 5.05,
+            currencyLocale: 'pt-BR',
         },
         // --- Europe ---
         eu_central: {
@@ -666,7 +672,8 @@ const DEFAULTS = {
             regulatoryNote: 'IEC 62109, EN 50549 apply. Check local feed-in regulations and grid codes.',
             vatPct: 20,
             currencyDisplay: 'EUR',
-            fxRateToUSD: 0.92
+            fxRateToUSD: 0.92,
+            currencyLocale: 'de-DE',
         },
         eu_south: {
             name: 'Southern Europe (ES, IT, GR)',
@@ -682,7 +689,8 @@ const DEFAULTS = {
             regulatoryNote: 'IEC 62109, EN 50549 apply. High ambient temperatures — derate accordingly.',
             vatPct: 22,
             currencyDisplay: 'EUR',
-            fxRateToUSD: 0.92
+            fxRateToUSD: 0.92,
+            currencyLocale: 'es-ES',
         },
         // --- Asia / Oceania ---
         india: {
@@ -699,7 +707,8 @@ const DEFAULTS = {
             regulatoryNote: 'CEA (Central Electricity Authority) technical standards and MNRE guidelines apply.',
             vatPct: 18,
             currencyDisplay: 'INR',
-            fxRateToUSD: 84
+            fxRateToUSD: 84,
+            currencyLocale: 'en-IN',
         },
         uae: {
             name: 'UAE / Middle East',
@@ -715,7 +724,8 @@ const DEFAULTS = {
             regulatoryNote: 'DEWA/ADDC regulations apply for grid-connected systems.',
             vatPct: 5,
             currencyDisplay: 'AED',
-            fxRateToUSD: 3.67
+            fxRateToUSD: 3.67,
+            currencyLocale: 'en-AE',
         },
         australia: {
             name: 'Australia',
@@ -731,7 +741,8 @@ const DEFAULTS = {
             regulatoryNote: 'AS/NZS 5033 (PV installations) and AS/NZS 4777 (grid connection) apply.',
             vatPct: 10,
             currencyDisplay: 'AUD',
-            fxRateToUSD: 1.52
+            fxRateToUSD: 1.52,
+            currencyLocale: 'en-AU',
         },
         // --- Catch-all ---
         generic: {
@@ -745,7 +756,8 @@ const DEFAULTS = {
             ambientTempMin: -10,
             ambientTempMax: 45,
             climate: 'mixed',
-            regulatoryNote: 'Consult local electrical codes and standards for your jurisdiction.'
+            regulatoryNote: 'Consult local electrical codes and standards for your jurisdiction.',
+            currencyLocale: 'en-US',
         }
     }) as Record<string, DefaultsRegionProfile>,
 
