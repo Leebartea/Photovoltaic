@@ -34770,8 +34770,8 @@ const PVCalculator = {
             assumptions.push(`Plant scoping resolves to ${plantScoping.plantScope?.definition?.label || 'Captive Site / Single Premises'} with ${plantScoping.distributionTopology?.definition?.label || 'Single Main Board'} and ${plantScoping.interconnectionScope?.definition?.label || 'Islanded / No External Interconnection'}.`);
             assumptions.push(`${plantScoping.studyBoundary?.label || 'Current product boundary'}: ${plantScoping.studyBoundary?.detail || plantScoping.summary}`);
         }
+        const displayCurrencyLabel = (commercial.inputs.effectiveFxRate > 1) ? (commercial.inputs.currencyLabel || 'USD') : 'USD';
         if (finance) {
-            const displayCurrencyLabel = (commercial.inputs.effectiveFxRate > 1) ? (commercial.inputs.currencyLabel || 'USD') : 'USD';
             assumptions.push(`Commercial value outlook uses ${finance.basisLabel} at ${this.formatCommercialUnitRate(finance.energyRatePerKWh, displayCurrencyLabel)}/kWh with ${finance.operatingDaysPerYear} operating day${finance.operatingDaysPerYear === 1 ? '' : 's'} per year.`);
         }
 
