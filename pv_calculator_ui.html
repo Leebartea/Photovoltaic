@@ -35036,10 +35036,11 @@ const PVCalculator = {
         const source = this.resolveSupplierPricingSource(inputs, this.results);
         const profile = DEFAULTS.PROPOSAL_PRICING.profiles[inputs.pricingProfile]
             || DEFAULTS.PROPOSAL_PRICING.profiles.standard;
+        const displayCurrencyLabel = (inputs.effectiveFxRate > 1) ? (inputs.currencyLabel || 'USD') : 'USD';
         const rateCards = this.getSupplierRateDefinitions().map(definition => `
             <div class="supplier-rate-card">
                 <div class="supplier-rate-label">${this.escapeHtml(definition.shortLabel)}</div>
-                <div class="supplier-rate-value">${this.escapeHtml(this.formatSupplierRate(source.resolvedRates[definition.key], definition, inputs.currencyLabel))}</div>
+                <div class="supplier-rate-value">${this.escapeHtml(this.formatSupplierRate(source.resolvedRates[definition.key], definition, displayCurrencyLabel))}</div>
                 <div class="supplier-rate-note">${source.overrides[definition.key] ? 'Manual override' : 'Pack default'}</div>
             </div>
         `).join('');
@@ -35904,15 +35905,16 @@ const PVCalculator = {
             || supportSummary?.runtimeExpectation
             || 'Confirm the actual site energy cost and operating pattern before treating this value outlook as a selling commitment.';
         const advancedAssumptionsActive = taxBenefitAmount > 0 || financedAmount > 0 || residualValueAmount > 0;
+        const displayCurrencyLabel = (inputs.effectiveFxRate > 1) ? (inputs.currencyLabel || 'USD') : 'USD';
         const capitalStackSummary = financedAmount > 0
-            ? `Equity ${this.formatProposalMoney(equityContribution, inputs.currencyLabel, inputs.effectiveFxRate || 1)} | Debt ${debtSharePct.toFixed(1)}% (${this.formatProposalMoney(financedAmount, inputs.currencyLabel, inputs.effectiveFxRate || 1)}) @ ${debtAprPct.toFixed(1)}% for ${debtTermYears}y`
+            ? `Equity ${this.formatProposalMoney(equityContribution, displayCurrencyLabel, inputs.effectiveFxRate || 1)} | Debt ${debtSharePct.toFixed(1)}% (${this.formatProposalMoney(financedAmount, displayCurrencyLabel, inputs.effectiveFxRate || 1)}) @ ${debtAprPct.toFixed(1)}% for ${debtTermYears}y`
             : `All-equity view | No debt service modeled | Tax benefit ${taxBenefitPct.toFixed(1)}% | Residual ${residualValuePct.toFixed(1)}%`;
         let scenarioComparison = null;
         if (financedAmount > 0) {
             const fiveYearDelta = roundValue(fiveYearNetAfterFinance - cashFiveYearNet, 2);
             const tenYearDelta = roundValue(tenYearNetAfterFinance - cashTenYearNet, 2);
             let comparisonHeadline = 'Financed posture improves short-term owner cash position under the current assumptions.';
-            let comparisonDetail = `At 5 years the financed case sits ${this.formatProposalMoney(Math.abs(fiveYearDelta), inputs.currencyLabel, inputs.effectiveFxRate || 1)} ${fiveYearDelta >= 0 ? 'above' : 'below'} the cash-purchase case, and at 10 years it sits ${this.formatProposalMoney(Math.abs(tenYearDelta), inputs.currencyLabel, inputs.effectiveFxRate || 1)} ${tenYearDelta >= 0 ? 'above' : 'below'} it.`;
+            let comparisonDetail = `At 5 years the financed case sits ${this.formatProposalMoney(Math.abs(fiveYearDelta), displayCurrencyLabel, inputs.effectiveFxRate || 1)} ${fiveYearDelta >= 0 ? 'above' : 'below'} the cash-purchase case, and at 10 years it sits ${this.formatProposalMoney(Math.abs(tenYearDelta), displayCurrencyLabel, inputs.effectiveFxRate || 1)} ${tenYearDelta >= 0 ? 'above' : 'below'} it.`;
             if (fiveYearDelta >= 0 && tenYearDelta < 0) {
                 comparisonHeadline = 'Financing helps the early cash story, but the long-run value needs review.';
             } else if (fiveYearDelta < 0 && tenYearDelta < 0) {
@@ -36021,7 +36023,7 @@ const PVCalculator = {
         const listDefaults = DEFAULTS.PROPOSAL_PRICING.defaultLists;
         const termDefaults = DEFAULTS.PROPOSAL_PRICING.termsDefaults;
         const rateDefinitions = this.getSupplierRateDefinitions();
-        const currencyLabel = inputs.currencyLabel || 'USD';
+        const currencyLabel = (inputs.effectiveFxRate > 1) ? (inputs.currencyLabel || 'USD') : 'USD';
         const multiplier = Math.max(0.5, inputs.regionalMultiplier || 1.0);
         const panel = this.getPanel();
         const mppt = this.getMPPT();
@@ -36324,7 +36326,7 @@ const PVCalculator = {
                 'Battery pricing uses nominal bank capacity because commercial suppliers typically quote by installed kWh, not usable depth of discharge.',
                 'Labor, soft costs, and margin are explicit assumptions. Replace them with your real project percentages before sending a final quote.',
                 `Commercial terms shown here assume ${depositPct}% deposit, ${validityDays}-day quote validity, and about ${installWindowDays} working day${installWindowDays === 1 ? '' : 's'} on site once materials are ready.`,
-                `Advisory value outlook uses ${selectedOption.finance?.basisLabel || 'the selected site-energy basis'} at ${inputs.currencyLabel} ${Number(inputs.energyRatePerKWh || 0).toFixed(2)}/kWh with ${Number(inputs.annualEscalationPct || 0).toFixed(1)}% annual escalation.`,
+                `Advisory value outlook uses ${selectedOption.finance?.basisLabel || 'the selected site-energy basis'} at ${currencyLabel} ${Number(inputs.energyRatePerKWh || 0).toFixed(2)}/kWh with ${Number(inputs.annualEscalationPct || 0).toFixed(1)}% annual escalation.`,
                 `Lifecycle sensitivity applies ${Number(inputs.annualMaintenancePct || 0).toFixed(1)}% annual O&M plus ${Number(inputs.inverterRefreshPct || 0).toFixed(0)}% inverter and ${Number(inputs.batteryRefreshPct || 0).toFixed(0)}% battery reserve allowances.`,
                 `Capital-stack sensitivity is optional and currently assumes ${Number(inputs.debtSharePct || 0).toFixed(0)}% debt, ${Number(inputs.debtAprPct || 0).toFixed(1)}% APR, ${Number(inputs.debtTermYears || 0).toFixed(0)}-year term, ${Number(inputs.taxBenefitPct || 0).toFixed(1)}% tax benefit, and ${Number(inputs.residualValuePct || 0).toFixed(1)}% residual value.`
             ].filter(Boolean)
@@ -37908,7 +37910,8 @@ const PVCalculator = {
             const AMBER_BG = [254, 243, 199];
             const GREEN_BG = [220, 252, 231];
             const readinessColorMap = { green: GREEN, blue: BLUE, amber: AMBER, red: RED };
-            const formatPdfMoney = (value) => this.formatProposalMoney(value, commercial.inputs.currencyLabel, commercial.inputs.effectiveFxRate || 1);
+            const displayCurrencyLabel = (commercial.inputs.effectiveFxRate > 1) ? (commercial.inputs.currencyLabel || 'USD') : 'USD';
+            const formatPdfMoney = (value) => this.formatProposalMoney(value, displayCurrencyLabel, commercial.inputs.effectiveFxRate || 1);
 
             // ---- SVG-to-Image capture helper (for embedding UI diagram in PDF) ----
             async function captureSvgAsImage(svgElement, maxWidthMm) {
@@ -38391,7 +38394,7 @@ const PVCalculator = {
                 });
                 y += statH + 6;
 
-                labelValue('Pricing Basis:', `${commercial.profileLabel}  |  ${commercial.inputs.currencyLabel}  |  Market factor ${commercial.inputs.regionalMultiplier.toFixed(2)}`);
+                labelValue('Pricing Basis:', `${commercial.profileLabel}  |  ${displayCurrencyLabel}  |  Market factor ${commercial.inputs.regionalMultiplier.toFixed(2)}`);
                 if (commercial.preset) {
                     labelValue('Commercial Preset:', `${commercial.preset.label}  |  ${commercial.preset.badge}  |  ${commercial.preset.summary}`);
                 }
@@ -38427,7 +38430,7 @@ const PVCalculator = {
                     const formattedRate = definition.decimals === 0
                         ? Math.round(rate).toLocaleString()
                         : rate.toFixed(definition.decimals);
-                    return `${definition.shortLabel} ${commercial.inputs.currencyLabel} ${formattedRate}${definition.unit}`;
+                    return `${definition.shortLabel} ${displayCurrencyLabel} ${formattedRate}${definition.unit}`;
                 }).join('  |  ');
 
                 if (compact) {
@@ -38489,13 +38492,13 @@ const PVCalculator = {
                     subTitle('Pricing Assumptions');
                     commercial.notes.forEach(note => bulletItem(note, 'info', 2));
                     bulletItem(`Budget band: ${formatPdfMoney(commercial.band.low)} to ${formatPdfMoney(commercial.band.high)} for ${commercial.profileLabel.toLowerCase()} assumptions.`, 'info', 2);
-                    bulletItem(`Currency label is ${commercial.inputs.currencyLabel}. Replace it with your invoice currency only after tuning the market multiplier to local conditions.`, 'info', 2);
+                    bulletItem(`Currency label is ${displayCurrencyLabel}. Replace it with your invoice currency only after tuning the market multiplier to local conditions.`, 'info', 2);
                     bulletItem(`Supplier price source: ${commercial.pricingSource.packLabel} (${commercial.pricingSource.supplierLabel}). ${commercial.pricingSource.note || commercial.pricingSource.coverage}`, 'info', 2);
                     bulletItem(`Supplier quote freshness: ${commercial.pricingSource.quoteFreshness?.label || 'Benchmark-only'}. ${commercial.pricingSource.quoteFreshness?.detail || 'The current quote path is still benchmark-led.'}`, commercial.pricingSource.quoteFreshness?.status === 'fail' ? 'critical' : commercial.pricingSource.quoteFreshness?.status === 'warn' ? 'warning' : 'info', 2);
                     bulletItem(`Resolved package-adjusted rates: ${resolvedRateSummary}`, commercial.pricingSource.hasOverrides ? 'warning' : 'info', 2);
                     if (finance) {
                         subTitle('Commercial Value Outlook');
-                        bulletItem(`Modeled annual value: ${formatPdfMoney(finance.annualSavings)} using ${finance.basisLabel} at ${PVCalculator.formatCommercialUnitRate(finance.energyRatePerKWh, commercial.inputs.currencyLabel)}/kWh and ${finance.operatingDaysPerYear} operating days/year.`, finance.status === 'fail' ? 'warning' : 'info', 2);
+                        bulletItem(`Modeled annual value: ${formatPdfMoney(finance.annualSavings)} using ${finance.basisLabel} at ${PVCalculator.formatCommercialUnitRate(finance.energyRatePerKWh, displayCurrencyLabel)}/kWh and ${finance.operatingDaysPerYear} operating days/year.`, finance.status === 'fail' ? 'warning' : 'info', 2);
                         bulletItem(`Simple payback: ${PVCalculator.formatFinancePayback(finance.simplePaybackYears)}. Five-year gross value ${formatPdfMoney(finance.fiveYearGrossValue)} and ten-year gross value ${formatPdfMoney(finance.tenYearGrossValue)}.`, finance.status === 'warn' ? 'warning' : 'info', 2);
                         bulletItem(`Net after quote: five-year ${formatPdfMoney(finance.fiveYearNetAfterQuote)} | ten-year ${formatPdfMoney(finance.tenYearNetAfterQuote)}. Load offset ${finance.coverageMetrics?.loadOffsetPct ?? 0}% with on-site solar use ${finance.coverageMetrics?.onsiteSolarUsePct ?? 0}%.`, 'info', 2);
                         bulletItem(`Lifecycle allowances: O&M ${Number(finance.annualMaintenancePct || 0).toFixed(1)}% per year (${formatPdfMoney(finance.annualMaintenanceCost)}/yr), inverter reserve ${Number(finance.inverterRefreshPct || 0).toFixed(0)}% in year ${finance.inverterRefreshYear}, battery reserve ${Number(finance.batteryRefreshPct || 0).toFixed(0)}% in year ${finance.batteryRefreshYear}.`, 'info', 2);
@@ -38588,7 +38591,7 @@ const PVCalculator = {
                 { label: `Battery (Ah) ${batt.chemistryName}`, value: Math.round(batt.totalCapacityAh), accent: batt.isManualOverride ? AMBER : BLUE },
                 { label: `PV Array (Wp) ${pv.totalPanels} panels`, value: pv.arrayWattage, accent: GREEN },
                 clientExport
-                    ? { label: `Target Quote (${commercial.inputs.currencyLabel})`, value: Math.round(commercial.totals.finalQuote), accent: GREEN }
+                    ? { label: `Target Quote (${displayCurrencyLabel})`, value: Math.round(commercial.totals.finalQuote), accent: GREEN }
                     : { label: 'System Efficiency', value: losses.overallSystemEfficiency + '%', accent: losses.overallSystemEfficiency >= 75 ? GREEN : AMBER }
             ];
 
@@ -41690,7 +41693,8 @@ const PVCalculator = {
             assumptions.push(`${plantScoping.studyBoundary?.label || 'Current product boundary'}: ${plantScoping.studyBoundary?.detail || plantScoping.summary}`);
         }
         if (finance) {
-            assumptions.push(`Commercial value outlook uses ${finance.basisLabel} at ${this.formatCommercialUnitRate(finance.energyRatePerKWh, commercial.inputs.currencyLabel)}/kWh with ${finance.operatingDaysPerYear} operating day${finance.operatingDaysPerYear === 1 ? '' : 's'} per year.`);
+            const displayCurrencyLabel = (commercial.inputs.effectiveFxRate > 1) ? (commercial.inputs.currencyLabel || 'USD') : 'USD';
+            assumptions.push(`Commercial value outlook uses ${finance.basisLabel} at ${this.formatCommercialUnitRate(finance.energyRatePerKWh, displayCurrencyLabel)}/kWh with ${finance.operatingDaysPerYear} operating day${finance.operatingDaysPerYear === 1 ? '' : 's'} per year.`);
         }
 
         const nextActions = [...proposalReadiness.openItems];
@@ -41844,7 +41848,7 @@ const PVCalculator = {
                     ${this.renderCommercialArchitecturePanel(architecture, { compact: true, title: 'Commercial Power Architecture', maxNotes: 3 })}
                     ${this.renderPlantScopingPanel(plantScoping, { compact: true, title: 'Plant / Mini-Grid Scope', maxNotes: 3 })}
                     ${this.renderCommercialSupportPanel(supportSummary, { compact: true, title: 'Supported Load Story', maxNotes: 3, maxItems: 4 })}
-                    ${this.renderCommercialFinancePanel(finance, { compact: true, title: 'Commercial Value Outlook', maxNotes: 4, currencyLabel: commercial.inputs.currencyLabel, fxRate: commercial.inputs.effectiveFxRate || 1 })}
+                    ${this.renderCommercialFinancePanel(finance, { compact: true, title: 'Commercial Value Outlook', maxNotes: 4, currencyLabel: displayCurrencyLabel, fxRate: commercial.inputs.effectiveFxRate || 1 })}
                     ${this.renderCompliancePanel(compliance, { compact: true, title: 'Regional Compliance Path', maxOpenItems: 3 })}
                     ${this.renderSubmissionPackPanel(submissionPack, { compact: true, title: 'Submission Pack Readiness', maxOpenItems: 2, maxFocusDeliverables: 4 })}
                     ${this.renderEquipmentReferencePanel(detailContext)}
@@ -41879,7 +41883,8 @@ const PVCalculator = {
             )
             : null);
         const supportSummary = detailContext.supportSummary || this.getCommercialSupportSummary(detailContext);
-        const money = (value) => this.formatProposalMoney(value, commercial.inputs.currencyLabel, commercial.inputs.effectiveFxRate || 1);
+        const displayCurrencyLabel = (commercial.inputs.effectiveFxRate > 1) ? (commercial.inputs.currencyLabel || 'USD') : 'USD';
+        const money = (value) => this.formatProposalMoney(value, displayCurrencyLabel, commercial.inputs.effectiveFxRate || 1);
         const finance = commercial.finance || null;
         const quoteLabel = isClientMode ? 'Proposal Budget' : 'Commercial Estimate';
         const comparisonLabel = isClientMode ? 'Package Options' : 'Pricing Basis Comparison';
@@ -41924,7 +41929,7 @@ const PVCalculator = {
                 value: finance ? money(finance.annualSavings) : 'Advisory',
                 label: 'Annual value',
                 note: finance
-                    ? `${finance.basisLabel} at ${this.formatCommercialUnitRate(finance.energyRatePerKWh, commercial.inputs.currencyLabel)}/kWh with ${finance.operatingDaysPerYear} operating days/year.`
+                    ? `${finance.basisLabel} at ${this.formatCommercialUnitRate(finance.energyRatePerKWh, displayCurrencyLabel)}/kWh with ${finance.operatingDaysPerYear} operating days/year.`
                     : 'Set the site energy-rate basis to unlock value guidance.'
             },
             {
@@ -41967,7 +41972,7 @@ const PVCalculator = {
         const supplierRateCards = this.getSupplierRateDefinitions().map(definition => `
             <div class="supplier-rate-card">
                 <div class="supplier-rate-label">${this.escapeHtml(definition.shortLabel)}</div>
-                <div class="supplier-rate-value">${this.escapeHtml(this.formatSupplierRate(commercial.resolvedRates?.[definition.key], definition, commercial.inputs.currencyLabel))}</div>
+                <div class="supplier-rate-value">${this.escapeHtml(this.formatSupplierRate(commercial.resolvedRates?.[definition.key], definition, displayCurrencyLabel))}</div>
                 <div class="supplier-rate-note">${pricingSource.overrides?.[definition.key] ? 'Manual base rate' : 'Pack-derived base rate'}</div>
             </div>
         `).join('');
@@ -42180,14 +42185,14 @@ const PVCalculator = {
                         </div>
                     `).join('')}
                 </div>
-                ${this.renderCommercialFinancePanel(finance, { compact: isClientMode, title: 'Commercial Value Outlook', maxNotes: isClientMode ? 4 : 6, currencyLabel: commercial.inputs.currencyLabel, fxRate: commercial.inputs.effectiveFxRate || 1 })}
+                ${this.renderCommercialFinancePanel(finance, { compact: isClientMode, title: 'Commercial Value Outlook', maxNotes: isClientMode ? 4 : 6, currencyLabel: displayCurrencyLabel, fxRate: commercial.inputs.effectiveFxRate || 1 })}
                 ${quoteStructureHtml}
                 <div class="proposal-assumptions">
                     <div class="executive-panel">
                         <h3>Pricing Assumptions</h3>
                         <ul>
                             ${commercial.notes.map(note => `<li>${note}</li>`).join('')}
-                            <li>Quote label is set to ${commercial.inputs.currencyLabel}. Replace it with your invoice currency only after you tune the market multiplier to local conditions.</li>
+                            <li>Quote label is set to ${displayCurrencyLabel}. Replace it with your invoice currency only after you tune the market multiplier to local conditions.</li>
                         </ul>
                     </div>
                     <div class="executive-panel">
@@ -42811,7 +42816,7 @@ const PVCalculator = {
             html += this.renderCommercialSupportPanel(supportSummary, { compact: true, title: 'Supported Load Snapshot', maxNotes: 3, maxItems: 4 });
         }
         if (finance) {
-            html += this.renderCommercialFinancePanel(finance, { compact: true, title: 'Commercial Value Snapshot', maxNotes: 4, currencyLabel: commercial.inputs.currencyLabel, fxRate: commercial.inputs.effectiveFxRate || 1 });
+            html += this.renderCommercialFinancePanel(finance, { compact: true, title: 'Commercial Value Snapshot', maxNotes: 4, currencyLabel: displayCurrencyLabel, fxRate: commercial.inputs.effectiveFxRate || 1 });
         }
         html += svg;
 
