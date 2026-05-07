@@ -4004,3 +4004,45 @@ input:checked + .toggle-slider:before {
 .business-hint-expanded .business-hint-chevron {
     transform: rotate(180deg);
 }
+
+/* --- Audience mode banner (Batch 11) --- */
+.mode-banner {
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 5px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    border-bottom: 1px solid transparent;
+    transition: background 0.2s, color 0.2s;
+}
+.mode-banner[data-mode="installer"] {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border-color: #a5d6a7;
+}
+.mode-banner[data-mode="client"] {
+    background: #e3f2fd;
+    color: #1565c0;
+    border-color: #90caf9;
+}
+@media (prefers-color-scheme: dark) {
+    .mode-banner[data-mode="installer"] {
+        background: #1b3a1e;
+        color: #81c784;
+        border-color: #388e3c;
+    }
+    .mode-banner[data-mode="client"] {
+        background: #0d2137;
+        color: #64b5f6;
+        border-color: #1565c0;
+    }
+}
+#pdfIncludeDetails:disabled,
+#pdfIncludeDetails:disabled + label {
+    opacity: 0.45;
+    cursor: not-allowed;
+}

@@ -11672,6 +11672,13 @@ const PVCalculator = {
         this.workflowGuideFocusId = null;
         this.workflowGuideFocusType = 'section';
         document.body.setAttribute('data-audience-mode', mode);
+        const _modeBanner = document.getElementById('audienceModeBanner');
+        if (_modeBanner) {
+            _modeBanner.textContent = mode === 'client' ? 'Client Mode' : 'Installer Mode';
+            _modeBanner.setAttribute('data-mode', mode);
+        }
+        const _detailsCb = document.getElementById('pdfIncludeDetails');
+        if (_detailsCb) { _detailsCb.disabled = (mode === 'client'); }
 
         const hint = document.getElementById('audienceModeHint');
         if (hint) {
@@ -32580,7 +32587,7 @@ const PVCalculator = {
 
                 // Managed Practical in PDF
                 const pdfManaged = inv.managedMode;
-                if (pdfManaged) {
+                if (pdfManaged && !clientExport) {
                     y += 3;
                     checkSpace(40);
                     subTitle('Managed Practical Alternative');
@@ -32768,6 +32775,47 @@ const PVCalculator = {
                 drawTable(lossHeaders, lossRows, [66, 40]);
 
             } // end includeDetails
+
+            if (clientExport && commercial?.paymentPlan) {
+                newPage();
+                sectionTitle('Payment Schedule & Acceptance');
+                y += 2;
+                const _pp = commercial.paymentPlan;
+                const _terms = commercial.terms || {};
+                if (commercial.totals?.finalQuote != null) {
+                    labelValue('Quote Total:', formatPdfMoney(commercial.totals.finalQuote));
+                }
+                if (_pp.depositPct != null) {
+                    labelValue('Deposit (on order):', `${_pp.depositPct}% — ${formatPdfMoney(_pp.deposit || 0)}`);
+                }
+                if (_pp.completionPct != null) {
+                    labelValue('On Completion:', `${_pp.completionPct}% — ${formatPdfMoney(_pp.completion || 0)}`);
+                }
+                if (_terms.validityDays) {
+                    labelValue('Validity:', `${_terms.validityDays} day${_terms.validityDays === 1 ? '' : 's'}`);
+                }
+                if (_terms.installWindowLabel) {
+                    labelValue('Install Window:', _terms.installWindowLabel);
+                }
+                labelValue('Currency:', displayCurrencyLabel);
+                y += 8;
+                subTitle('Acceptance');
+                y += 2;
+                bodyText(`Client: ${proposalContext.clientName || '____________________'}`);
+                bodyText(`Site: ${proposalContext.siteName || '____________________'}`);
+                bodyText(`Quote Reference: ${proposalContext.quoteReference || '____________________'}`);
+                bodyText(`Date: ${proposalDisplay.issueDateLabel || '____________________'}`);
+                y += 12;
+                doc.setLineWidth(0.3);
+                doc.line(mL, y, mL + 70, y);
+                doc.line(pageW - mR - 70, y, pageW - mR, y);
+                y += 4;
+                doc.setFontSize(7);
+                doc.text('Client Signature & Date', mL, y);
+                doc.text('Issuer Signature & Date', pageW - mR, y, { align: 'right' });
+                doc.setFontSize(9);
+                y += 8;
+            }
 
             // ══════════════════════════════════════════════════════════
             // FINAL PAGE: DISCLAIMER
