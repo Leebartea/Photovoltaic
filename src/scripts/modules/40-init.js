@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
         control.addEventListener('change', () => PVCalculator.saveToLocalStorageAuto());
         control.addEventListener('focus', () => PVCalculator.setWorkflowGuideFocus(control.id, 'field'));
         if (control.tagName !== 'SELECT' && control.type !== 'checkbox') {
-            control.addEventListener('input', () => PVCalculator.saveToLocalStorageAuto());
+            control.addEventListener('input', debounce(() => PVCalculator.saveToLocalStorageAuto(), 150));
         }
     });
 

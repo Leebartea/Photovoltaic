@@ -22289,14 +22289,10 @@ const PVCalculator = {
                 return;
             }
 
-            const savedTime = new Date(snapshot.meta.updatedAt || snapshot.meta.createdAt).toLocaleString();
-            const message = `Found an autosaved draft for "${snapshot.meta.name}" from ${savedTime}${applianceCount ? ` with ${applianceCount} appliance${applianceCount === 1 ? '' : 's'}` : ''}. Restore it?`;
-            if (confirm(message)) {
-                this.applyProjectSnapshot(snapshot, {
-                    statusMessage: `Restored autosaved draft "${snapshot.meta.name}". Save it to browser storage if you want it in the named project list.`,
-                    statusTone: 'draft'
-                });
-            }
+            this.applyProjectSnapshot(snapshot, {
+                statusMessage: `Restored autosaved draft "${snapshot.meta.name}". Save it to browser storage if you want it in the named project list.`,
+                statusTone: 'draft'
+            });
         } catch (e) {
             // Ignore malformed autosave data
         }
@@ -27582,3 +27578,11 @@ const PVCalculator = {
         }
     }
 };
+
+function debounce(fn, wait) {
+    let timer;
+    return function (...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), wait);
+    };
+}
