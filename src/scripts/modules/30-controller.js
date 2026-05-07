@@ -4753,6 +4753,7 @@ const PVCalculator = {
         const inverterMarket = data?.config?.inverterMarket || DEFAULTS.REGION_PROFILES[location]?.inverterMarket || 'EMERGING_OFFGRID';
         const regionDefaults = DEFAULTS.PROPOSAL_PRICING.regionDefaults[DEFAULTS.REGION_PROFILES[location]?.region || 'global']
             || DEFAULTS.PROPOSAL_PRICING.regionDefaults.global;
+        const fxRate = Number(DEFAULTS.REGION_PROFILES[location]?.fxRateToUSD) > 0 ? Number(DEFAULTS.REGION_PROFILES[location].fxRateToUSD) : 1;
         const termDefaults = DEFAULTS.PROPOSAL_PRICING.termsDefaults;
         const listDefaults = DEFAULTS.PROPOSAL_PRICING.defaultLists;
         const quoteFreshnessDefaults = DEFAULTS.PROPOSAL_PRICING.quoteFreshnessDefaults || {};
@@ -4835,8 +4836,8 @@ const PVCalculator = {
             proposalMarginPct: { value: String(data?.proposalPricing?.marginPct || regionDefaults.marginPct || 12) },
             proposalTaxPct: { value: String(data?.proposalPricing?.taxPct ?? DEFAULTS.REGION_PROFILES[location]?.vatPct ?? regionDefaults?.taxPct ?? 0) },
             financeValueBasis: { value: data?.proposalPricing?.financeValueBasis || regionDefaults.financeMode || 'blended_site_energy' },
-            financeEnergyRatePerKWh: { value: String(data?.proposalPricing?.energyRatePerKWh || regionDefaults.energyRatePerKWh || 0.18) },
-            financeExportCreditPerKWh: { value: String(data?.proposalPricing?.exportCreditPerKWh || regionDefaults.exportCreditPerKWh || 0) },
+            financeEnergyRatePerKWh: { value: String(data?.proposalPricing?.energyRatePerKWh || (regionDefaults.energyRatePerKWhUSD != null ? +(regionDefaults.energyRatePerKWhUSD * fxRate).toFixed(2) : regionDefaults.energyRatePerKWh) || 0.18) },
+            financeExportCreditPerKWh: { value: String(data?.proposalPricing?.exportCreditPerKWh || (regionDefaults.exportCreditPerKWhUSD != null ? +(regionDefaults.exportCreditPerKWhUSD * fxRate).toFixed(2) : regionDefaults.exportCreditPerKWh) || 0) },
             financeOperatingDaysPerWeek: { value: String(data?.proposalPricing?.operatingDaysPerWeek || this.getOperatingScheduleDefinition(data?.config?.operatingSchedulePreset || scheduleFallback)?.operatingDaysPerWeek || 6) },
             financeAnnualEscalationPct: { value: String(data?.proposalPricing?.annualEscalationPct || regionDefaults.annualEscalationPct || 4) },
             financeAnnualMaintenancePct: { value: String(data?.proposalPricing?.annualMaintenancePct || regionDefaults.annualMaintenancePct || DEFAULTS.PROPOSAL_PRICING.lifecycleDefaults.annualMaintenancePct || 1.5) },
@@ -17468,8 +17469,13 @@ const PVCalculator = {
         if (marginEl) marginEl.value = defaults.marginPct;
         if (taxEl) taxEl.value = locationProfile?.vatPct ?? defaults.taxPct ?? 0;
         if (financeModeEl) financeModeEl.value = defaults.financeMode || 'blended_site_energy';
-        if (energyRateEl) energyRateEl.value = defaults.energyRatePerKWh ?? 0.18;
-        if (exportCreditEl) exportCreditEl.value = defaults.exportCreditPerKWh ?? 0;
+        const fxRate = Number(locationProfile?.fxRateToUSD) > 0 ? Number(locationProfile.fxRateToUSD) : 1;
+        if (energyRateEl) energyRateEl.value = (defaults.energyRatePerKWhUSD != null)
+            ? +(defaults.energyRatePerKWhUSD * fxRate).toFixed(2)
+            : (defaults.energyRatePerKWh ?? 0.18);
+        if (exportCreditEl) exportCreditEl.value = (defaults.exportCreditPerKWhUSD != null)
+            ? +(defaults.exportCreditPerKWhUSD * fxRate).toFixed(2)
+            : (defaults.exportCreditPerKWh ?? 0);
         if (operatingDaysEl) operatingDaysEl.value = schedule?.operatingDaysPerWeek || 6;
         if (escalationEl) escalationEl.value = defaults.annualEscalationPct ?? 4;
         if (maintenanceEl) maintenanceEl.value = defaults.annualMaintenancePct ?? lifecycleDefaults.annualMaintenancePct ?? 1.5;
