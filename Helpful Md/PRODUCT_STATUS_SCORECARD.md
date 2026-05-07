@@ -161,6 +161,14 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Bug fix batch 8 (2026-05-07)
+
+One structural fix deployed (commit 7701aa5):
+
+- **Energy rate auto-conversion on profile load** — Region defaults store energy rates as USD-denominated values (e.g., Africa: 0.28 USD/kWh). Previously these were written directly to the input field, so a Nigerian client profile displayed "NGN 0.28/kWh" instead of the correct converted rate (~NGN 434/kWh). Fixed in two parts: (1) `energyRatePerKWhUSD` and `exportCreditPerKWhUSD` companion fields added to all six `regionDefaults` entries in `00-defaults.ts` as the authoritative USD-anchored values — existing fields preserved for backwards compatibility; (2) both consumer functions (`applyCommercialDefaultsByLocation` and `buildLegacyFormState`) now derive the local-currency rate as `energyRatePerKWhUSD × fxRateToUSD` when the companion field is present, falling back to the existing field otherwise. User-saved project values still take precedence over defaults. Lagos example: `0.28 × 1550 = NGN 434.00/kWh`.
+
+---
+
 ### Bug fix batch 7 (2026-05-07)
 
 One MEDIUM issue resolved and deployed (commit f0627cf):

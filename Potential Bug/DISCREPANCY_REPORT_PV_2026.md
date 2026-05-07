@@ -36,6 +36,7 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 | 2026-05-07 | Batch 5 | #19, #20, #21 | 6ec4a22 |
 | 2026-05-07 | Batch 6 | #22, #23 | 4d3e179 |
 | 2026-05-07 | Batch 7 | #24 | f0627cf |
+| 2026-05-07 | Batch 8 | FX rate companion fields | 7701aa5 |
 
 ---
 
