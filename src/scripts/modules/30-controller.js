@@ -20120,8 +20120,8 @@ const PVCalculator = {
                     setColor(DARK);
                     row.forEach((cell, i) => {
                         const cellText = String(cell);
-                        const truncated = cellText.length > Math.floor(colWidths[i] / 2.2) - 1
-                            ? cellText.substring(0, Math.floor(colWidths[i] / 2.2) - 1) + '…'
+                        const truncated = cellText.length > Math.floor(colWidths[i] / 1.85) - 1
+                            ? cellText.substring(0, Math.floor(colWidths[i] / 1.85) - 1) + '…'
                             : cellText;
                         doc.text(truncated, cx, y);
                         cx += colWidths[i];
@@ -20226,7 +20226,7 @@ const PVCalculator = {
                     formatPdfMoney(option.totals.finalQuote),
                     `${formatPdfMoney(option.band.low)} - ${formatPdfMoney(option.band.high)}`
                 ]);
-                drawTable(['Package', 'Status', 'Target Quote', 'Budget Band'], packageRows, [34, 24, 34, 86]);
+                drawTable(['Package', 'Status', 'Target Quote', 'Budget Band'], packageRows, [44, 22, 32, 80]);
                 mutedText(`Current basis: ${commercial.profileLabel}. ${commercial.profileHeadline}${commercial.profileNote ? ' ' + commercial.profileNote : ''}`);
                 y += 1;
 
@@ -21259,11 +21259,11 @@ const PVCalculator = {
                         a.ratedPowerW,
                         a.dailyUsageHours,
                         a.dutyCycle + '%',
-                        a.loadType.substring(0, 6),
+                        ({ motor: 'Motor', electronic: 'Electronic', resistive: 'Resistive' }[a.loadType] || a.loadType),
                         ...(phaseAllocation ? [this.getResolvedPhaseSummary(phaseAllocation, index).substring(0, 18)] : []),
                         Math.round(LoadEngine.calculateDailyEnergyWh(a))
                     ]);
-                    drawTable(appHeaders, appRows, phaseAllocation ? [32, 12, 18, 16, 16, 18, 30, 20] : [38, 14, 22, 18, 18, 22, 24]);
+                    drawTable(appHeaders, appRows, phaseAllocation ? [32, 12, 16, 14, 14, 24, 30, 20] : [38, 14, 22, 18, 18, 22, 24]);
                     y += 3;
                     const appSubtotalWh = appRows.reduce((sum, row) => sum + row[row.length - 1], 0);
                     const marginWh = Math.round(agg.dailyEnergyWh) - appSubtotalWh;
@@ -21292,7 +21292,7 @@ const PVCalculator = {
                         InverterSizingEngine.formatMarketRange(inv.staggeredSizeVA || inv.recommendedSizeVA),
                         'Staggered motor starts (30s apart)']
                 ];
-                drawTable(tierHeaders, tierRows, [30, 26, 34, 68]);
+                drawTable(tierHeaders, tierRows, [26, 22, 30, 100]);
 
                 labelValue('DC Bus Voltage:', `${inv.dcBusVoltage}V`);
                 labelValue('DC Current (continuous):', `${inv.dcInputCurrentContinuous} A`);
@@ -21413,7 +21413,7 @@ const PVCalculator = {
                         `${t.kWh} kWh (${t.ah} Ah${t.strings > 1 ? ', ' + t.strings + 'P' : ''})`,
                         t.module ? (t.module.stackCount > 1 ? `${t.module.stackCount}× ${t.module.stackUnit ? t.module.stackUnit.kWh + ' kWh' : t.module.label}` : t.module.label) : '—'
                     ]);
-                    drawTable(tierHeaders, tierRows, [38, 24, 40, 56]);
+                    drawTable(tierHeaders, tierRows, [34, 22, 38, 84]);
 
                     if (batt.moduleMatch && batt.isLithium) {
                         mutedText(`Recommended module: ${batt.moduleMatch.label} — ${batt.moduleMatch.note}. Standard: 51.2V (16S × 3.2V).`);
@@ -21488,11 +21488,11 @@ const PVCalculator = {
                         subTitle(section.title);
                         const protHeaders = ['Device', 'Type / Rating', 'Location'];
                         const protRows = section.devices.map(d => [
-                            d.name.length > 26 ? d.name.substring(0, 25) + '…' : d.name,
-                            (`${d.type || ''} ${d.rating || ''}`).substring(0, 38),
-                            (d.location || '').substring(0, 34)
+                            d.name,
+                            `${d.type || ''} ${d.rating || ''}`.trim(),
+                            d.location || ''
                         ]);
-                        drawTable(protHeaders, protRows, [42, 60, 56]);
+                        drawTable(protHeaders, protRows, [44, 78, 56]);
                     }
                 });
 
