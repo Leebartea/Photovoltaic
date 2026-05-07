@@ -37,6 +37,8 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 | 2026-05-07 | Batch 6 | #22, #23 | 4d3e179 |
 | 2026-05-07 | Batch 7 | #24 | f0627cf |
 | 2026-05-07 | Batch 8 | FX rate companion fields | 7701aa5 |
+| 2026-05-07 | Batch 9 | #25a/b/c, #26a/b | 2361b34 |
+| 2026-05-07 | Batch 10 | #27, #28a–e | 980ec06 |
 
 ---
 
@@ -123,6 +125,93 @@ When the user selects a 6000VA inverter, `dcInputCurrentSurge` is still set from
 **Status:** FIXED
 
 In installer mode `effectiveFxRate = 1.0`, so all money values stay at their raw USD-denominated magnitudes. The currency label (user-chosen, e.g., "NGN") is applied unchanged. The PDF shows "NGN 8,724" for a system that is actually $8,724 USD — the label is wrong. Fix: derive `displayCurrencyLabel = effectiveFxRate > 1 ? userLabel : 'USD'` and use it at all money-output call sites.
+
+---
+
+### #25a — ~~CRITICAL~~ FIXED (2026-05-07 Batch 9): Commercial BOM and quote not FX-converted in client mode
+
+**Section affected:** Commercial Estimate / PDF / HTML summary
+**Source:** `30-controller.js` — `formatProposalMoney` (line ~17503), `formatPdfMoney` closure (line ~19760), `money` closure in `renderCommercialSummary` (line ~23733)
+**Severity:** CRITICAL
+**Status:** FIXED
+
+Batch 5 removed `* fxRate` from `formatProposalMoney` to fix the finance double-multiply. This correctly stopped NGN finance values from being inflated. But commercial BOM amounts (module costs, inverter costs, final quote) are computed in USD and must be multiplied by fxRate before client-mode display. Effect: client PDF showed NGN 12,599 instead of ~NGN 17.4 million for Nigeria.
+
+**Fix:** Added `formatCommercialMoney(valueUSD, currencyLabel, fxRate)` — a new formatter that multiplies USD inputs by fxRate before display. `formatPdfMoney` and the `money` closure in `renderCommercialSummary` now use this formatter. `formatProposalMoney` is now used exclusively for finance outputs that are already in local currency.
+
+---
+
+### #25b — ~~CRITICAL~~ FIXED (2026-05-07 Batch 9): Finance summary mixes USD and local-currency arithmetic
+
+**Section affected:** Commercial Finance summary (payback, lifecycle, debt service)
+**Source:** `30-controller.js` lines ~17562–17648 (`calculateCommercialFinanceSummary`)
+**Severity:** CRITICAL
+**Status:** FIXED
+
+`finalQuote`, `inverterCost`, `batteryCost`, and `equipmentSubtotal` (all USD) were used directly in arithmetic with `annualSavings` and gross values that are in local currency after Batch 8 made `energyRatePerKWh` local. Result: `fiveYearNetAfterQuote = NGN_value - USD_value`, `annualMaintenanceCost = USD * pct`, etc. — all currency-scrambled.
+
+**Fix:** Added `fxRate = inputs.effectiveFxRate` at the top of the function and derived `finalQuoteLocal`, `inverterCostLocal`, `batteryCostLocal`, `equipmentSubtotalLocal`. All downstream arithmetic now uses the local-currency versions.
+
+---
+
+### #25c — ~~HIGH~~ FIXED (2026-05-07 Batch 9): BOM description strings show USD rates with NGN label
+
+**Section affected:** BOM line item descriptions in PDF and HTML
+**Source:** `30-controller.js` lines ~17922, 20279, 16866, 23821
+**Severity:** HIGH
+**Status:** FIXED
+
+`describeRateBasis` and supplier rate card renders were using `displayCurrencyLabel` (e.g. NGN) for the supplier rate label, producing strings like "NGN 0.29/Wp supplier rate" — the rate is a USD procurement value. Fixed by hardcoding `'USD'` at all four supplier rate display call sites.
+
+---
+
+### #26a — ~~CRITICAL~~ FIXED (2026-05-07 Batch 9): parseFinanceRate max:5 cap destroys NGN energy rate
+
+**Section affected:** Finance calculation engine
+**Source:** `30-controller.js` line ~17379 (`getProposalPricingInputs`)
+**Severity:** CRITICAL
+**Status:** FIXED
+
+`parseFinanceRate` used `max: 5` — designed for USD (0–5 USD/kWh). After Batch 8, Nigeria energy rate = 434 NGN/kWh, which was hard-capped to 5.00, causing annual savings to show ~NGN 10,238/yr instead of ~NGN 914,766/yr.
+
+**Fix:** Added `fxScalar` IIFE before `return {` in `getProposalPricingInputs`. Bounds are now `Math.max(5, 5 * fxScalar)` for energy rate and `Math.max(2, 2 * fxScalar)` for export credit — scales with the active FX rate so USD-range guard is preserved in installer mode.
+
+---
+
+### #26b — ~~CRITICAL~~ FIXED (2026-05-07 Batch 9): parseFinanceRate max:2 cap clamps NGN export credit
+
+**Section affected:** Finance calculation engine
+**Source:** `30-controller.js` line ~17380
+**Severity:** CRITICAL
+**Status:** FIXED
+
+Same root cause as #26a. Nigeria export credit = 0.02 × 1385 = 27.7 NGN/kWh, capped at 2. Fixed with the same `fxScalar` pattern.
+
+---
+
+### #27 — ~~HIGH~~ FIXED (2026-05-07 Batch 10): Appliance table Type column shows raw "electr" abbreviation
+
+**Section affected:** PDF Load Analysis / Appliance Breakdown table
+**Source:** `30-controller.js` line ~21262
+**Severity:** HIGH
+**Status:** FIXED
+
+`a.loadType.substring(0, 6)` hard-truncated internal classification strings: `electronic` → `electr`, `resistive` → `resist`. Fixed with a label map `{ motor: 'Motor', electronic: 'Electronic', resistive: 'Resistive' }`. Phase-mode appliance table Type column widened from 18mm to 24mm to accommodate the longer label.
+
+---
+
+### #28a–e — ~~MEDIUM/HIGH~~ FIXED (2026-05-07 Batch 10): PDF table column truncation across multiple tables
+
+**Section affected:** PDF protection devices, pricing comparison, inverter sizing, battery sizing tables
+**Source:** `30-controller.js` lines ~20123, 20229, 21295, 21416, 21490–21495
+**Severity:** HIGH (#28a protection devices), MEDIUM (others)
+**Status:** FIXED
+
+- **drawTable divisor** (line 20123): `/2.2` → `/1.85` globally, raising effective character cap by ~20% across all tables.
+- **Pricing comparison** (line 20229): Package column 34→44mm — "Standard Install" (16 chars) no longer clips.
+- **Inverter sizing Basis** (line 21295): Basis column 68→100mm — full basis descriptions now visible.
+- **Battery tier Module/Config** (line 21416): Config column 56→84mm — module labels no longer clipped.
+- **Protection devices** (lines 21490–21495): Removed double-truncation (pre-clip substrings at 25/38/34 chars eliminated). Type/Rating column 60→78mm. All three columns now let drawTable handle overflow with its own ellipsis at the corrected threshold.
 
 ---
 

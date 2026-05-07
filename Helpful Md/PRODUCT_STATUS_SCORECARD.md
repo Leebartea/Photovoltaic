@@ -161,6 +161,29 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Bug fix batch 10 (2026-05-07)
+
+Five PDF display issues resolved and deployed (commit 980ec06):
+
+- **Appliance type label** — Raw `loadType` classification strings (`electr`, `resist`) replaced with a proper label map: `electronic → Electronic`, `motor → Motor`, `resistive → Resistive`. Phase-mode Type column widened from 18mm to 24mm to fit the longer labels.
+- **Global truncation threshold** — `drawTable` divisor changed from `/2.2` to `/1.85`, raising the effective character cap by ~20% across all PDF tables without per-table changes.
+- **Pricing comparison column** — Package column widened from 34mm to 44mm; "Standard Install" and "Premium Install" now display in full.
+- **Inverter sizing Basis column** — Widened from 68mm to 100mm; full basis descriptions ("Worst-case surge (all motors start together)" etc.) no longer truncated.
+- **Battery tier Module/Config column** — Widened from 56mm to 84mm; module labels like "3× 7.2 kWh" display in full.
+- **Protection devices table** — Removed pre-truncation substrings (previously clipping device names at 25 chars, type/rating at 38, location at 34 before drawTable clipped again). Type/Rating column widened from 60mm to 78mm. Full content width (178mm) now used for all three columns.
+
+### Bug fix batch 9 (2026-05-07)
+
+Five critical financial issues resolved and deployed (commit 2361b34):
+
+- **Commercial BOM FX conversion** — Added `formatCommercialMoney(valueUSD, currencyLabel, fxRate)` formatter that multiplies USD-denominated BOM amounts by the active FX rate before display. `formatPdfMoney` and the `money` closure in `renderCommercialSummary` now use this formatter. Client-mode Nigeria quote now shows ~NGN 17.4 million instead of NGN 12,599.
+- **Finance USD/NGN arithmetic normalisation** — All USD-anchored variables in `calculateCommercialFinanceSummary` (`finalQuote`, `inverterCost`, `batteryCost`, `equipmentSubtotal`) are now converted to local currency at the top of the function using `fxRate = inputs.effectiveFxRate`. Downstream arithmetic (payback, lifecycle net, debt service, equity contribution) is now fully currency-consistent.
+- **Supplier rate label strings** — BOM description strings and supplier rate cards hardcoded to `'USD'` label; previously showed "NGN 0.29/Wp supplier rate" which was incoherent since supplier rates are USD procurement prices.
+- **Energy rate validation cap** — `parseFinanceRate` bounds for `energyRatePerKWh` and `exportCreditPerKWh` scaled with `fxScalar` (the active FX rate). Previously `max: 5` capped 434 NGN/kWh to 5.00, making annual savings show ~NGN 10,238/yr instead of ~NGN 914,766/yr.
+- **Export credit cap** — Same fix as energy rate; Nigeria export credit (27.7 NGN/kWh) was being capped at 2 NGN/kWh.
+
+---
+
 ### Bug fix batch 8 (2026-05-07)
 
 One structural fix deployed (commit 7701aa5):
