@@ -161,6 +161,16 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 15C — Africa Region Rate Correction (commit 1b7ed32 — 2026-05-09)
+
+**Issue #A4 — Africa generator_offset rate corrected from 0.28 → 1.00 USD/kWh**
+- `africa` regionDefaults in `00-defaults.ts` previously carried a single `energyRatePerKWhUSD: 0.28` used for all finance bases, despite `financeMode: 'generator_energy_offset'` — 0.28 USD/kWh is utility tariff magnitude, not diesel genset cost (~0.80–1.20 USD/kWh in West/East Africa)
+- Three per-basis rate fields added: `generatorOffsetRatePerKWhUSD: 1.00`, `gridTariffRatePerKWhUSD: 0.22`, `blendedRatePerKWhUSD: 0.55`; legacy `energyRatePerKWhUSD` corrected to 1.00 to match the default basis
+- `applyCommercialDefaultsByLocation` (30-controller.js:17492) now branches on `defaults.financeMode` to write the matching per-basis USD rate into the energy rate DOM field — Africa locations auto-fill "Generator Energy Offset" + ~1.00 USD/kWh instead of the previous contradictory "Generator Energy Offset" + 0.28 USD/kWh
+- `getProposalPricingInputs` (30-controller.js:17391) fallback rate is now basis-aware via inline IIFE; rate clamp ceiling raised from `Math.max(1.0, 1.0 × fxScalar)` to `Math.max(2.5, 2.5 × fxScalar)` to admit honest genset cost without silent truncation
+
+---
+
 ### Batch 15B — Finance Rate Clamp, HTML Finance Panel FX, Acceptance Page Gate (commit ce04338 — 2026-05-09)
 
 **Issue #A1 — Installer-mode rate clamp corrected**

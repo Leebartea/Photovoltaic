@@ -46,6 +46,7 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 | 2026-05-09 | Hotfix 3 | Finance double-FX in calculateCommercialFinanceSummary (*Local variables removed, energy rates divided by _financeFxScalar) | 1ac47eb |
 | 2026-05-09 | Batch 15A | PDF footer double-print fixed (brand stamp moved to footY+3.5, page stamp to post-build only); header company-name fallback suppressed | 97c5450 |
 | 2026-05-09 | Batch 15B | #A1 (rate clamp ceiling 5→1.0 USD/kWh, export credit 2→0.5 USD/kWh); #A3 (formatProposalMoney now applies fxRate identical to formatCommercialMoney); #A6 (Payment & Acceptance page decoupled from clientExport flag — now gates on audienceMode==='client' directly) | ce04338 |
+| 2026-05-09 | Batch 15C | #A4 (Africa generator_offset rate corrected 0.28→1.00 USD/kWh; per-basis rate fields added: gridTariffRatePerKWhUSD 0.22, blendedRatePerKWhUSD 0.55; applyCommercialDefaultsByLocation now auto-fills basis-matched rate; parseFinanceRate clamp raised 1.0→2.5 USD/kWh) | 1b7ed32 |
 
 ---
 
@@ -58,7 +59,7 @@ PDFs tested: `PV_System_Design_Lagos__Nigeria_2026-05-09 (4).pdf` (client) and `
 | #A1 | Installer-mode energy-rate clamp yields absurd payback (USD 5/kWh ceiling → 0.3yr payback on $7.7K system) | CRITICAL | **FIXED — Batch 15B (ce04338)** |
 | #A2 | PDF footer double-printed every page (original + white-rect override overlap) | CRITICAL | **FIXED — Batch 15A (97c5450)** |
 | #A3 | formatProposalMoney ignores fxRate — HTML finance panel shows USD magnitudes labeled NGN | HIGH | **FIXED — Batch 15B (ce04338)** |
-| #A4 | Africa generator_offset rate = USD 0.28/kWh (utility tariff magnitude, not diesel cost) | MEDIUM | Open — Batch 15C |
+| #A4 | Africa generator_offset rate = USD 0.28/kWh (utility tariff magnitude, not diesel cost) | MEDIUM | **FIXED — Batch 15C (1b7ed32)** |
 | #A5 | PDF header prints company name fallback twice when companyName unset | MEDIUM | **FIXED — Batch 15A (97c5450)** |
 | #A6 | Payment & Acceptance page gated by !includeDetails — suppressed on most client exports | MEDIUM | **FIXED — Batch 15B (ce04338)** |
 | #A7 | Mobile "Why this package" popup not full-width at 375px | MEDIUM | Open — Batch 15D |
