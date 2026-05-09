@@ -1296,7 +1296,9 @@ const DEFAULTS = {
         },
         commercialPresets: PROPOSAL_COMMERCIAL_PRESETS,
         regionDefaults: {
-            africa: { currencyLabel: 'USD', regionalMultiplier: 1.04, laborPct: 18, softCostPct: 8, marginPct: 12, taxPct: 0, supplierPricePack: 'west_africa_import', financeMode: 'generator_energy_offset', energyRatePerKWh: 0.28, exportCreditPerKWh: 0.02, energyRatePerKWhUSD: 0.28, exportCreditPerKWhUSD: 0.02, annualEscalationPct: 6, annualMaintenancePct: 1.8 },
+            africa: { currencyLabel: 'USD', regionalMultiplier: 1.04, laborPct: 18, softCostPct: 8, marginPct: 12, taxPct: 0, supplierPricePack: 'west_africa_import', financeMode: 'generator_energy_offset',
+                energyRatePerKWh: 1.00, exportCreditPerKWh: 0.02, energyRatePerKWhUSD: 1.00, exportCreditPerKWhUSD: 0.02, gridTariffRatePerKWhUSD: 0.22, generatorOffsetRatePerKWhUSD: 1.00, blendedRatePerKWhUSD: 0.55,
+                annualEscalationPct: 6, annualMaintenancePct: 1.8 },
             americas: { currencyLabel: 'USD', regionalMultiplier: 1.18, laborPct: 22, softCostPct: 10, marginPct: 14, taxPct: 0, supplierPricePack: 'north_america_residential', financeMode: 'grid_tariff_offset', energyRatePerKWh: 0.18, exportCreditPerKWh: 0.05, energyRatePerKWhUSD: 0.18, exportCreditPerKWhUSD: 0.05, annualEscalationPct: 3, annualMaintenancePct: 1.2 },
             europe: { currencyLabel: 'USD', regionalMultiplier: 1.20, laborPct: 22, softCostPct: 10, marginPct: 14, taxPct: 0, supplierPricePack: 'europe_certified', financeMode: 'grid_tariff_offset', energyRatePerKWh: 0.24, exportCreditPerKWh: 0.07, energyRatePerKWhUSD: 0.24, exportCreditPerKWhUSD: 0.07, annualEscalationPct: 3, annualMaintenancePct: 1.2 },
             asia: { currencyLabel: 'USD', regionalMultiplier: 0.98, laborPct: 16, softCostPct: 8, marginPct: 12, taxPct: 0, supplierPricePack: 'asia_value_supply', financeMode: 'blended_site_energy', energyRatePerKWh: 0.16, exportCreditPerKWh: 0.03, energyRatePerKWhUSD: 0.16, exportCreditPerKWhUSD: 0.03, annualEscalationPct: 4, annualMaintenancePct: 1.4 },
@@ -28650,7 +28652,7 @@ const PVCalculator = {
             marginPct: parseFloat(document.getElementById('proposalMarginPct')?.value) || 12,
             taxPct: parseFloat(document.getElementById('proposalTaxPct')?.value) || 0,
             financeValueBasis: document.getElementById('financeValueBasis')?.value || regionDefaults.financeMode || 'blended_site_energy',
-            energyRatePerKWh: parseFinanceRate('financeEnergyRatePerKWh', regionDefaults.energyRatePerKWh || 0.18, { min: 0.01, max: Math.max(1.0, 1.0 * fxScalar) }),
+            energyRatePerKWh: parseFinanceRate('financeEnergyRatePerKWh', (() => { const _b = document.getElementById('financeValueBasis')?.value || regionDefaults.financeMode || 'blended_site_energy'; return (_b === 'generator_energy_offset' && regionDefaults.generatorOffsetRatePerKWhUSD != null) ? regionDefaults.generatorOffsetRatePerKWhUSD : (_b === 'grid_tariff_offset' && regionDefaults.gridTariffRatePerKWhUSD != null) ? regionDefaults.gridTariffRatePerKWhUSD : (_b === 'blended_site_energy' && regionDefaults.blendedRatePerKWhUSD != null) ? regionDefaults.blendedRatePerKWhUSD : (regionDefaults.energyRatePerKWh || 0.18); })(), { min: 0.01, max: Math.max(2.5, 2.5 * fxScalar) }),
             exportCreditPerKWh: parseFinanceRate('financeExportCreditPerKWh', regionDefaults.exportCreditPerKWh || 0, { min: 0, max: Math.max(0.5, 0.5 * fxScalar) }),
             operatingDaysPerWeek: parseFinanceInteger('financeOperatingDaysPerWeek', scheduleDays, { min: 1, max: 7 }),
             annualEscalationPct: parseFinanceRate('financeAnnualEscalationPct', regionDefaults.annualEscalationPct || 4, { min: 0, max: 25 }),
@@ -28751,9 +28753,17 @@ const PVCalculator = {
         if (taxEl) taxEl.value = locationProfile?.vatPct ?? defaults.taxPct ?? 0;
         if (financeModeEl) financeModeEl.value = defaults.financeMode || 'blended_site_energy';
         const fxRate = Number(locationProfile?.fxRateToUSD) > 0 ? Number(locationProfile.fxRateToUSD) : 1;
-        if (energyRateEl) energyRateEl.value = (defaults.energyRatePerKWhUSD != null)
-            ? +(defaults.energyRatePerKWhUSD * fxRate).toFixed(2)
-            : (defaults.energyRatePerKWh ?? 0.18);
+        if (energyRateEl) {
+            const _basis = defaults.financeMode || 'blended_site_energy';
+            const _usdRate =
+                (_basis === 'generator_energy_offset' && defaults.generatorOffsetRatePerKWhUSD != null) ? defaults.generatorOffsetRatePerKWhUSD :
+                (_basis === 'grid_tariff_offset'      && defaults.gridTariffRatePerKWhUSD       != null) ? defaults.gridTariffRatePerKWhUSD :
+                (_basis === 'blended_site_energy'     && defaults.blendedRatePerKWhUSD          != null) ? defaults.blendedRatePerKWhUSD :
+                defaults.energyRatePerKWhUSD;
+            energyRateEl.value = (_usdRate != null)
+                ? +(_usdRate * fxRate).toFixed(2)
+                : (defaults.energyRatePerKWh ?? 0.18);
+        }
         if (exportCreditEl) exportCreditEl.value = (defaults.exportCreditPerKWhUSD != null)
             ? +(defaults.exportCreditPerKWhUSD * fxRate).toFixed(2)
             : (defaults.exportCreditPerKWh ?? 0);

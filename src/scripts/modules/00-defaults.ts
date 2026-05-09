@@ -1388,7 +1388,9 @@ const DEFAULTS = {
         },
         commercialPresets: PROPOSAL_COMMERCIAL_PRESETS,
         regionDefaults: {
-            africa:  { currencyLabel: 'USD', regionalMultiplier: 1.04, laborPct: 18, softCostPct: 8, marginPct: 12, taxPct: 0, supplierPricePack: 'west_africa_import', financeMode: 'generator_energy_offset', energyRatePerKWh: 0.28, exportCreditPerKWh: 0.02, energyRatePerKWhUSD: 0.28, exportCreditPerKWhUSD: 0.02, annualEscalationPct: 6, annualMaintenancePct: 1.8 },
+            africa:  { currencyLabel: 'USD', regionalMultiplier: 1.04, laborPct: 18, softCostPct: 8, marginPct: 12, taxPct: 0, supplierPricePack: 'west_africa_import', financeMode: 'generator_energy_offset',
+            energyRatePerKWh: 1.00, exportCreditPerKWh: 0.02, energyRatePerKWhUSD: 1.00, exportCreditPerKWhUSD: 0.02, gridTariffRatePerKWhUSD: 0.22, generatorOffsetRatePerKWhUSD: 1.00, blendedRatePerKWhUSD: 0.55,
+            annualEscalationPct: 6, annualMaintenancePct: 1.8 },
             americas:{ currencyLabel: 'USD', regionalMultiplier: 1.18, laborPct: 22, softCostPct: 10, marginPct: 14, taxPct: 0, supplierPricePack: 'north_america_residential', financeMode: 'grid_tariff_offset', energyRatePerKWh: 0.18, exportCreditPerKWh: 0.05, energyRatePerKWhUSD: 0.18, exportCreditPerKWhUSD: 0.05, annualEscalationPct: 3, annualMaintenancePct: 1.2 },
             europe:  { currencyLabel: 'USD', regionalMultiplier: 1.20, laborPct: 22, softCostPct: 10, marginPct: 14, taxPct: 0, supplierPricePack: 'europe_certified', financeMode: 'grid_tariff_offset', energyRatePerKWh: 0.24, exportCreditPerKWh: 0.07, energyRatePerKWhUSD: 0.24, exportCreditPerKWhUSD: 0.07, annualEscalationPct: 3, annualMaintenancePct: 1.2 },
             asia:    { currencyLabel: 'USD', regionalMultiplier: 0.98, laborPct: 16, softCostPct: 8, marginPct: 12, taxPct: 0, supplierPricePack: 'asia_value_supply', financeMode: 'blended_site_energy', energyRatePerKWh: 0.16, exportCreditPerKWh: 0.03, energyRatePerKWhUSD: 0.16, exportCreditPerKWhUSD: 0.03, annualEscalationPct: 4, annualMaintenancePct: 1.4 },
