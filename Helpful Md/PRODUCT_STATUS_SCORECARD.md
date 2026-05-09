@@ -161,6 +161,29 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 15A — PDF Footer + Header Rendering Fixes (commit 97c5450 — 2026-05-09)
+
+**Issue #A2 — Footer double-print eliminated**
+- `addPageFooter()` no longer prints `| Page N` — the brand stamp `Leebartea | v3.0.0` is now printed at `footY + 3.5` (3.5mm below guidance text), keeping both footer elements on separate Y coordinates
+- Post-build loop white-rect repositioned to `pageH - 9` (height 4mm) — sits entirely below the guidance text baseline, no overlap
+- Post-build loop prints `Leebartea | v3.0.0 | Page N of M` at `pageH - 6.5`, replacing only the brand stamp row
+
+**Issue #A5 — Header company-name duplication suppressed**
+- When `proposalContext.companyName` is not set, Row 1 of the page header is now silent — the full subtitle + ref + date on Row 2 becomes the sole header line
+- When company name IS set, Row 1 shows the company name, Row 2 shows subtitle | ref | date (unchanged)
+
+---
+
+### Hotfix 3 — Finance Double-FX Conversion (commit 1ac47eb — 2026-05-09)
+
+**Finance bug: client-mode values were 1,346× inflated**
+- `calculateCommercialFinanceSummary`: removed `finalQuoteLocal`, `inverterCostLocal`, `batteryCostLocal`, `equipmentSubtotalLocal` (Batch 9 over-correction that pre-converted USD costs to NGN before PDF formatters applied fxRate again)
+- Energy rates (`energyRatePerKWh`, `exportCreditPerKWh`) were already in local currency from the DOM field — now divided by `_financeFxScalar` before math so `annualSavings` is in USD; formatters handle the single conversion to NGN
+- Return object exposes `energyRatePerKWh: energyRateLocalPerKWh` so display labels (which do not re-apply fxRate) still show correct local-currency unit rates
+- Client PDF verified: annual value NGN 888,658/yr (was NGN 1.23 billion), equity NGN 17.7M (was NGN 24.3 billion), O&M NGN 319K/yr (was NGN 438M/yr)
+
+---
+
 ### Batch 14 — Advanced Field Disclosure + Section Reorder + Tablet Layout (commit abc7c21 — 2026-05-07)
 
 **UX-D — Collapse rarely-used fields**

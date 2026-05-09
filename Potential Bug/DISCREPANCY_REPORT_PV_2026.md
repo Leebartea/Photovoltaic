@@ -43,6 +43,31 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 | 2026-05-07 | Batch 12 | UX-H1 (scoped), UX-C | 56393c2 |
 | 2026-05-07 | Batch 13 | UX-H2 (autosave silent restore, debounce) | 9912003 |
 | 2026-05-07 | Batch 14 | UX-D (collapse advanced fields), UX-E (Pricing section reorder), UX-F (tablet layout) | abc7c21 |
+| 2026-05-09 | Hotfix 3 | Finance double-FX in calculateCommercialFinanceSummary (*Local variables removed, energy rates divided by _financeFxScalar) | 1ac47eb |
+| 2026-05-09 | Batch 15A | PDF footer double-print fixed (brand stamp moved to footY+3.5, page stamp to post-build only); header company-name fallback suppressed | 97c5450 |
+
+---
+
+## Audit 2 — Post-fix Runtime Audit (2026-05-09)
+
+PDFs tested: `PV_System_Design_Lagos__Nigeria_2026-05-09 (4).pdf` (client) and `PV_System_Design_Lagos__Nigeria_2026-05-09-2.pdf` (installer), both generated from the live site after all 14 batches + Hotfix 3 deployed.
+
+| # | Title | Severity | Status |
+|---|---|---|---|
+| #A1 | Installer-mode energy-rate clamp yields absurd payback (USD 5/kWh ceiling → 0.3yr payback on $7.7K system) | CRITICAL | Open — Batch 15B |
+| #A2 | PDF footer double-printed every page (original + white-rect override overlap) | CRITICAL | **FIXED — Batch 15A (97c5450)** |
+| #A3 | formatProposalMoney ignores fxRate — HTML finance panel shows USD magnitudes labeled NGN | HIGH | Open — Batch 15B |
+| #A4 | Africa generator_offset rate = USD 0.28/kWh (utility tariff magnitude, not diesel cost) | MEDIUM | Open — Batch 15C |
+| #A5 | PDF header prints company name fallback twice when companyName unset | MEDIUM | **FIXED — Batch 15A (97c5450)** |
+| #A6 | Payment & Acceptance page gated by !includeDetails — suppressed on most client exports | MEDIUM | Open — Batch 15B |
+| #A7 | Mobile "Why this package" popup not full-width at 375px | MEDIUM | Open — Batch 15D |
+| #A8 | Coping Score block printed twice in installer PDF | LOW | Open — Batch 15D |
+| #A9 | Appliance reconciliation "+1 Wh" rounding-noise row not suppressed | LOW | Open — Batch 15D |
+| #A10 | Duplicate hybrid-topology advisory bullet from two list-builders | LOW | Open — Batch 15D |
+| #A11 | "Validation: MEETS requirements" stranded under Auto-Rec row | LOW | Open — Batch 15D |
+| #A12 | SVG system diagram visual verify (installer PDF) | INFO | Needs runtime check |
+| #A13 | MPPT validation label shown even in auto-sized path | INFO | Open — Batch 15D |
+| Feature | Panel/battery wattage auto-select scales with array size (≥5kWp → 550–600Wp, small → 100–200Wp) | Enhancement | Open — needs Opus dive |
 
 ---
 
