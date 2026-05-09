@@ -161,6 +161,25 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 15B — Finance Rate Clamp, HTML Finance Panel FX, Acceptance Page Gate (commit ce04338 — 2026-05-09)
+
+**Issue #A1 — Installer-mode rate clamp corrected**
+- `parseFinanceRate` energy rate ceiling lowered from `Math.max(5, 5 * fxScalar)` to `Math.max(1.0, 1.0 * fxScalar)` — cap is now USD 1.0/kWh in installer mode (vs the previous USD 5.0/kWh ceiling that produced ~0.3yr payback on a $7.7K system)
+- Export credit ceiling lowered from `Math.max(2, 2 * fxScalar)` to `Math.max(0.5, 0.5 * fxScalar)`
+- In client mode the ceilings scale proportionally (e.g., ~1,346 NGN/kWh for energy), remaining above any realistic real-world tariff
+
+**Issue #A3 — `formatProposalMoney` now applies fxRate**
+- Single-line fix: `converted = Math.round(numeric)` → `Math.round(numeric * (Number(fxRate) > 0 ? Number(fxRate) : 1))`
+- Body is now semantically identical to `formatCommercialMoney`; all existing call sites already pass the correct `fxRate` argument
+- HTML finance panel (`renderCommercialFinancePanel`) now shows correct NGN magnitudes in client mode; was showing USD-magnitude values with NGN label
+
+**Issue #A6 — Payment & Acceptance page now always shows in client mode**
+- Gate changed from `if (clientExport && commercial?.paymentPlan)` to `if (audienceMode === 'client' && commercial?.paymentPlan)`
+- `clientExport` was defined as `audienceMode === 'client' && !includeDetails`; page was suppressed when client user also selected full-detail export
+- `audienceMode` already in scope at insertion point; `clientExport` uses in other blocks (title, header, footer, file prefix) left untouched
+
+---
+
 ### Batch 15A — PDF Footer + Header Rendering Fixes (commit 97c5450 — 2026-05-09)
 
 **Issue #A2 — Footer double-print eliminated**
