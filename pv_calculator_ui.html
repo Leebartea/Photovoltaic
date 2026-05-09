@@ -35636,8 +35636,8 @@ const PVCalculator = {
             marginPct: parseFloat(document.getElementById('proposalMarginPct')?.value) || 12,
             taxPct: parseFloat(document.getElementById('proposalTaxPct')?.value) || 0,
             financeValueBasis: document.getElementById('financeValueBasis')?.value || regionDefaults.financeMode || 'blended_site_energy',
-            energyRatePerKWh: parseFinanceRate('financeEnergyRatePerKWh', regionDefaults.energyRatePerKWh || 0.18, { min: 0.01, max: Math.max(5, 5 * fxScalar) }),
-            exportCreditPerKWh: parseFinanceRate('financeExportCreditPerKWh', regionDefaults.exportCreditPerKWh || 0, { min: 0, max: Math.max(2, 2 * fxScalar) }),
+            energyRatePerKWh: parseFinanceRate('financeEnergyRatePerKWh', regionDefaults.energyRatePerKWh || 0.18, { min: 0.01, max: Math.max(1.0, 1.0 * fxScalar) }),
+            exportCreditPerKWh: parseFinanceRate('financeExportCreditPerKWh', regionDefaults.exportCreditPerKWh || 0, { min: 0, max: Math.max(0.5, 0.5 * fxScalar) }),
             operatingDaysPerWeek: parseFinanceInteger('financeOperatingDaysPerWeek', scheduleDays, { min: 1, max: 7 }),
             annualEscalationPct: parseFinanceRate('financeAnnualEscalationPct', regionDefaults.annualEscalationPct || 4, { min: 0, max: 25 }),
             annualMaintenancePct: parseFinanceRate('financeAnnualMaintenancePct', regionDefaults.annualMaintenancePct || DEFAULTS.PROPOSAL_PRICING.lifecycleDefaults.annualMaintenancePct || 1.5, { min: 0, max: 15 }),
@@ -35769,7 +35769,7 @@ const PVCalculator = {
      */
     formatProposalMoney(value, currencyLabel, fxRate = 1) {
         const numeric = Number.isFinite(value) ? value : 0;
-        const converted = Math.round(numeric);
+        const converted = Math.round(numeric * (Number(fxRate) > 0 ? Number(fxRate) : 1));
         return `${currencyLabel} ${converted.toLocaleString(this.getDisplayLocale())}`;
     },
 
@@ -39783,7 +39783,7 @@ const PVCalculator = {
 
             } // end includeDetails
 
-            if (clientExport && commercial?.paymentPlan) {
+            if (audienceMode === 'client' && commercial?.paymentPlan) {
                 newPage();
                 sectionTitle('Payment Schedule & Acceptance');
                 y += 2;
