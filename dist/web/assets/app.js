@@ -31203,7 +31203,7 @@ const PVCalculator = {
                 doc.setFontSize(8);
                 setColor(MUTED);
                 doc.setFont('helvetica', 'normal');
-                doc.text(proposalContext.companyName || headerSubtitle, mL + 30, 10);
+                if (proposalContext.companyName) doc.text(proposalContext.companyName, mL + 30, 10);
                 doc.setFontSize(7);
                 doc.text([(brandedExportEnabled && brandedHeaderTagline) ? brandedHeaderTagline.slice(0, 70) : headerSubtitle, proposalContext.quoteReference ? `Ref ${proposalContext.quoteReference}` : null, dateStr].filter(Boolean).join('  |  '), mL + 30, 14.5);
                 if (brandedExportEnabled) {
@@ -31236,7 +31236,7 @@ const PVCalculator = {
                 doc.setFont('helvetica', 'italic');
                 setColor(MUTED);
                 doc.text('Guidance only — real performance varies (dust, shading, temperature). Professional installation required for safety.', mL, footY);
-                doc.text(`${brandedExportEnabled ? (proposalContext.companyName || 'Branded export') : 'Leebartea'}${brandedExportEnabled && brandedFooterNote ? `  |  ${brandedFooterNote.slice(0, 34)}` : ''}  |  v3.0.0  |  Page ${pageNum}`, pageW - mR, footY, { align: 'right' });
+                doc.text(`${brandedExportEnabled ? (proposalContext.companyName || 'Branded export') : 'Leebartea'}${brandedExportEnabled && brandedFooterNote ? `  |  ${brandedFooterNote.slice(0, 34)}` : ''}  |  v3.0.0`, pageW - mR, footY + 3.5, { align: 'right' });
             }
 
             function newPage() {
@@ -32900,11 +32900,10 @@ const PVCalculator = {
                 doc.setPage(i);
                 doc.setFontSize(6.5);
                 doc.setFont('helvetica', 'italic');
-                // Overwrite the page number area with white rect first
                 doc.setFillColor(255, 255, 255);
-                doc.rect(pageW - mR - 50, pageH - 14, 52, 8, 'F');
+                doc.rect(pageW - mR - 62, pageH - 9, 64, 4, 'F');
                 doc.setTextColor(148, 163, 184);
-                doc.text(`Leebartea  |  v3.0.0  |  Page ${i} of ${totalPages}`, pageW - mR, pageH - 10, { align: 'right' });
+                doc.text(`Leebartea  |  v3.0.0  |  Page ${i} of ${totalPages}`, pageW - mR, pageH - 6.5, { align: 'right' });
             }
 
             // Save
