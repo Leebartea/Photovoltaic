@@ -35828,14 +35828,15 @@ const PVCalculator = {
             : 0;
         const annualSelfConsumedKWh = roundValue((selfConsumedWh / 1000) * operatingDaysPerYear, 1);
         const annualExportKWh = roundValue((exportWh / 1000) * operatingDaysPerYear, 1);
-        const energyRatePerKWh = Math.max(0.01, Number(inputs.energyRatePerKWh) || 0.18);
-        const exportCreditPerKWh = Math.max(0, Number(inputs.exportCreditPerKWh) || 0);
+        const energyRateLocalPerKWh = Math.max(0.01, Number(inputs.energyRatePerKWh) || 0.18);
+        const exportCreditLocalPerKWh = Math.max(0, Number(inputs.exportCreditPerKWh) || 0);
+        const _financeFxScalar = Number(inputs.effectiveFxRate) > 0 ? Number(inputs.effectiveFxRate) : 1;
+        const energyRatePerKWh = energyRateLocalPerKWh / _financeFxScalar;
+        const exportCreditPerKWh = exportCreditLocalPerKWh / _financeFxScalar;
         const annualEscalationPct = Math.min(25, Math.max(0, Number(inputs.annualEscalationPct) || 0));
         const annualSavings = roundValue((annualSelfConsumedKWh * energyRatePerKWh) + (annualExportKWh * exportCreditPerKWh), 2);
         const finalQuote = totals.finalQuote || 0;
-        const fxRate = Number(inputs.effectiveFxRate) > 0 ? Number(inputs.effectiveFxRate) : 1;
-        const finalQuoteLocal = roundValue(finalQuote * fxRate, 2);
-        const simplePaybackYears = annualSavings > 0 ? roundValue(finalQuoteLocal / annualSavings, 2) : null;
+        const simplePaybackYears = annualSavings > 0 ? roundValue(finalQuote / annualSavings, 2) : null;
         const lifecycleDefaults = DEFAULTS.PROPOSAL_PRICING.lifecycleDefaults || {};
         const annualMaintenancePct = Math.max(0, Number(inputs.annualMaintenancePct) || 0);
         const inverterRefreshPct = Math.max(0, Number(inputs.inverterRefreshPct) || 0);
@@ -35850,12 +35851,9 @@ const PVCalculator = {
         const inverterCost = Math.max(0, Number(totals.inverterCost) || 0);
         const batteryCost = Math.max(0, Number(totals.batteryCost) || 0);
         const equipmentSubtotal = Math.max(0, Number(totals.equipmentSubtotal) || 0);
-        const inverterCostLocal = roundValue(inverterCost * fxRate, 2);
-        const batteryCostLocal = roundValue(batteryCost * fxRate, 2);
-        const equipmentSubtotalLocal = roundValue(equipmentSubtotal * fxRate, 2);
-        const annualMaintenanceCost = roundValue(finalQuoteLocal * (annualMaintenancePct / 100), 2);
-        const inverterRefreshReserve = roundValue(inverterCostLocal * (inverterRefreshPct / 100), 2);
-        const batteryRefreshReserve = roundValue(batteryCostLocal * (batteryRefreshPct / 100), 2);
+        const annualMaintenanceCost = roundValue(finalQuote * (annualMaintenancePct / 100), 2);
+        const inverterRefreshReserve = roundValue(inverterCost * (inverterRefreshPct / 100), 2);
+        const batteryRefreshReserve = roundValue(batteryCost * (batteryRefreshPct / 100), 2);
         const annualValueForYear = (year) => annualSavings * Math.pow(1 + (annualEscalationPct / 100), year - 1);
         const sumYearValue = (years) => {
             let total = 0;
@@ -35866,8 +35864,8 @@ const PVCalculator = {
         };
         const fiveYearGrossValue = sumYearValue(5);
         const tenYearGrossValue = sumYearValue(10);
-        const fiveYearNetAfterQuote = roundValue(fiveYearGrossValue - finalQuoteLocal, 2);
-        const tenYearNetAfterQuote = roundValue(tenYearGrossValue - finalQuoteLocal, 2);
+        const fiveYearNetAfterQuote = roundValue(fiveYearGrossValue - finalQuote, 2);
+        const tenYearNetAfterQuote = roundValue(tenYearGrossValue - finalQuote, 2);
         const sumLifecycleCosts = (years) => {
             let total = annualMaintenanceCost * years;
             if (inverterRefreshYear <= years) total += inverterRefreshReserve;
@@ -35876,12 +35874,12 @@ const PVCalculator = {
         };
         const fiveYearLifecycleCost = sumLifecycleCosts(5);
         const tenYearLifecycleCost = sumLifecycleCosts(10);
-        const fiveYearNetAfterLifecycle = roundValue(fiveYearGrossValue - finalQuoteLocal - fiveYearLifecycleCost, 2);
-        const tenYearNetAfterLifecycle = roundValue(tenYearGrossValue - finalQuoteLocal - tenYearLifecycleCost, 2);
-        const taxBenefitAmount = roundValue(finalQuoteLocal * (taxBenefitPct / 100), 2);
-        const financedAmount = roundValue(finalQuoteLocal * (debtSharePct / 100), 2);
-        const equityContribution = roundValue(Math.max(0, finalQuoteLocal - financedAmount), 2);
-        const residualValueAmount = roundValue(equipmentSubtotalLocal * (residualValuePct / 100), 2);
+        const fiveYearNetAfterLifecycle = roundValue(fiveYearGrossValue - finalQuote - fiveYearLifecycleCost, 2);
+        const tenYearNetAfterLifecycle = roundValue(tenYearGrossValue - finalQuote - tenYearLifecycleCost, 2);
+        const taxBenefitAmount = roundValue(finalQuote * (taxBenefitPct / 100), 2);
+        const financedAmount = roundValue(finalQuote * (debtSharePct / 100), 2);
+        const equityContribution = roundValue(Math.max(0, finalQuote - financedAmount), 2);
+        const residualValueAmount = roundValue(equipmentSubtotal * (residualValuePct / 100), 2);
         let annualDebtService = 0;
         if (financedAmount > 0) {
             if (debtAprPct > 0) {
@@ -35904,8 +35902,8 @@ const PVCalculator = {
         const tenYearDebtService = roundValue(annualDebtService * debtYearsInTen, 2);
         const fiveYearNetAfterFinance = roundValue(fiveYearGrossValue - fiveYearLifecycleCost - equityContribution - fiveYearDebtService + taxBenefitAmount, 2);
         const tenYearNetAfterFinance = roundValue(tenYearGrossValue - tenYearLifecycleCost - equityContribution - tenYearDebtService + taxBenefitAmount + residualValueAmount, 2);
-        const cashFiveYearNet = roundValue(fiveYearGrossValue - finalQuoteLocal - fiveYearLifecycleCost + taxBenefitAmount, 2);
-        const cashTenYearNet = roundValue(tenYearGrossValue - finalQuoteLocal - tenYearLifecycleCost + taxBenefitAmount + residualValueAmount, 2);
+        const cashFiveYearNet = roundValue(fiveYearGrossValue - finalQuote - fiveYearLifecycleCost + taxBenefitAmount, 2);
+        const cashTenYearNet = roundValue(tenYearGrossValue - finalQuote - tenYearLifecycleCost + taxBenefitAmount + residualValueAmount, 2);
         const loadOffsetPct = dailyWh > 0 ? roundValue((selfConsumedWh / dailyWh) * 100, 1) : 0;
         const onsiteSolarUsePct = pvDailyWh > 0 ? roundValue((capturedSolarWh / pvDailyWh) * 100, 1) : 0;
         const exportPct = pvDailyWh > 0 ? roundValue((exportWh / pvDailyWh) * 100, 1) : 0;
@@ -36104,8 +36102,8 @@ const PVCalculator = {
             batteryRefreshReserve,
             operatingDaysPerYear,
             operatingDaysPerWeek,
-            energyRatePerKWh,
-            exportCreditPerKWh,
+            energyRatePerKWh: energyRateLocalPerKWh,
+            exportCreditPerKWh: exportCreditLocalPerKWh,
             annualEscalationPct,
             coverageMetrics: {
                 loadOffsetPct,
