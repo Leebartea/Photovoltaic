@@ -48,6 +48,7 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 | 2026-05-09 | Batch 15B | #A1 (rate clamp ceiling 5→1.0 USD/kWh, export credit 2→0.5 USD/kWh); #A3 (formatProposalMoney now applies fxRate identical to formatCommercialMoney); #A6 (Payment & Acceptance page decoupled from clientExport flag — now gates on audienceMode==='client' directly) | ce04338 |
 | 2026-05-09 | Batch 15C | #A4 (Africa generator_offset rate corrected 0.28→1.00 USD/kWh; per-basis rate fields added: gridTariffRatePerKWhUSD 0.22, blendedRatePerKWhUSD 0.55; applyCommercialDefaultsByLocation now auto-fills basis-matched rate; parseFinanceRate clamp raised 1.0→2.5 USD/kWh) | 1b7ed32 |
 | 2026-05-14 | Batch 15D | #A7 (mobile hero @media 480px stacks to 1-column); #A8 (coping score duplicate block deleted from Page 3); #A9 (rounding-noise margin row threshold raised to >2 Wh); #A10 (subsumed by #A11+#A13); #A11 (Inverter Validation: label added at mL); #A13 (MPPT Validation row gated to usesStandaloneMPPT) | 00c1a70 |
+| 2026-05-14 | Batch 15E | Verification only — no code changes. #A8/#A9/#A13 confirmed via source + dist audit. #A12 SVG verified functional for 24V Off-Grid and 48V Hybrid cases. New issues #A14/#A15/#A16 logged from engineering audit of May 14 PDFs. | — |
 
 ---
 
@@ -68,21 +69,92 @@ PDFs tested: `PV_System_Design_Lagos__Nigeria_2026-05-09 (4).pdf` (client) and `
 | #A9 | Appliance reconciliation "+1 Wh" rounding-noise row not suppressed | LOW | **FIXED — Batch 15D (00c1a70)** |
 | #A10 | Duplicate hybrid-topology advisory bullet from two list-builders | LOW | **FIXED — Batch 15D (00c1a70) — subsumed by #A11+#A13** |
 | #A11 | "Validation: MEETS requirements" stranded under Auto-Rec row | LOW | **FIXED — Batch 15D (00c1a70)** |
-| #A12 | SVG system diagram visual verify (installer PDF) | INFO | Needs runtime check |
+| #A12 | SVG system diagram visual verify (installer PDF) | INFO | **VERIFIED — Batch 15E** — SVG functional for Off-Grid (24V/800Ah) and Hybrid (48V/280Ah). Silent text-fallback fires when Overview tab DOM not rendered before export. No structural rendering error found. |
 | #A13 | MPPT validation label shown even in auto-sized path | INFO | **FIXED — Batch 15D (00c1a70)** |
+| #A14 | BatterySizingEngine missing continuous-discharge current check — surge check exists but sustained draw (e.g. 177A continuous vs 140A 0.5C limit) is not warned | MEDIUM | **Open — Batch 16A** |
+| #A15 | Disclaimer guard edge case: client mode + includeDetails=true still shows MANAGED PRACTICAL DISCLAIMER (gate is `!clientExport` not `audienceMode !== 'client'`) | LOW | **Open — Batch 16A** |
+| #A16 | Confidence score (e.g. 36% Stress) not itemised in PDF — installers cannot audit which penalty components drove the score | INFO | **Open — Batch 16B** |
+| #R1 | Product policy: 24V bus not auto-escalated to 48V when bank Ah > ~500Ah — produces unusually large-format cells (400Ah) and borderline DC current paths | INFO — Product policy | **Open — Opus design dive before implementation** |
 | Feature | Panel/battery wattage auto-select scales with array size (≥5kWp → 550–600Wp, small → 100–200Wp) | Enhancement | Open — needs Opus dive |
 
 ---
 
-## Severity Summary Table
+## Severity Summary Table (updated after Batch 15E, 2026-05-14)
 
-| Severity | Open | Fixed |
+| Severity | Open | Fixed / Verified |
 |---|---|---|
-| CRITICAL | 0 | 6 (#1, #2, #3, #4, #5, #6) |
-| MEDIUM | 1 | 7 (#7, #8, #9, #10, #11, #12, #19, #20, #21) |
-| LOW | 0 | 3 (#13, #14, #15) |
-| INFO | 3 | — (#16, #17, #18 remain open) |
-| POST-AUDIT (new) | 0 open | 6 fixed (#19, #20, #21, #22, #23, #24) |
+| CRITICAL | 0 | 6 (#1–6 original + #A1–A3 Audit 2) |
+| MEDIUM | 2 (#A14, #A14-battery continuous check; one residual from original audit) | All others fixed |
+| LOW | 1 (#A15 disclaimer edge case) | All others fixed |
+| INFO | 3 (#A16, #R1, panel-wattage feature) | #A12 verified |
+| POST-AUDIT (Audit 2) | 0 open | #A1–A13 all fixed or verified |
+
+---
+
+## Batch 15E — Engineering Verification Findings (2026-05-14)
+
+PDFs audited: `Potential Bug/May 14th/Installer mode/PV_System_Design_Lagos__Nigeria_2026-05-14.pdf` (Off-Grid, 17pp) and `Potential Bug/May 14th/client mode/PV_System_Design_Lagos__Nigeria_2026-05-14.pdf` (Hybrid, 17pp).
+
+### #A12 — SVG System Diagram — VERIFIED
+
+- SVG renderer at `30-controller.js:24100+` confirmed functional for both Off-Grid (24V/800Ah/3000VA) and Hybrid (48V/280Ah/8000VA) system types.
+- 24V case: 8S2P = 16 cells → compact layout, text readable, no structural rendering error.
+- 48V case: 16S1P = 16 cells → compact layout, no structural rendering error.
+- **Known risk:** If `exportPDF()` is called before the Overview tab DOM has been rendered, `document.querySelector('#tab-overview svg')` returns `null` and the code silently falls back to a text-based diagram. No user-visible warning is shown. Recommend a forced pre-render call before SVG capture, or an explicit fallback message.
+
+### #A14 — Missing Continuous-Discharge Current Check (MEDIUM — Safety Relevant)
+
+**Section affected:** Battery Sizing Engine
+**Source:** `src/scripts/modules/10-engines.ts` lines 1857–1888 (`BatterySizingEngine.calculate`)
+**Severity:** MEDIUM
+**Status:** Open — Batch 16A
+
+The engine checks whether **surge** DC current can be sustained (1.5× margin), but does not verify whether **continuous** DC current exceeds the battery's 0.5C sustained discharge limit.
+
+Observed in Hybrid PDF: 280Ah LiFePO4 bank at 48V, 8000VA inverter.
+- Continuous DC load = 8000W ÷ 48V ÷ 0.94 ≈ **177A**
+- Battery 0.5C continuous limit = 280Ah × 0.5 = **140A**
+- Gap: 177A > 140A — engine does not warn
+
+**Fix:** Add continuous check after the surge check at line 1888:
+```ts
+const continuousLoadCurrent = inverterReq.dcInputCurrentContinuous;
+if (continuousLoadCurrent > totalCapacityAh * specs.maxDischargeRate) {
+    warnings.push(
+        `Continuous DC current ${Math.round(continuousLoadCurrent)}A exceeds battery 0.5C sustained limit of ${Math.round(totalCapacityAh * specs.maxDischargeRate)}A. Increase bank size or reduce inverter VA.`
+    );
+}
+```
+
+### #A15 — Disclaimer Guard Edge Case (LOW)
+
+**Section affected:** PDF Export — MANAGED PRACTICAL DISCLAIMER
+**Source:** `src/scripts/modules/30-controller.js` line 21313
+**Severity:** LOW
+**Status:** Open — Batch 16A
+
+Current gate: `if (pdfManaged && !clientExport)` where `clientExport = audienceMode === 'client' && !includeDetails`.
+When `audienceMode === 'client'` AND `includeDetails === true` (checkbox ticked), `clientExport = false` → disclaimer renders.
+
+A client who receives a "full detail" export still sees the MANAGED PRACTICAL DISCLAIMER which is installer-internal language.
+
+**Fix:** Change gate from `!clientExport` to `audienceMode !== 'client'`:
+```js
+if (pdfManaged && audienceMode !== 'client') {
+```
+
+### #A16 — Confidence Score Not Auditable from PDF (INFO)
+
+**Section affected:** PDF cover page confidence bar
+**Source:** `src/scripts/modules/25-controller-payloads.ts` lines 47–117 (`computeConfidenceMetrics`)
+**Severity:** INFO
+**Status:** Open — Batch 16B
+
+The confidence score (e.g. "36% — Stress") is a composite of architecture penalties, strategy penalties, and managed-mode deviation. The PDF shows only the final score — installers in the field cannot identify which component drove it down without access to the source code.
+
+May 14 PDFs show 36% (installer, Off-Grid) and 23% (client, Hybrid). Opus audit confirmed these are not calculation errors — they reflect intent misalignment (Backup-Only vs Battery-Dominant Off-Grid) and architecture/throughput penalties, compounded with 0% proposal readiness.
+
+**Fix:** Add a compact penalty-breakdown block under the confidence bar on the PDF cover page, listing the contributing penalty points (architecture, strategy, managed-mode deviation) in 7pt muted text. This makes the score auditable and defensible without changing the formula.
 
 **Batch 3 FX gap — RESOLVED (Batch 4):** All `formatProposalMoney` and `formatCommercialUnitRate` calls in `renderCommercialFinancePanel` now pass `fxRate`. All three call sites pass `fxRate: commercial.inputs.effectiveFxRate || 1`. Direct calls at `capitalStackSummary` and `comparisonDetail` also updated.
 

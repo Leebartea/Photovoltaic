@@ -161,6 +161,30 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 15E — Engineering Verification Audit (2026-05-14, no code commit)
+
+Verification-only batch using May 14 PDFs (Off-Grid installer + Hybrid client modes, 17 pages each). No code changes in this batch.
+
+**All Batch 15D fixes confirmed by source + dist audit:**
+- #A8 (coping score deduplication): PASS — one occurrence confirmed in `30-controller.js`
+- #A9 (rounding-noise threshold): PASS — `Math.abs(marginWh) > 2` confirmed in place
+- #A13 (MPPT gate): PASS — gate tied to `systemType === 'off_grid'` confirmed; Off-Grid PDF shows row, Hybrid PDF correctly omits it
+
+**#A12 SVG diagram verified:**
+- Functional for both 24V/800Ah Off-Grid and 48V/280Ah Hybrid configurations
+- 8S2P/16-cell and 16S1P/16-cell layouts both render in compact mode without structural errors
+- Known risk documented: silent text-fallback fires when Overview tab DOM not rendered before export
+
+**New engineering issues found and logged:**
+- **#A14 (MEDIUM/Safety):** `BatterySizingEngine` checks surge current but not continuous DC current vs battery 0.5C sustained limit — 280Ah at 48V with 8000VA inverter pulls 177A continuous vs 140A 0.5C limit without a warning
+- **#A15 (LOW):** Disclaimer guard edge case — `client mode + includeDetails=true` still shows MANAGED PRACTICAL DISCLAIMER; gate needs to change to `audienceMode !== 'client'`
+- **#A16 (INFO):** Confidence score (36%, 23% Stress) not broken down in PDF — penalty components not visible to installer in the field
+
+**Product policy recommendation logged:**
+- **#R1:** 24V bus should soft-recommend escalation to 48V when battery bank Ah > ~500Ah — avoids unusually large-format cells (400Ah) and borderline continuous DC current paths (125–133A on 24V systems)
+
+---
+
 ### Batch 15D — Mobile Hero Stack, PDF Polish (commit 00c1a70 — 2026-05-14)
 
 **Issue #A7 — Mobile "Why this package" block now stacks full-width at 375px**

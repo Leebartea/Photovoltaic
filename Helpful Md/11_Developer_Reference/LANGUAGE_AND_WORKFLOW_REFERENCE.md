@@ -975,6 +975,102 @@ If you are studying web development, here is the order to learn these concepts:
 
 ---
 
+---
+
+## 17. Engineering Concepts Specific to This Codebase
+
+### Inverter Technology and Surge Absorption
+
+The field `Inverter Technology` (in System Configuration → Engineering Overrides)
+controls the surge multiplier used throughout the calculation engines.
+
+**Why this matters (the physics):**
+
+When a motor starts (direct-on-line / DOL), it draws 3–8× its rated current for
+a fraction of a second. This is called *inrush current* or *starting surge*.
+The inverter must survive this without tripping.
+
+**Transformer-based (low-frequency / LF) inverter — surge multiplier 2.5×:**
+- Contains a heavy iron-core toroidal transformer between the DC battery and the AC output stage.
+- The transformer's inductance stores magnetic energy (`E = ½ × L × I²`) and releases it during the surge, acting like a short-term energy buffer.
+- The copper windings have thermal mass that absorbs the brief I²R heat spike without triggering protection.
+- Result: the inverter can sustain 2.5× its rated VA for ~1–2 seconds, enough for most DOL motor starts.
+- Trade-off: heavier, bulkier, more expensive, slightly lower efficiency at light loads.
+
+**Transformerless (high-frequency / HF) inverter — surge multiplier 2.0×:**
+- Replaces the iron-core transformer with a smaller DC-link capacitor bank and a high-frequency switching stage (~20–100 kHz).
+- The capacitor bank delivers burst current but has less stored energy than a transformer.
+- When a heavy motor starts, the DC bus voltage sags briefly; if too deep, the protection circuit trips the inverter.
+- Result: tighter 2.0× surge rating, stricter overload window.
+- Trade-off: lighter, more compact, higher efficiency at full load, lower cost.
+
+**In the engine** (`10-engines.ts` — InverterSizingEngine):
+```
+surgeCap_VA = recommendedSizeVA × inverterSurgeMultiplier
+if surgeCap_VA < surgeRequired × 1.10:
+    auto-promote to next catalog tier
+    set surgePromotionApplied = true
+```
+The 10% headroom (`× 1.10`) accounts for real-world variability in motor starting
+current — motors do not start identically every time.
+
+### DC Bus Voltage and its Engineering Consequences
+
+The DC bus voltage (24V or 48V) is a fundamental system design choice that
+affects everything:
+
+| Quantity | 24V example | 48V example | Formula |
+|---------|------------|------------|---------|
+| Continuous DC current | 133A (3kVA / 24V / 0.94) | 89A (4kVA / 48V / 0.94) | `I = VA / V / η` |
+| Cable cross-section | ~50mm² | ~25mm² | Larger current = larger cable |
+| Battery capacity | 800Ah (19.2kWh at 24V) | 400Ah (19.2kWh at 48V) | `Wh = Ah × V` |
+| BMS rating needed | 200A+ | 100A+ | Must exceed peak DC current |
+
+**Rule of thumb:** For systems above ~5kWh or ~3kVA inverter, 48V is almost
+always the better choice. 24V is practical for small residential systems
+(1–3kVA, up to ~5kWh). The calculator currently does not enforce this
+recommendation automatically — that is a planned enhancement (#R1).
+
+### Confidence Score Formula
+
+The confidence score on the PDF cover page is computed by
+`computeConfidenceMetrics()` in `25-controller-payloads.ts`:
+
+```
+score = max(0, 100 - weightedDeviation - architecturePenalty - strategyPenalty)
+
+weightedDeviation = (invDev × 0.40) + (battDev × 0.35) + (pvDev × 0.25)
+  — only non-zero when user has overridden the auto-sizing
+  
+architecturePenalty:
+  architecture.status === 'warn' → +5
+  architecture.status === 'fail' → +12
+  throughput === 'warn' → +4
+  throughput === 'fail' → +10
+  mppt grouping === 'warn' → +2
+
+strategyPenalty:
+  strategy.status === 'warn' → +4
+  strategy.status === 'fail' → +10
+  intent not aligned → +3
+  system type not aligned → +3
+```
+
+**Score buckets:**
+- 85–100: High confidence (green)
+- 65–84: Moderate (blue)
+- 45–64: Managed (amber)
+- 0–44: **Stress** (red)
+
+A score of 36% (as seen in the May 14 installer PDF) means the system penalties
+total ~64 points. This typically results from: `architecture fail (+12) + throughput
+warn (+4) + strategy warn (+4) + intent misalignment (+3) + managed-mode
+deviation` all compounding. It does NOT mean the system is physically dangerous
+— it means the commercial story and engineering posture need to be tightened
+before the PDF becomes a credible client-ready proposal.
+
+---
+
 ## Languages Summary Table
 
 | Language / Technology | Role | Where in Project |

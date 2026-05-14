@@ -1451,16 +1451,68 @@ RED:    ratio > 1.00  (upgrade required)
 ### Inverter Technology Surge Tolerance
 
 ```
-InverterSurgeCapacity = InverterVA × SurgeMultiplier
+InverterSurgeCapacity_VA = InverterVA × SurgeMultiplier
 ```
 
 | Technology | Surge Multiplier | Description |
 |-----------|-----------------|-------------|
 | Unknown / Default | 2.0x | Conservative assumption |
-| Transformer-based / LF | **2.5x** | Better surge handling |
-| Transformerless / HF | 2.0x | Standard surge handling |
+| Transformer-based / LF | **2.5x** | Better surge handling due to transformer mass |
+| Transformerless / HF | 2.0x | Standard surge handling; tighter overload window |
 
 Selecting inverter technology auto-sets the surge multiplier field in the UI.
+
+#### Engineering basis — why transformer-based inverters absorb surge better
+
+When a motor starts (DOL / direct-on-line), it draws **3–8× its rated current** for 0.1–2 seconds. Two physics mechanisms determine how well an inverter survives this:
+
+1. **Transformer core energy storage (LF/transformer-based):**
+   - The iron-core toroidal transformer acts as an electromagnetic flywheel.
+   - It stores magnetic energy (`E = ½ × L × I²`) and releases it to the load during the surge transient, buffering the instantaneous power demand seen by the switching stage.
+   - The copper windings have thermal mass that absorbs I²R heating over the short surge window without immediately tripping thermal protection.
+   - This is why LF inverters are rated at **2.5× surge** — the transformer handles the brief overload mechanically.
+
+2. **Capacitor bank (HF/transformerless):**
+   - HF inverters use a smaller DC-link capacitor bank instead of a transformer.
+   - The capacitor bank can deliver burst current, but it has less stored energy and charges/discharges faster.
+   - When a heavy motor starts, the capacitor bank partially depletes, the DC bus voltage sags briefly, and the protection circuit triggers if the sag is too deep.
+   - This is why HF inverters are rated at only **2.0× surge** — the electronic protection is stricter.
+
+**Practical implication for motor-heavy loads (pump, compressor, welder):**
+- If the motor's starting VA × surge factor > `InverterVA × SurgeMultiplier`, the inverter will trip or shut down.
+- For a 1500W (DOL) pump: starting surge ≈ 1500W × 6.0 surge factor = 9,000VA surge.
+- A 3kVA LF inverter handles: 3000 × 2.5 = 7,500VA — **not enough**, the inverter trips.
+- A 5kVA LF inverter handles: 5000 × 2.5 = 12,500VA — **safe margin**.
+
+**Engine implementation:** `InverterSizingEngine` checks `surgeCap_VA = recommendedSizeVA × inverterSurgeMultiplier ≥ surgeRequired × 1.10` (10% headroom). If insufficient, it auto-promotes to the next catalog tier and sets `surgePromotionApplied = true`.
+
+---
+
+### Battery Continuous Discharge Check (IMPORTANT — Missing from Engine as of Batch 15E)
+
+**Background:** LiFePO4 cells are typically rated at 0.5C continuous discharge. A 280Ah bank has a continuous limit of **140A**. A 300Ah bank has 150A. Exceeding this continuously degrades cells faster than the cycle-life rating assumes.
+
+```
+ContinuousLoadCurrentDC_A = InverterVA / BusDCVoltage_V / InverterEfficiency(~0.94)
+
+BatteryMaxContinuousCurrent_A = TotalCapacityAh × MaxDischargeRate_C
+  where MaxDischargeRate_C = 0.5 for LiFePO4 (see DEFAULTS.BATTERY_SPECS.lifepo4.maxDischargeRate)
+
+SAFE if: ContinuousLoadCurrentDC_A ≤ BatteryMaxContinuousCurrent_A
+WARNING if: ContinuousLoadCurrentDC_A > BatteryMaxContinuousCurrent_A
+```
+
+**Worked example (Client PDF May 14):**
+- 8000VA inverter, 48V bus, LiFePO4: `ContinuousLoadCurrentDC = 8000 / 48 / 0.94 ≈ 177A`
+- 280Ah bank: `MaxContinuous = 280 × 0.5 = 140A`
+- 177A > 140A → **ENGINE SHOULD WARN** but currently does not (#A14)
+
+**Worked example (Installer PDF May 14):**
+- 3000VA inverter, 24V bus, LiFePO4: `ContinuousLoadCurrentDC = 3000 / 24 / 0.94 ≈ 133A`
+- 800Ah bank: `MaxContinuous = 800 × 0.5 = 400A`
+- 133A < 400A → **SAFE** (large bank absorbs continuous draw comfortably)
+
+This check is slated for **Batch 16A** (`10-engines.ts` BatterySizingEngine around line 1888).
 
 ### Inverter Technology — Output-Layer Rendering
 
