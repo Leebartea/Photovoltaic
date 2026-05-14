@@ -4,183 +4,275 @@
 
 Use this guide when you want to deploy the PV calculator backend on Google Cloud without incurring monthly hosting costs.
 
-This is the modern serverless alternative to Oracle Cloud Always Free. No SSH, no cron setup, no VM to manage. The entire lite backend (payments, user auth, license keys, project sync) fits inside Google's permanent always-free limits at realistic usage levels.
+This is the recommended alternative to Oracle Cloud Always Free. Oracle's free compute shapes have well-documented capacity errors in many regions — provisioning is effectively a lottery. Google Cloud Always Free gives you a **guaranteed always-on free quota**, no SSH, no cron setup, no VM to manage.
+
+The entire backend (entitlement verification, team seats, admin console, audit log, delivery trail) is lite work. It comfortably fits inside Google's permanent free limits at realistic installer-tooling usage levels.
 
 ---
 
-## Can Google Cloud Always Free Power This Backend?
+## Decision: Oracle vs Google Cloud
 
-**Yes — with a light Firestore refactor.**
-
-The current backend (`backend/server.js`) uses SQLite via `node:sqlite` with a persistent host filesystem. Google Cloud Run has no persistent disk, so SQLite cannot be used as-is. The refactor replaces SQLite storage calls with Firestore reads/writes. The Express.js HTTP structure, middleware, and API route logic can stay unchanged.
-
-What requires no change:
-- All PV calculation logic (100% client-side, never touches the backend)
-- PDF generation (client-side)
-- All proposal, sizing, and engineering output
-
-What the backend handles (lite work only):
-- License key issuance and verification
-- Stripe payment webhook processing
-- User account creation and session tokens
-- Team seat management and role enforcement
-- Saved project cloud sync (optional premium feature)
-- PDF delivery audit log
-- Admin console API
-
-All of this fits Google Cloud Always Free.
-
----
-
-## Always-Free Services Used
-
-### Cloud Run
-
-- **Free tier (permanent):** 2 million requests/month, 360,000 CPU-seconds/month, 180,000 GB-seconds/month
-- **What it runs:** The Express.js backend as a container. No persistent disk. No SSH.
-- **Cold starts:** First request after idle takes ~1–3 seconds. Acceptable for backend webhooks and API calls where the user does not notice a half-second delay.
-- **Scales to zero:** No idle cost. Only billed when handling requests.
-
-### Firestore
-
-- **Free tier (permanent):** 1 GB storage, 50,000 document reads/day, 20,000 document writes/day, 20,000 document deletes/day
-- **What it stores:** User accounts, license keys, team seats, saved projects, payment records, audit logs
-- **Replaces:** SQLite in `backend/server.js`
-- **Realistic usage:** 100 active users × 10 API calls/day = 1,000 reads/day — well within 50,000/day limit
-
-### Cloud Functions (alternative to Cloud Run for webhooks)
-
-- **Free tier (permanent):** 2 million invocations/month, 400,000 GB-seconds/month
-- **What it runs:** Stripe payment webhooks, license-generation triggers
-- **Use case:** If you want payment processing fully isolated from the main backend
-
-### Firebase Authentication
-
-- **Free tier (permanent):** 10,000 authentications/month (email/password, Google, magic link)
-- **What it handles:** Installer login, team seat auth, session management
-- **Replaces:** Custom session token logic in the current backend
-
-### Cloud Storage
-
-- **Free tier (permanent):** 5 GB storage, 1 GB egress/month
-- **What it stores:** Backup exports (JSON snapshots of Firestore data), optionally PDF delivery artifacts
-
-### Secret Manager
-
-- **Free tier (permanent):** 6 active secret versions
-- **What it stores:** `STRIPE_SECRET_KEY`, `BACKEND_ACTION_LINK_SECRET`, `BACKEND_ALLOWED_ORIGINS`, `FIREBASE_SERVICE_ACCOUNT`
-
----
-
-## Architecture — Lite Backend on Google Cloud
-
-```
-[Client Browser]
-      |
-      | HTTPS
-      v
-[GitHub Pages / Netlify]          ← Static frontend (free, no change)
-      |
-      | API calls (license, sync, payment webhook)
-      v
-[Cloud Run — Express.js container]
-      |
-      +--→ [Firestore]            ← User data, license keys, seats, audit log
-      |
-      +--→ [Firebase Auth]        ← Session tokens, user identity
-      |
-      +--→ [Secret Manager]       ← API keys, signing secrets
-      |
-      +--→ [Cloud Storage]        ← Backup snapshots
-
-[Stripe]
-      |
-      | Payment webhooks
-      v
-[Cloud Functions or Cloud Run /webhook route]
-      |
-      v
-[Firestore — payment records + license issuance]
-```
-
----
-
-## What Each Backend Route Maps To
-
-| Current Route | Purpose | Google Cloud Implementation |
+| Factor | Oracle Always Free | Google Cloud Always Free |
 |---|---|---|
-| `POST /api/verify-license` | Check if a license key is valid | Cloud Run → Firestore read |
-| `POST /api/issue-license` | Issue license after payment confirmed | Cloud Functions (Stripe webhook) → Firestore write |
-| `POST /api/sync-project` | Save a project to the cloud | Cloud Run → Firestore write |
-| `GET /api/sync-project` | Load a saved project | Cloud Run → Firestore read |
-| `POST /api/team/invite` | Invite a team seat | Cloud Run → Firestore write + Firebase Auth email |
-| `GET /api/admin/licenses` | Admin: list all licenses | Cloud Run → Firestore query (admin-role gate) |
-| `POST /api/stripe/webhook` | Receive Stripe payment events | Cloud Functions → Firestore write |
-| `GET /health` | Health check | Cloud Run → static 200 |
+| Provisioning reliability | Lottery — `out of host capacity` errors common in many regions | Guaranteed — GCP free tier is instant and consistent |
+| VM management | SSH required; nginx, systemd, cron all manual | None — serverless container via Cloud Run |
+| Cold starts | None (always-on VM) | Yes — ~1–3s first request after idle. Acceptable for backend API calls |
+| Storage engine | SQLite (file-based, works as-is) | Firestore (NoSQL) — requires a light adapter refactor |
+| Auth | Roll-your-own session tokens (already implemented in backend) | Firebase Auth available, but current custom session logic can stay |
+| Backup | Custom cron scripts already in deploy/ | Cloud Scheduler + Cloud Storage, or periodic manual export |
+| Signup friction | High — capacity errors, VM provisioning delays, shell setup | Low — Cloud Console account, enable billing, deploy in minutes |
+| Free storage ceiling | ~200 GB block storage (Oracle VM disk) | 1 GB Firestore + 5 GB Cloud Storage |
+| Best for | Lift-and-shift, zero code change, comfortable with SSH | Modern serverless, no server ops, light Firestore refactor |
+
+**Recommendation:** If Oracle provisioning keeps failing in your region, use Google Cloud. The Firestore refactor is about 150 lines of adapter code across the 8 data stores. Everything else stays identical.
 
 ---
 
-## Setup Steps
+## What Stays Client-Side (No Backend Needed)
 
-### 1. Create a Google Cloud Project
+The backend is genuinely lite because 100% of the engineering runs in the browser:
 
-1. Go to [console.cloud.google.com](https://console.cloud.google.com)
-2. Create a new project (e.g., `pv-calculator-backend`)
-3. Enable billing (required even for free tier — Google holds a card but does not charge within free limits)
+- All PV sizing calculations
+- Battery, inverter, PV, cable, protection engine output
+- Commercial finance and ROI advisory
+- PDF generation (jsPDF, fully offline)
+- All proposal output and BOM generation
+- Local Cost Build-Up pricing mode
 
-### 2. Enable APIs
+The backend only handles:
 
-Enable these APIs in the Cloud Console or via CLI:
+- License entitlement verification (who has paid access)
+- Team seat issuance, session, recovery
+- Admin console (license management, delivery trail)
+- Audit log (who accessed what, when)
+- Company profile sync (optional)
+
+---
+
+## The 8 Data Stores and Their Firestore Mapping
+
+The current backend uses flat JSON files (`STORAGE_DRIVER=json`) or SQLite (`STORAGE_DRIVER=sqlite`). On Google Cloud, both are replaced by Firestore collections.
+
+| Data file | Purpose | Firestore collection | Document key |
+|---|---|---|---|
+| `licenses.json` | License entitlement records — who has paid access, expiry, seat count | `licenses` | `{licenseKey}` |
+| `company_profiles.json` | Installer company branding profiles (name, logo URL, contact) | `companyProfiles` | `{installationId}` |
+| `team_handbacks.json` | Pending team handback records from admin to seat holders | `teamHandbacks` | `{handbackId}` |
+| `team_roster.json` | Team member records linked to a license — names, roles, statuses | `teamRoster` | `{rosterId}` |
+| `team_seats.json` | Seat codes, invite tokens, session tokens, lockout state | `teamSeats` | `{seatCode}` |
+| `audit_log.json` | Time-stamped audit events — logins, license checks, admin actions | `auditLog` | `{eventId}` (auto-ID) |
+| `admin_action_approvals.json` | Pending/reviewed admin action approval workflow records | `adminActionApprovals` | `{approvalId}` |
+| `admin_delivery_trail.json` | Delivery dispatch records and acknowledgements | `adminDeliveryTrail` | `{trailId}` |
+
+All document fields are the same JSON structure already used in the flat file store — no schema redesign required.
+
+---
+
+## All API Routes
+
+The backend exposes these routes. All of these run identically on Cloud Run — only the storage layer changes.
+
+### Public routes (no auth required)
+| Route | Purpose |
+|---|---|
+| `GET /health` | Health check — returns `{"status":"ok"}` |
+| `GET /api/entitlement/resolve` | Verify a license key — used by the frontend to gate premium features |
+
+### Seat and session routes (require valid seat session token)
+| Route | Purpose |
+|---|---|
+| `POST /api/seat-session/issue` | Authenticate a team seat and issue a session token |
+| `POST /api/seat-session/renew` | Renew an active session before it expires |
+| `POST /api/seat-session/revoke` | Revoke a session (logout) |
+| `GET /api/team-seats` | Read the caller's seat record |
+| `GET /api/team-seats/recovery` | Read recovery code state |
+| `POST /api/team-seats/recovery-code/issue` | Issue a new recovery code for the seat |
+| `POST /api/team-seats/recovery-code/redeem` | Redeem a recovery code to regain access |
+| `POST /api/team-seats/invite/redeem` | Redeem an invite token to activate a new seat |
+| `GET /api/company-profiles` | Read the company profile linked to the caller's license |
+| `GET /api/team-handbacks` | Read pending handbacks for the caller's seat |
+| `GET /api/team-roster` | Read the team roster for the caller's license |
+| `GET /api/audit-log` | Read the caller's recent audit events |
+
+### Admin routes (require admin API key header)
+| Route | Purpose |
+|---|---|
+| `GET /api/admin/posture` | Admin console boot — returns licenses, seats, audit summary |
+| `GET /api/admin/session-context` | Verify admin session is still valid |
+| `GET /api/admin/audit-export` | Export the full audit log |
+| `GET /api/admin/action-approvals` | List pending admin action approvals |
+| `POST /api/admin/action-approvals/request` | Submit a new admin action for approval |
+| `POST /api/admin/action-approvals/review` | Approve or reject a pending admin action |
+| `GET /api/admin/delivery-trail` | List all delivery trail records |
+| `POST /api/admin/delivery-trail/record` | Record a new delivery dispatch |
+| `POST /api/admin/delivery-trail/acknowledge` | Mark a delivery as acknowledged by the recipient |
+| `POST /api/admin/delivery-dispatch/prepare` | Prepare a delivery dispatch pack |
+| `POST /api/team-seats/invite/issue` | Issue a seat invite token (admin action) |
+| `GET /api/team-roster` | Read full team roster (admin view) |
+
+### Static routes
+| Route | Purpose |
+|---|---|
+| `GET /admin` | Admin console HTML |
+| `GET /admin/app.js` | Admin console JS |
+| `GET /admin/app.css` | Admin console CSS |
+
+---
+
+## The Trade-Off Fix: SQLite/JSON → Firestore Adapter
+
+The entire storage layer in `backend/server.js` is encapsulated in 8 store loader functions (`readLicenses`, `readCompanyProfiles`, etc.) and their write counterparts. The Firestore migration is:
+
+1. Replace each `readJsonFile(path)` call with a Firestore collection read
+2. Replace each `writeJsonFile(path, data)` call with a Firestore write
+
+The HTTP route logic, auth middleware, CORS handling, and all business logic stay unchanged.
+
+### Step 1 — Install Firestore client
 
 ```bash
-gcloud services enable run.googleapis.com
-gcloud services enable firestore.googleapis.com
-gcloud services enable secretmanager.googleapis.com
-gcloud services enable cloudfunctions.googleapis.com
-gcloud services enable firebase.googleapis.com
+cd backend/
+npm install @google-cloud/firestore
 ```
 
-### 3. Set Up Firestore
+### Step 2 — Add Firestore adapter module
 
-In the Cloud Console:
-- Go to Firestore → Create database
-- Choose **Native mode** (not Datastore mode)
-- Choose a region close to your users (e.g., `us-central1` for broad global coverage, or `europe-west1`)
-
-### 4. Set Up Firebase Authentication
-
-1. Go to the Firebase Console → Add project → select your GCP project
-2. Enable Authentication → Sign-in method → Email/Password
-3. Optionally enable Google sign-in for admin console access
-
-### 5. Adapt the Backend (Firestore Refactor)
-
-Replace SQLite storage in `backend/server.js` with Firestore client calls:
+Create `backend/firestore-adapter.js`:
 
 ```js
-// Before (SQLite):
-const db = new Database(':memory:');
-db.exec(`CREATE TABLE licenses (...)`);
-const row = db.prepare('SELECT * FROM licenses WHERE key = ?').get(key);
-
-// After (Firestore):
+'use strict';
 const { Firestore } = require('@google-cloud/firestore');
+
+// Only used when STORAGE_DRIVER=firestore
 const db = new Firestore();
-const doc = await db.collection('licenses').doc(key).get();
-const row = doc.exists ? doc.data() : null;
+
+async function readCollection(collection) {
+    const snap = await db.collection(collection).get();
+    const records = {};
+    snap.forEach(doc => { records[doc.id] = doc.data(); });
+    return records;
+}
+
+async function writeDocument(collection, id, data) {
+    await db.collection(collection).doc(id).set(data, { merge: true });
+}
+
+async function appendDocument(collection, data) {
+    await db.collection(collection).add(data);
+}
+
+async function readDocument(collection, id) {
+    const doc = await db.collection(collection).doc(id).get();
+    return doc.exists ? doc.data() : null;
+}
+
+module.exports = { readCollection, writeDocument, appendDocument, readDocument };
 ```
 
-Key Firestore collections:
-- `licenses/{key}` — license records
-- `users/{uid}` — user account data
-- `seats/{inviteToken}` — team seat invitations
-- `projects/{uid}/{projectId}` — cloud-synced projects
-- `payments/{stripeEventId}` — Stripe payment records
-- `auditLog/{docId}` — delivery and admin events
+### Step 3 — Add STORAGE_DRIVER=firestore branch in server.js
 
-### 6. Containerise and Deploy to Cloud Run
+At the top of `server.js`, after the existing `STORAGE_DRIVER` constant, add:
 
-Create a `Dockerfile` in `backend/`:
+```js
+const STORAGE_DRIVER_FIRESTORE = STORAGE_DRIVER === 'firestore';
+const firestoreAdapter = STORAGE_DRIVER_FIRESTORE ? require('./firestore-adapter') : null;
+```
+
+Then in each store loader, add the Firestore branch before the existing JSON/SQLite path. Example for `readLicenses()`:
+
+```js
+async function readLicenses() {
+    if (STORAGE_DRIVER_FIRESTORE) {
+        const records = await firestoreAdapter.readCollection('licenses');
+        return { installations: records };
+    }
+    // existing JSON/SQLite path stays below unchanged
+    const preferredPath = fs.existsSync(PRIMARY_DATA_FILE) ? PRIMARY_DATA_FILE : EXAMPLE_DATA_FILE;
+    // ... rest unchanged
+}
+```
+
+Apply the same pattern to all 8 stores:
+
+| Store function | Firestore collection | Read method | Write method |
+|---|---|---|---|
+| `readLicenses` / `writeLicenses` | `licenses` | `readCollection` | `writeDocument` |
+| `readCompanyProfiles` / `writeCompanyProfiles` | `companyProfiles` | `readCollection` | `writeDocument` |
+| `readTeamHandbacks` / `writeTeamHandbacks` | `teamHandbacks` | `readCollection` | `writeDocument` |
+| `readTeamRoster` / `writeTeamRoster` | `teamRoster` | `readCollection` | `writeDocument` |
+| `readTeamSeats` / `writeTeamSeats` | `teamSeats` | `readCollection` | `writeDocument` |
+| `readAuditLog` / `writeAuditLog` | `auditLog` | `readCollection` | `appendDocument` (append-only) |
+| `readAdminActionApprovals` / `writeAdminActionApprovals` | `adminActionApprovals` | `readCollection` | `writeDocument` |
+| `readAdminDeliveryTrail` / `writeAdminDeliveryTrail` | `adminDeliveryTrail` | `readCollection` | `writeDocument` |
+
+### Step 4 — Set STORAGE_DRIVER=firestore in backend.env
+
+```bash
+STORAGE_DRIVER=firestore
+```
+
+No other application env vars change — all the auth, CORS, session TTL, API key, pepper, and signing secret vars stay identical.
+
+---
+
+## Environment Variables: Oracle vs Google Cloud
+
+All existing `backend.env` variables carry over unchanged. Only two things change:
+
+| Variable | Oracle value | Google Cloud value |
+|---|---|---|
+| `HOST` | `127.0.0.1` (behind nginx) | `0.0.0.0` (Cloud Run terminates TLS) |
+| `PORT` | `5055` | `8080` (Cloud Run expects 8080) |
+| `STORAGE_DRIVER` | `json` or `sqlite` | `firestore` |
+| `BACKEND_DATA_DIR` | `/var/data/pv-premium-sync/` | Not used (Firestore has no local path) |
+| `BACKEND_SQLITE_FILE` | `/var/data/.../premium_sync.sqlite` | Not used |
+
+Everything else (`BACKEND_API_KEYS`, `BACKEND_ACTION_LINK_SECRET`, `BACKEND_ALLOWED_ORIGINS`, `BACKEND_SEAT_CODE_PEPPER`, `SEAT_SESSION_TTL_MS`, etc.) is **identical** — copy them from your Oracle `backend.env` directly into Cloud Run env vars or Secret Manager.
+
+---
+
+## Free Tier Limits vs Realistic Usage
+
+| Service | Free limit | Realistic usage (200 active users/month) | Headroom |
+|---|---|---|---|
+| Cloud Run requests | 2M/month | ~15k/month (seat logins, license checks, admin) | 130× |
+| Cloud Run CPU | 360k CPU-seconds/month | ~1k CPU-seconds/month (lite JSON work) | 360× |
+| Firestore reads | 50,000/day | ~500/day | 100× |
+| Firestore writes | 20,000/day | ~200/day | 100× |
+| Firestore storage | 1 GB | ~10 MB (JSON records for 200 users) | 100× |
+| Cloud Storage | 5 GB | ~100 MB (backup exports) | 50× |
+| Secret Manager | 6 active versions | 5 secrets in use | 1 spare |
+
+This app will not hit the free tier ceiling until it reaches several thousand daily active paying users — at which point it is generating revenue that covers Google Cloud costs with ease.
+
+---
+
+## Deploy Steps (Cloud Run)
+
+### 1. Create Google Cloud project and enable APIs
+
+```bash
+gcloud projects create pv-calculator-backend --set-as-default
+gcloud services enable run.googleapis.com firestore.googleapis.com \
+    secretmanager.googleapis.com cloudbuild.googleapis.com
+```
+
+### 2. Create Firestore database
+
+```bash
+gcloud firestore databases create --location=us-central1
+```
+
+### 3. Store secrets
+
+```bash
+printf "your-api-key-here" | gcloud secrets create BACKEND_API_KEYS --data-file=-
+printf "your-signing-secret" | gcloud secrets create BACKEND_ACTION_LINK_SECRET --data-file=-
+printf "https://your-user.github.io/your-repo" | gcloud secrets create BACKEND_ALLOWED_ORIGINS --data-file=-
+printf "your-seat-pepper" | gcloud secrets create BACKEND_SEAT_CODE_PEPPER --data-file=-
+```
+
+### 4. Create Dockerfile in backend/
 
 ```dockerfile
 FROM node:22-slim
@@ -189,10 +281,12 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 COPY . .
 ENV PORT=8080
+ENV HOST=0.0.0.0
+ENV STORAGE_DRIVER=firestore
 CMD ["node", "server.js"]
 ```
 
-Deploy:
+### 5. Deploy to Cloud Run
 
 ```bash
 gcloud run deploy pv-backend \
@@ -200,86 +294,67 @@ gcloud run deploy pv-backend \
   --platform managed \
   --region us-central1 \
   --allow-unauthenticated \
-  --port 8080
+  --port 8080 \
+  --set-secrets="BACKEND_API_KEYS=BACKEND_API_KEYS:latest,BACKEND_ACTION_LINK_SECRET=BACKEND_ACTION_LINK_SECRET:latest,BACKEND_ALLOWED_ORIGINS=BACKEND_ALLOWED_ORIGINS:latest,BACKEND_SEAT_CODE_PEPPER=BACKEND_SEAT_CODE_PEPPER:latest"
 ```
 
-Cloud Run returns a permanent HTTPS URL (e.g., `https://pv-backend-xxxx-uc.a.run.app`). Set this as `BACKEND_URL` in your frontend `.env` or `backend.env`.
+Cloud Run returns a permanent HTTPS URL. Set this as `BACKEND_URL` in your frontend's env config or in `dist/web/assets/app.js` where the backend URL is consumed.
 
-### 7. Set Secrets
+### 6. Verify health check
 
 ```bash
-echo -n "sk_live_..." | gcloud secrets create STRIPE_SECRET_KEY --data-file=-
-echo -n "your-signing-secret" | gcloud secrets create BACKEND_ACTION_LINK_SECRET --data-file=-
-echo -n "https://your-user.github.io/your-repo" | gcloud secrets create BACKEND_ALLOWED_ORIGINS --data-file=-
+curl https://your-cloud-run-url/health
+# Expected: {"status":"ok"}
 ```
 
-Grant Cloud Run access to secrets:
+### 7. Set up daily Firestore backup
 
 ```bash
-gcloud secrets add-iam-policy-binding STRIPE_SECRET_KEY \
-  --member="serviceAccount:PROJECT_NUMBER-compute@developer.gserviceaccount.com" \
-  --role="roles/secretmanager.secretAccessor"
-```
+gsutil mb gs://pv-calculator-backups-$(gcloud config get-value project)
 
-### 8. Set Up Backup (Cloud Storage)
-
-Create a backup bucket:
-
-```bash
-gsutil mb -l us-central1 gs://pv-calculator-backups
-```
-
-Schedule a daily Firestore export using Cloud Scheduler:
-
-```bash
-gcloud scheduler jobs create http firestore-daily-backup \
+gcloud scheduler jobs create http firestore-backup \
   --schedule="0 2 * * *" \
-  --uri="https://firestore.googleapis.com/v1/projects/YOUR_PROJECT/databases/(default):exportDocuments" \
-  --message-body='{"outputUriPrefix": "gs://pv-calculator-backups/"}' \
-  --oauth-service-account-email=YOUR_SERVICE_ACCOUNT
+  --location=us-central1 \
+  --uri="https://firestore.googleapis.com/v1/projects/$(gcloud config get-value project)/databases/(default):exportDocuments" \
+  --message-body="{\"outputUriPrefix\": \"gs://pv-calculator-backups-$(gcloud config get-value project)/\"}" \
+  --oauth-service-account-email=$(gcloud iam service-accounts list --format='value(email)' | head -1)
 ```
 
 ---
 
-## Free Tier Limits in Practice
+## Update BACKEND_ALLOWED_ORIGINS
 
-| Service | Free Limit | Realistic Usage (100 active users/day) | Headroom |
-|---|---|---|---|
-| Cloud Run requests | 2M/month | ~10k/month | 200× |
-| Firestore reads | 50k/day | ~1k/day | 50× |
-| Firestore writes | 20k/day | ~500/day | 40× |
-| Firebase Auth | 10k/month | ~200/month | 50× |
-| Cloud Storage | 5 GB | ~50 MB/month | Effectively unlimited |
-| Secret Manager | 6 versions | 4 secrets in use | 2 spare |
+Set this to your GitHub Pages URL. Example:
 
-This app will not exceed the free tier at realistic small-business installer tooling usage levels unless it scales to thousands of daily active users — at which point it is generating revenue that easily covers the cost.
+```
+BACKEND_ALLOWED_ORIGINS=https://leebartea.github.io/Photovoltaic
+```
+
+The backend already reads this env var and uses it to set CORS `Access-Control-Allow-Origin`. No code change needed.
 
 ---
 
-## Comparison: Google Cloud vs Oracle Always Free
+## After Deployment
 
-| Factor | Google Cloud Always Free | Oracle Always Free |
-|---|---|---|
-| VM management | None — serverless | SSH + manual cron + nginx setup |
-| Cold starts | Yes (~1–3s on Cloud Run) | No (always-on VM) |
-| Storage engine | Firestore (NoSQL) | SQLite (relational, file-based) |
-| Backend refactor needed | Light — replace SQLite calls with Firestore | None — lift-and-shift |
-| Auth integration | Firebase Auth (built-in) | Roll-your-own or add a library |
-| Backup tooling | Cloud Scheduler + Cloud Storage | Custom cron scripts |
-| Signup friction | Moderate (billing card required) | High (provisioning errors common) |
-| Database size limit | 1 GB Firestore free | Effectively disk-limited (Oracle gives 200 GB) |
-| Best for | Teams comfortable with Google APIs or Firebase | Developers who want lift-and-shift with no code change |
+The frontend (`pv_calculator_ui.html` and `dist/web/`) already has the backend URL wiring points for:
+- `GET /api/entitlement/resolve` — called on app load to check license
+- `POST /api/seat-session/issue` — called on team seat login
+- `GET /api/admin/posture` — called by admin console
+
+Set the Cloud Run HTTPS URL as the backend URL in the frontend's settings, rebuild, and push. GitHub Pages continues to serve the static frontend. Cloud Run handles all API calls.
 
 ---
 
-## Honest Recommendation
+## Oracle Migration Path (If Already Running on Oracle)
 
-If you are not blocked on the Firestore refactor, **Google Cloud Always Free is the better long-term backend home** for this project. It removes all server management overhead, has better auth tooling, and is more reliable to provision than Oracle.
+1. Export each JSON file from the Oracle VM (`scp` the `data/*.json` files locally)
+2. Write a one-off migration script that reads each JSON file and writes each record to the matching Firestore collection using the Firestore Admin SDK
+3. Verify record counts match
+4. Switch DNS / backend URL in the frontend from Oracle IP to Cloud Run HTTPS URL
+5. Decommission the Oracle VM
 
-If you want zero code changes and are comfortable with SSH, **Oracle Always Free** is still the right choice.
-
-Both options are genuinely free for this app's usage profile.
+The migration can be done with zero downtime: both backends can run simultaneously during the switchover.
 
 ---
 
-*Added: 2026-05-14*
+*Added: 2026-05-14 | Last updated: 2026-05-14*
