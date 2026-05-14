@@ -25715,6 +25715,12 @@ const PVCalculator = {
                 </div>`;
         }
 
+        if (battery.warnings && battery.warnings.length > 0) {
+            battery.warnings.forEach(w => {
+                html += `<div class="alert alert-warning" style="margin-top:8px;">${w}</div>`;
+            });
+        }
+
         html += `
                 <div class="result-row">
                     <span class="result-label">Chemistry</span>

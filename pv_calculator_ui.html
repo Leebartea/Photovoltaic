@@ -12838,6 +12838,11 @@ or reduce inverter VA.`);
         if (isLithium && bankVoltage >= 48) {
             suggestions.push(`LiFePO4 standard: 51.2V nominal (16S × 3.2V). Modern rack batteries (Pylontech, Felicity, BYD, Deye) use this standard. Actual terminal voltage: 44.8V–58.4V operating range.`);
         }
+        if (bankVoltage <= 24 && actualCapacityAh > 500) {
+            warnings.push(`24V bus with ${Math.round(actualCapacityAh)}Ah bank: consider upgrading to 48V. ` +
+                `48V halves DC current (reduces cable sizing and heat) and uses standard 100–200Ah rack modules. ` +
+                `24V at this scale typically requires uncommon 400Ah+ cells.`);
+        }
         return {
             chemistry,
             chemistryName: specs.name,
@@ -44108,6 +44113,12 @@ const PVCalculator = {
                             : ` <span style="color: var(--success-color);">(matches recommendation)</span>`}
                     </div>
                 </div>`;
+        }
+
+        if (battery.warnings && battery.warnings.length > 0) {
+            battery.warnings.forEach(w => {
+                html += `<div class="alert alert-warning" style="margin-top:8px;">${w}</div>`;
+            });
         }
 
         html += `

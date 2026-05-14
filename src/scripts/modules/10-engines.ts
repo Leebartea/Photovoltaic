@@ -1938,6 +1938,14 @@ or reduce inverter VA.`
             );
         }
 
+        if (bankVoltage <= 24 && actualCapacityAh > 500) {
+            warnings.push(
+                `24V bus with ${Math.round(actualCapacityAh)}Ah bank: consider upgrading to 48V. ` +
+                `48V halves DC current (reduces cable sizing and heat) and uses standard 100–200Ah rack modules. ` +
+                `24V at this scale typically requires uncommon 400Ah+ cells.`
+            );
+        }
+
         return {
             chemistry,
             chemistryName: specs.name,
