@@ -3876,7 +3876,21 @@ input:checked + .toggle-slider:before {
     text-overflow: ellipsis;
 }
 @media (max-width: 768px) {
-    .section-nav { display: none; }
+    .section-nav {
+        left: auto;
+        right: 12px;
+        bottom: 12px;
+        top: auto;
+        transform: none;
+    }
+    .section-nav-items {
+        position: fixed;
+        right: 12px;
+        bottom: 56px;
+        z-index: 950;
+        max-height: 70vh;
+        overflow-y: auto;
+    }
 }
 
 /* =============================================================================

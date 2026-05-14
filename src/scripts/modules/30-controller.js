@@ -6122,6 +6122,15 @@ const PVCalculator = {
         document.getElementById('projectImportInput')?.click();
     },
 
+    clearProject() {
+        if (!confirm('Clear the current workspace and start fresh? Saved browser projects will not be deleted.')) return;
+        const keys = this.getProjectStorageKeys();
+        localStorage.removeItem(keys.autosave);
+        localStorage.removeItem(keys.legacyAutosave);
+        localStorage.removeItem(keys.currentProject);
+        location.reload();
+    },
+
     importProjectFromFile(event) {
         const file = event?.target?.files?.[0];
         if (!file) return;
@@ -20486,6 +20495,19 @@ const PVCalculator = {
             doc.text(`System Confidence: ${pdfConfScore}% — ${pdfConfLevel}`, pageW / 2, y + 7, { align: 'center' });
             y += 14;
 
+            // Confidence penalty breakdown (#A16)
+            const invDev = confidenceData.invRisk?.deviation || 0;
+            const battDev = confidenceData.battRisk?.deviation || 0;
+            const pvDev = confidenceData.pvRisk?.deviation || 0;
+            const weightedDeviation = invDev * 0.40 + battDev * 0.35 + pvDev * 0.25;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7);
+            doc.setTextColor(...MUTED);
+            const breakdownText = `100 − ${weightedDeviation.toFixed(1)} (risk dev.) − ${(confidenceData.clusterPenalty || 0).toFixed(1)} (cluster) − ${(confidenceData.architecturePenalty || 0).toFixed(1)} (arch.) − ${(confidenceData.strategyPenalty || 0).toFixed(1)} (strategy) = ${pdfConfScore}%`;
+            doc.text(breakdownText, pageW / 2, y, { align: 'center' });
+            y += 4;
+            doc.setTextColor(...DARK);
+
             sectionTitle('Proposal Control');
             const pdfReadinessColor = readinessColorMap[proposalReadiness.tone] || BLUE;
             labelValue('Proposal Readiness:', `${proposalReadiness.label} (${proposalReadiness.score}%)  |  ${proposalDisplay.surveyStageLabel}`);
@@ -27407,6 +27429,10 @@ const PVCalculator = {
     },
 
     initSectionNav() {
+        if (window.innerWidth <= 768) {
+            const items = document.getElementById('sectionNavItems');
+            if (items && !items.classList.contains('collapsed')) items.classList.add('collapsed');
+        }
         const nav = document.getElementById('sectionNav');
         if (!nav) return;
         if (typeof IntersectionObserver === 'undefined') return;

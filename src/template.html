@@ -564,6 +564,7 @@
                                 <button class="btn btn-secondary btn-small" onclick="PVCalculator.saveProjectCopy()">Save Copy</button>
                                 <button class="btn btn-secondary btn-small" onclick="PVCalculator.exportProjectToFile()">Export File</button>
                                 <button class="btn btn-secondary btn-small" onclick="PVCalculator.triggerProjectImport()">Import File</button>
+                                <button class="btn btn-secondary btn-small" onclick="PVCalculator.clearProject()">New / Clear</button>
                             </div>
                             <input type="file" id="projectImportInput" aria-label="Import project file" class="sr-only" accept=".json,.pvcalc,.pvcalc.json" onchange="PVCalculator.importProjectFromFile(event)">
                             <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Browser projects stay on this device. Exported files let you move a design to another browser or archive it outside loca">i</button><small class="field-help">Browser projects stay on this device. Exported files let you move a design to another browser or archive it outside local storage.</small></span>

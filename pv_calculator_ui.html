@@ -4292,7 +4292,21 @@ input:checked + .toggle-slider:before {
     text-overflow: ellipsis;
 }
 @media (max-width: 768px) {
-    .section-nav { display: none; }
+    .section-nav {
+        left: auto;
+        right: 12px;
+        bottom: 12px;
+        top: auto;
+        transform: none;
+    }
+    .section-nav-items {
+        position: fixed;
+        right: 12px;
+        bottom: 56px;
+        z-index: 950;
+        max-height: 70vh;
+        overflow-y: auto;
+    }
 }
 
 /* =============================================================================
@@ -5019,6 +5033,7 @@ input:checked + .toggle-slider:before {
                                 <button class="btn btn-secondary btn-small" onclick="PVCalculator.saveProjectCopy()">Save Copy</button>
                                 <button class="btn btn-secondary btn-small" onclick="PVCalculator.exportProjectToFile()">Export File</button>
                                 <button class="btn btn-secondary btn-small" onclick="PVCalculator.triggerProjectImport()">Import File</button>
+                                <button class="btn btn-secondary btn-small" onclick="PVCalculator.clearProject()">New / Clear</button>
                             </div>
                             <input type="file" id="projectImportInput" aria-label="Import project file" class="sr-only" accept=".json,.pvcalc,.pvcalc.json" onchange="PVCalculator.importProjectFromFile(event)">
                             <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Browser projects stay on this device. Exported files let you move a design to another browser or archive it outside loca">i</button><small class="field-help">Browser projects stay on this device. Exported files let you move a design to another browser or archive it outside local storage.</small></span>
@@ -24392,6 +24407,15 @@ const PVCalculator = {
         document.getElementById('projectImportInput')?.click();
     },
 
+    clearProject() {
+        if (!confirm('Clear the current workspace and start fresh? Saved browser projects will not be deleted.')) return;
+        const keys = this.getProjectStorageKeys();
+        localStorage.removeItem(keys.autosave);
+        localStorage.removeItem(keys.legacyAutosave);
+        localStorage.removeItem(keys.currentProject);
+        location.reload();
+    },
+
     importProjectFromFile(event) {
         const file = event?.target?.files?.[0];
         if (!file) return;
@@ -38756,6 +38780,19 @@ const PVCalculator = {
             doc.text(`System Confidence: ${pdfConfScore}% — ${pdfConfLevel}`, pageW / 2, y + 7, { align: 'center' });
             y += 14;
 
+            // Confidence penalty breakdown (#A16)
+            const invDev = confidenceData.invRisk?.deviation || 0;
+            const battDev = confidenceData.battRisk?.deviation || 0;
+            const pvDev = confidenceData.pvRisk?.deviation || 0;
+            const weightedDeviation = invDev * 0.40 + battDev * 0.35 + pvDev * 0.25;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7);
+            doc.setTextColor(...MUTED);
+            const breakdownText = `100 − ${weightedDeviation.toFixed(1)} (risk dev.) − ${(confidenceData.clusterPenalty || 0).toFixed(1)} (cluster) − ${(confidenceData.architecturePenalty || 0).toFixed(1)} (arch.) − ${(confidenceData.strategyPenalty || 0).toFixed(1)} (strategy) = ${pdfConfScore}%`;
+            doc.text(breakdownText, pageW / 2, y, { align: 'center' });
+            y += 4;
+            doc.setTextColor(...DARK);
+
             sectionTitle('Proposal Control');
             const pdfReadinessColor = readinessColorMap[proposalReadiness.tone] || BLUE;
             labelValue('Proposal Readiness:', `${proposalReadiness.label} (${proposalReadiness.score}%)  |  ${proposalDisplay.surveyStageLabel}`);
@@ -45677,6 +45714,10 @@ const PVCalculator = {
     },
 
     initSectionNav() {
+        if (window.innerWidth <= 768) {
+            const items = document.getElementById('sectionNavItems');
+            if (items && !items.classList.contains('collapsed')) items.classList.add('collapsed');
+        }
         const nav = document.getElementById('sectionNav');
         if (!nav) return;
         if (typeof IntersectionObserver === 'undefined') return;
