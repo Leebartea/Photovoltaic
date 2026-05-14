@@ -161,6 +161,27 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 16B — Mobile Nav, New/Clear Button, Confidence PDF Breakdown (commit 0ec81ae — 2026-05-14)
+
+**Mobile hamburger nav re-enabled**
+- `app.css` `@media (max-width: 768px)` rule changed from `display: none` to repositioning `.section-nav` fixed bottom-right (12px from edge)
+- `.section-nav-items` styled as upward popover (`position: fixed; bottom: 56px; z-index: 950; max-height: 70vh`)
+- `initSectionNav()` now adds `.collapsed` to items list on mobile load — nav opens collapsed until user taps ☰
+- No new HTML elements — existing `<button class="section-nav-toggle">` and `toggleSectionNav()` reused
+
+**New / Clear project button**
+- `clearProject()` method added to controller: clears `pvCalculatorAutoSaveV2`, `pvCalculatorAutoSave`, and `pvCalculatorCurrentProject` keys, then reloads
+- Saved project list (`pvCalculatorProjects`) is NOT cleared — user's stored browser projects are preserved
+- Button added in `#projectWorkspaceCard` after "Import File" in the workspace actions row
+
+**Issue #A16 — Confidence score PDF breakdown added**
+- 7pt penalty breakdown line inserted under the confidence bar on PDF cover page
+- Formula: `100 − weightedDev (risk) − clusterPenalty − architecturePenalty − strategyPenalty = score%`
+- `weightedDeviation` derived inline from `confidenceData.invRisk/.battRisk/.pvRisk` at weights 0.40/0.35/0.25
+- Rendered in `MUTED` colour, centred, `y += 4` — does not displace following page content materially
+
+---
+
 ### Batch 16A — Continuous Discharge Check, Disclaimer Gate, Residential Schedule (commit b05b728 — 2026-05-14)
 
 **Issue #A14 — Battery continuous-discharge current check added**

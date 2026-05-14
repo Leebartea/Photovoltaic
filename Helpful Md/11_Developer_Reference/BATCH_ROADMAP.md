@@ -1,7 +1,7 @@
 # Fix Batch Roadmap — PV Calculator
 
 This document tracks all planned fix batches in priority order.
-Updated after each batch. Last update: 2026-05-14 (post-Batch 15E).
+Updated after each batch. Last update: 2026-05-14 (post-Batch 16B).
 
 ---
 
@@ -29,53 +29,12 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 15E).
 | Batch 15C | 1b7ed32 | 2026-05-09 | Africa generator_offset rate correction, basis-aware auto-fill, clamp raised to 2.5 |
 | Batch 15D | 00c1a70 + 9c045f8 | 2026-05-14 | Mobile hero stack, coping score dup, rounding row, inverter validation label, MPPT gate |
 | Batch 15E | — (verification) | 2026-05-14 | SVG verified, all 15D fixes confirmed, #A14/#A15/#A16 logged |
+| Batch 16A | b05b728 | 2026-05-14 | Continuous discharge safety check, disclaimer gate fix, residential_backup schedule, evening_overnight schedule |
+| Batch 16B | 0ec81ae | 2026-05-14 | Mobile nav hamburger (fixed bottom-right popover), New/Clear project button, #A16 confidence score PDF breakdown |
 
 ---
 
 ## Open Batches (Planned)
-
-### Batch 16A — Engineering Safety + Smart Workspace Defaults
-**Priority: HIGH — safety-relevant (#A14) + data correctness (#A15)**
-**Files:** `src/scripts/modules/10-engines.ts`, `src/scripts/modules/00-defaults.ts`, `src/scripts/modules/30-controller.js`
-
-| Issue | Fix | File |
-|-------|-----|------|
-| **#A14** — BatterySizingEngine missing continuous-discharge current check | Add warning when `ContinuousLoadCurrent > TotalCapacityAh × 0.5C` | `10-engines.ts` ~line 1888 |
-| **#A15** — Disclaimer guard edge case (client + includeDetails=true) | Change gate from `!clientExport` to `audienceMode !== 'client'` | `30-controller.js` ~line 21313 |
-| **residential_backup schedule wrong** | Change `recommendedSchedule: 'business_day'` → `'evening_overnight'` | `00-defaults.ts` line 1590 |
-| **New `evening_overnight` schedule** | Add schedule: label "Residential / Evening & Overnight", `expectsNightContinuity: true`, `prefersDaytimeShift: false`, 7 days | `00-defaults.ts` ~line 1806 |
-
-**No HTML or CSS changes required.** Schedule select populates dynamically from `DEFAULTS.OPERATING_SCHEDULES`.
-
-**Needs Opus pre-dive:** No — all 4 changes are well-specified above.
-**Implementer note:** Rebuild `dist/web/assets/app.js`, `pv_calculator_ui.html` after edits.
-
----
-
-### Batch 16B — Mobile Navigation + New Project UX
-**Priority: MEDIUM — UX quality**
-**Files:** `src/styles/app.css`, `src/template.html`, `src/scripts/modules/30-controller.js`
-
-| Issue | Fix | File |
-|-------|-----|------|
-| Mobile hamburger nav missing | Change `@media (max-width: 768px) { .section-nav { display: none } }` to position toggle button fixed bottom-right instead of hiding; style items panel as upward popover | `app.css` ~line 3878 |
-| No "New / Clear" project button | Add `clearProject()` method; add button in Project Workspace card after Import File button | `30-controller.js` (new method), `template.html` ~line 567 |
-
-**Needs Opus pre-dive:** Recommended for the hamburger implementation (positioning math and popover CSS need precision to not break desktop nav).
-
----
-
-### Batch 16C — Confidence Score PDF Breakdown
-**Priority: LOW — auditability improvement**
-**Files:** `src/scripts/modules/30-controller.js` (PDF export section)
-
-| Issue | Fix |
-|-------|-----|
-| **#A16** — Confidence score not itemised in PDF | Add compact penalty breakdown in 7pt text under the confidence bar on PDF cover page, listing architecture/strategy/managed-mode penalty components |
-
-**Needs Opus pre-dive:** No — the penalty values are already in scope at PDF export time; it's a formatting addition only.
-
----
 
 ### Batch 17 — Local Market Pricing Engine
 **Priority: HIGH value — installer usability**
