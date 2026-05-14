@@ -49,6 +49,7 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 | 2026-05-09 | Batch 15C | #A4 (Africa generator_offset rate corrected 0.28→1.00 USD/kWh; per-basis rate fields added: gridTariffRatePerKWhUSD 0.22, blendedRatePerKWhUSD 0.55; applyCommercialDefaultsByLocation now auto-fills basis-matched rate; parseFinanceRate clamp raised 1.0→2.5 USD/kWh) | 1b7ed32 |
 | 2026-05-14 | Batch 15D | #A7 (mobile hero @media 480px stacks to 1-column); #A8 (coping score duplicate block deleted from Page 3); #A9 (rounding-noise margin row threshold raised to >2 Wh); #A10 (subsumed by #A11+#A13); #A11 (Inverter Validation: label added at mL); #A13 (MPPT Validation row gated to usesStandaloneMPPT) | 00c1a70 |
 | 2026-05-14 | Batch 15E | Verification only — no code changes. #A8/#A9/#A13 confirmed via source + dist audit. #A12 SVG verified functional for 24V Off-Grid and 48V Hybrid cases. New issues #A14/#A15/#A16 logged from engineering audit of May 14 PDFs. | — |
+| 2026-05-14 | Batch 16A | #A14 (continuous discharge warning added to BatterySizingEngine); #A15 (disclaimer gate changed to audienceMode !== 'client'); residential_backup.recommendedSchedule fixed to 'evening_overnight'; new evening_overnight schedule added to OPERATING_SCHEDULES | b05b728 |
 
 ---
 
@@ -71,8 +72,8 @@ PDFs tested: `PV_System_Design_Lagos__Nigeria_2026-05-09 (4).pdf` (client) and `
 | #A11 | "Validation: MEETS requirements" stranded under Auto-Rec row | LOW | **FIXED — Batch 15D (00c1a70)** |
 | #A12 | SVG system diagram visual verify (installer PDF) | INFO | **VERIFIED — Batch 15E** — SVG functional for Off-Grid (24V/800Ah) and Hybrid (48V/280Ah). Silent text-fallback fires when Overview tab DOM not rendered before export. No structural rendering error found. |
 | #A13 | MPPT validation label shown even in auto-sized path | INFO | **FIXED — Batch 15D (00c1a70)** |
-| #A14 | BatterySizingEngine missing continuous-discharge current check — surge check exists but sustained draw (e.g. 177A continuous vs 140A 0.5C limit) is not warned | MEDIUM | **Open — Batch 16A** |
-| #A15 | Disclaimer guard edge case: client mode + includeDetails=true still shows MANAGED PRACTICAL DISCLAIMER (gate is `!clientExport` not `audienceMode !== 'client'`) | LOW | **Open — Batch 16A** |
+| #A14 | BatterySizingEngine missing continuous-discharge current check — surge check exists but sustained draw (e.g. 177A continuous vs 140A 0.5C limit) is not warned | MEDIUM | **FIXED — Batch 16A (b05b728)** |
+| #A15 | Disclaimer guard edge case: client mode + includeDetails=true still shows MANAGED PRACTICAL DISCLAIMER (gate is `!clientExport` not `audienceMode !== 'client'`) | LOW | **FIXED — Batch 16A (b05b728)** |
 | #A16 | Confidence score (e.g. 36% Stress) not itemised in PDF — installers cannot audit which penalty components drove the score | INFO | **Open — Batch 16B** |
 | #R1 | Product policy: 24V bus not auto-escalated to 48V when bank Ah > ~500Ah — produces unusually large-format cells (400Ah) and borderline DC current paths | INFO — Product policy | **Open — Opus design dive before implementation** |
 | Feature | Panel/battery wattage auto-select scales with array size (≥5kWp → 550–600Wp, small → 100–200Wp) | Enhancement | Open — needs Opus dive |

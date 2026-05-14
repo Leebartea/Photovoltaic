@@ -161,6 +161,28 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 16A — Continuous Discharge Check, Disclaimer Gate, Residential Schedule (commit b05b728 — 2026-05-14)
+
+**Issue #A14 — Battery continuous-discharge current check added**
+- `BatterySizingEngine` (`10-engines.ts:1892`) now warns when `continuousLoadCurrent > maxDischargeCurrent` (0.5C sustained limit)
+- Previously the engine only checked peak surge current; continuous draw above the 0.5C rating was silent
+- Warning message: "Continuous DC current XA exceeds battery sustained limit of YA (0.5C for ZAh bank)"
+
+**Issue #A15 — Disclaimer guard tightened**
+- Gate changed from `if (pdfManaged && !clientExport)` to `if (pdfManaged && audienceMode !== 'client')`
+- Previous gate allowed MANAGED PRACTICAL DISCLAIMER to leak into client PDFs when `includeDetails === true` was selected alongside client mode
+
+**Smart workspace — residential_backup schedule corrected**
+- `residential_backup.recommendedSchedule` changed from `'business_day'` → `'evening_overnight'`
+- "Business Hours (8am-6pm)" was factually wrong for a home backup system whose loads peak in the evening and overnight
+
+**New `evening_overnight` schedule added**
+- Key: `evening_overnight`, label: "Residential / Evening & Overnight"
+- `prefersDaytimeShift: false`, `expectsNightContinuity: true`, `preservationFocus: false`, 7 days/week
+- Schedule `<select>` populates dynamically — no HTML changes required
+
+---
+
 ### Batch 15E — Engineering Verification Audit (2026-05-14, no code commit)
 
 Verification-only batch using May 14 PDFs (Off-Grid installer + Hybrid client modes, 17 pages each). No code changes in this batch.
