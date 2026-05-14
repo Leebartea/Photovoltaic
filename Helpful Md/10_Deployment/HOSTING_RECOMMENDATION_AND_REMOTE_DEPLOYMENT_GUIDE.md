@@ -272,6 +272,32 @@ Good for:
 
 Not my first free recommendation because current official Fly pricing is usage-based, requires billing setup, and older free allowances are legacy-only.
 
+### 5. Google Cloud Always Free
+
+Good for:
+
+- a modern serverless backend with zero VM management
+- teams familiar with Firebase / Google's ecosystem
+- lite backend work: payment webhooks, user accounts, license verification, saved project sync
+
+How it fits this project:
+
+- **Cloud Run** (free tier: 2M requests/month, 360k CPU-seconds/month) runs the Express.js backend in a container. No server to SSH into. Scales to zero.
+- **Firestore** (free tier: 1 GB storage, 50k reads/day, 20k writes/day) replaces SQLite. NoSQL structure but generous for user data, saved projects, license keys, and audit logs.
+- **Cloud Functions** (free tier: 2M invocations/month) handles Stripe payment webhooks and email triggers without a persistent server process.
+- **Firebase Authentication** (free: 10k auth/month) handles installer login and team seat auth.
+- **Cloud Storage** (free: 5 GB) handles backup exports and PDF artifacts.
+- **Secret Manager** (free: 6 active secret versions) stores API keys, signing secrets, and CORS origins safely.
+
+Key trade-off vs Oracle:
+
+- Google Cloud: no VM ownership, modern managed services, auto-scales; cold starts on Cloud Run (~1–3s first request after idle); storage is Firestore (NoSQL) not SQLite — backend needs light refactor.
+- Oracle: always-on VM (no cold starts), SQLite works as-is, but requires SSH, cron setup, and manual server management.
+
+**Verdict for this project:** Google Cloud Always Free can power the entire lite backend (payments, user accounts, license keys, sync) within the free tier for moderate usage levels. The main refactor cost is replacing `backend/server.js` SQLite calls with Firestore reads/writes. For a full guide, see `Helpful Md/10_Deployment/GOOGLE_CLOUD_ALWAYS_FREE_BACKEND_GUIDE.md`.
+
+---
+
 ## Best Recommendations By Situation
 
 ### Best free and easiest right now
@@ -286,7 +312,11 @@ Not my first free recommendation because current official Fly pricing is usage-b
 
 ### Best free backend for the current backend code without rewriting it
 
-- `Oracle Cloud Always Free`
+- `Oracle Cloud Always Free` — lift-and-shift, SQLite works as-is, no cold starts
+
+### Best free backend if you are willing to do a light Firestore refactor
+
+- `Google Cloud Always Free (Cloud Run + Firestore)` — no VM management, scales to zero, better DX, cold starts acceptable for lite use
 
 ### Best free backend if you are willing to re-platform the backend
 

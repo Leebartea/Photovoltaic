@@ -52,6 +52,7 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 | 2026-05-14 | Batch 16A | #A14 (continuous discharge warning added to BatterySizingEngine); #A15 (disclaimer gate changed to audienceMode !== 'client'); residential_backup.recommendedSchedule fixed to 'evening_overnight'; new evening_overnight schedule added to OPERATING_SCHEDULES | b05b728 |
 | 2026-05-14 | Batch 16B | Mobile nav hamburger re-enabled (fixed bottom-right, upward popover, collapses on load); New/Clear project button + clearProject() method; #A16 confidence penalty breakdown added under PDF confidence bar | 0ec81ae |
 | 2026-05-14 | Batch 17  | Local Cost Build-Up pricing mode: per-unit prices (panel/inverter/battery), logistics, permits, flat/% labour, profit margin; FX-safe via fxRateToUSD; client PDF per-unit toggle; region-aware defaults; benchmarkPricingBlock/localBuildUpBlock show-hide | 572261c |
+| 2026-05-14 | Batch 18  | #R1 (24V bus advisory: BatterySizingEngine pushes warning when bankVoltage ≤ 24 && actualCapacityAh > 500; renderBatteryTab now loops battery.warnings into alert-warning divs); New Project button renamed + tooltip + footer reset CTA | f9ef5f4 |
 
 ---
 
@@ -77,20 +78,20 @@ PDFs tested: `PV_System_Design_Lagos__Nigeria_2026-05-09 (4).pdf` (client) and `
 | #A14 | BatterySizingEngine missing continuous-discharge current check — surge check exists but sustained draw (e.g. 177A continuous vs 140A 0.5C limit) is not warned | MEDIUM | **FIXED — Batch 16A (b05b728)** |
 | #A15 | Disclaimer guard edge case: client mode + includeDetails=true still shows MANAGED PRACTICAL DISCLAIMER (gate is `!clientExport` not `audienceMode !== 'client'`) | LOW | **FIXED — Batch 16A (b05b728)** |
 | #A16 | Confidence score (e.g. 36% Stress) not itemised in PDF — installers cannot audit which penalty components drove the score | INFO | **FIXED — Batch 16B (0ec81ae)** |
-| #R1 | Product policy: 24V bus not auto-escalated to 48V when bank Ah > ~500Ah — produces unusually large-format cells (400Ah) and borderline DC current paths | INFO — Product policy | **Open — Opus design dive before implementation** |
+| #R1 | Product policy: 24V bus not auto-escalated to 48V when bank Ah > ~500Ah — produces unusually large-format cells (400Ah) and borderline DC current paths | INFO — Product policy | **FIXED — Batch 18 (f9ef5f4)** |
 | Feature | Panel/battery wattage auto-select scales with array size (≥5kWp → 550–600Wp, small → 100–200Wp) | Enhancement | Open — needs Opus dive |
 
 ---
 
-## Severity Summary Table (updated after Batch 15E, 2026-05-14)
+## Severity Summary Table (updated after Batch 18, 2026-05-14)
 
 | Severity | Open | Fixed / Verified |
 |---|---|---|
 | CRITICAL | 0 | 6 (#1–6 original + #A1–A3 Audit 2) |
-| MEDIUM | 2 (#A14, #A14-battery continuous check; one residual from original audit) | All others fixed |
-| LOW | 1 (#A15 disclaimer edge case) | All others fixed |
-| INFO | 3 (#A16, #R1, panel-wattage feature) | #A12 verified |
-| POST-AUDIT (Audit 2) | 0 open | #A1–A13 all fixed or verified |
+| MEDIUM | 0 | All fixed — #A14 (Batch 16A), battery continuous check, all original audit items |
+| LOW | 0 | All fixed — #A15 (Batch 16A), all others |
+| INFO | 1 (panel-wattage auto-select feature) | #A12 verified; #A16 fixed (Batch 16B); #R1 fixed (Batch 18) |
+| POST-AUDIT (Audit 2) | 0 open | #A1–A18 all fixed or verified |
 
 ---
 

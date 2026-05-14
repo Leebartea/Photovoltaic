@@ -161,6 +161,26 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 18 — 24V Bus Advisory + New Project UX Polish (commit f9ef5f4 — 2026-05-14)
+
+**Issue #R1 resolved:** When `BatterySizingEngine` calculates a bank where `bankVoltage ≤ 24` and `actualCapacityAh > 500`, a warning is now pushed into `battery.warnings`. Advisory text explains the DC current and cell-format rationale for switching to 48V.
+
+**Engine change (`10-engines.ts` ~line 1874):**
+- Trigger condition: `bankVoltage <= 24 && actualCapacityAh > 500` — uses `bankVoltage` (nominal), NOT `effectiveBankVoltage`
+- Pushes to `warnings` array (already in return object since line 1812)
+
+**UI change (`30-controller.js` — renderBatteryTab ~line 25695):**
+- `battery.warnings` was returned but never rendered
+- Added loop that emits each warning as `<div class="alert alert-warning">` inside the battery tab
+
+**UX polish — New Project button (template.html):**
+- Button renamed from "New / Clear" to "New Project" — unambiguous intent
+- Added `title` tooltip: "Start a fresh estimation. Your saved browser projects will not be deleted."
+- Added "↩ Start a New Estimation" styled button-link in the page footer — users who finish reviewing results and scroll to the bottom now see a contextual reset CTA without hunting back to the toolbar
+- Footer sub-text: "Your saved projects will not be deleted." — reassures users
+
+---
+
 ### Batch 17 — Local Cost Build-Up Pricing Mode (commit 572261c — 2026-05-14)
 
 **Problem solved:** The benchmark $/Wp model quoted NGN 16.5M for systems Nigerian installers charge NGN 3–5M. Gap = international wholesale rates vs local procurement reality.

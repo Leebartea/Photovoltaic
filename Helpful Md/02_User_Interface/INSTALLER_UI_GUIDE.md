@@ -21,6 +21,18 @@ The results side is now segmented too:
 - `Results Navigator` jumps to the next section
 - longer sections can collapse when you are not actively reading them
 
+## Workspace Actions (Toolbar)
+
+The toolbar at the top of the page has five project management buttons:
+
+- **Save Project** — saves the current workspace to browser storage under the current project name
+- **Save Copy** — saves a duplicate of the current workspace as a new named project
+- **Export File** — downloads the current workspace as a JSON file for sharing or backup
+- **Import File** — loads a previously exported JSON file into the workspace
+- **New Project** — clears the current workspace and starts a fresh estimation. Your saved browser project list is not deleted. Hover for a tooltip reminder.
+
+If you finish reviewing results and want to start a new estimation without scrolling back to the top, there is also a **↩ Start a New Estimation** button at the very bottom of the page, just above the footer. It does the same thing as "New Project" in the toolbar.
+
 ## Recommended Navigation Order
 
 1. Start in `Installer Design`

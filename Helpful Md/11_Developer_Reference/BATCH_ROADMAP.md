@@ -1,7 +1,7 @@
 # Fix Batch Roadmap — PV Calculator
 
 This document tracks all planned fix batches in priority order.
-Updated after each batch. Last update: 2026-05-14 (post-Batch 17).
+Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 
 ---
 
@@ -32,25 +32,11 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 17).
 | Batch 16A | b05b728 | 2026-05-14 | Continuous discharge safety check, disclaimer gate fix, residential_backup schedule, evening_overnight schedule |
 | Batch 16B | 0ec81ae | 2026-05-14 | Mobile nav hamburger (fixed bottom-right popover), New/Clear project button, #A16 confidence score PDF breakdown |
 | Batch 17  | 572261c | 2026-05-14 | Local Cost Build-Up pricing mode — per-unit prices (panel/inverter/battery), logistics, permits, flat/% labour, profit margin, FX-safe, client PDF toggle |
+| Batch 18  | f9ef5f4 | 2026-05-14 | 24V bus advisory (BatterySizingEngine warning when >500Ah at 24V); renderBatteryTab warnings loop; New Project button rename + tooltip + footer reset CTA |
 
 ---
 
 ## Open Batches (Planned)
-
-### Batch 18 — 24V Bus Auto-Escalation Recommendation (#R1)
-**Priority: LOW — product policy improvement**
-**Scope:** When the engine calculates a battery bank > ~500Ah at 24V, add a soft advisory recommending the user switch to 48V.
-
-**Engineering basis:**
-- 800Ah at 24V requires 400Ah cells (uncommon)
-- Continuous DC at 24V for 3kVA = ~133A (borderline for many 24V components)
-- 48V halves DC current and uses commodity 100–200Ah rack modules
-
-**Files:** `src/scripts/modules/10-engines.ts` (BatterySizingEngine — add advisory), possibly `src/scripts/modules/30-controller.js` (UI badge)
-
-**Needs Opus pre-dive:** Brief one — to confirm which engine outputs the advisory and whether the HTML panel shows it.
-
----
 
 ### Enhancement — Panel/Battery Wattage Auto-Select
 **Priority: MEDIUM — UX quality**
@@ -78,4 +64,4 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 17).
 - Every code commit must include: `git add src/... dist/web/assets/app.js dist/web/assets/app.css pv_calculator_ui.html`
 - Build must pass (`npm run build` exit 0) before any commit
 
-*Last updated: 2026-05-14*
+*Last updated: 2026-05-14 (post-Batch 18)*
