@@ -13,11 +13,11 @@ function read(filePath) {
 const netlify = read('netlify.toml');
 const render = read('render.yaml');
 const workflow = read('.github/workflows/deploy-pages.yml');
-const guide = read('Helpful Md/DEPLOYMENT_TEMPLATES_AND_PROVIDER_SETUP_GUIDE.md');
-const pagesChecklist = read('Helpful Md/GITHUB_PAGES_PUBLISH_CHECKLIST.md');
-const hostingGuide = read('Helpful Md/HOSTING_RECOMMENDATION_AND_REMOTE_DEPLOYMENT_GUIDE.md');
-const oracleGuide = read('Helpful Md/ORACLE_CLOUD_ALWAYS_FREE_BACKEND_GUIDE.md');
-const closeoutGuide = read('Helpful Md/PREMIUM_V1_CLOSEOUT_CHECKLIST.md');
+const guide = read('Helpful Md/10_Deployment/DEPLOYMENT_TEMPLATES_AND_PROVIDER_SETUP_GUIDE.md');
+const pagesChecklist = read('Helpful Md/10_Deployment/GITHUB_PAGES_PUBLISH_CHECKLIST.md');
+const hostingGuide = read('Helpful Md/10_Deployment/HOSTING_RECOMMENDATION_AND_REMOTE_DEPLOYMENT_GUIDE.md');
+const oracleGuide = read('Helpful Md/10_Deployment/ORACLE_CLOUD_ALWAYS_FREE_BACKEND_GUIDE.md');
+const closeoutGuide = read('Helpful Md/09_Premium/PREMIUM_V1_CLOSEOUT_CHECKLIST.md');
 const oracleService = read('deploy/oracle/systemd/pv-premium-sync.service');
 const oracleNginx = read('deploy/oracle/nginx/pv-premium-sync.conf');
 const oracleCron = read('deploy/oracle/cron/pv-premium-sync.cron');
