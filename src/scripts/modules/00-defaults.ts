@@ -1387,6 +1387,26 @@ const DEFAULTS = {
             nextSteps: [...PROPOSAL_DEFAULT_LISTS.nextSteps]
         },
         commercialPresets: PROPOSAL_COMMERCIAL_PRESETS,
+        localBuildUpDefaults: {
+            africa:   { panelUnitPrice: 65000,  inverterUnitPrice: 420000, inverterCount: 1, batteryUnitPrice: 380000, batteryUnitKWh: 5.12,
+                        logisticsCost: 50000,   permitsCost: 20000,   miscMaterialsCost: 150000,
+                        laborMode: 'flat' as 'flat' | 'percent', laborFlatAmount: 200000, laborPercent: 15, profitMarginPct: 20 },
+            americas: { panelUnitPrice: 220,    inverterUnitPrice: 1400,   inverterCount: 1, batteryUnitPrice: 1800,  batteryUnitKWh: 5.12,
+                        logisticsCost: 180,     permitsCost: 350,     miscMaterialsCost: 700,
+                        laborMode: 'percent' as 'flat' | 'percent', laborFlatAmount: 0, laborPercent: 22, profitMarginPct: 14 },
+            europe:   { panelUnitPrice: 200,    inverterUnitPrice: 1300,   inverterCount: 1, batteryUnitPrice: 1700,  batteryUnitKWh: 5.12,
+                        logisticsCost: 160,     permitsCost: 400,     miscMaterialsCost: 650,
+                        laborMode: 'percent' as 'flat' | 'percent', laborFlatAmount: 0, laborPercent: 22, profitMarginPct: 14 },
+            asia:     { panelUnitPrice: 150,    inverterUnitPrice: 950,    inverterCount: 1, batteryUnitPrice: 1300,  batteryUnitKWh: 5.12,
+                        logisticsCost: 90,      permitsCost: 120,     miscMaterialsCost: 450,
+                        laborMode: 'flat' as 'flat' | 'percent', laborFlatAmount: 600, laborPercent: 16, profitMarginPct: 12 },
+            oceania:  { panelUnitPrice: 240,    inverterUnitPrice: 1500,   inverterCount: 1, batteryUnitPrice: 1900,  batteryUnitKWh: 5.12,
+                        logisticsCost: 250,     permitsCost: 450,     miscMaterialsCost: 750,
+                        laborMode: 'percent' as 'flat' | 'percent', laborFlatAmount: 0, laborPercent: 22, profitMarginPct: 14 },
+            global:   { panelUnitPrice: 180,    inverterUnitPrice: 1100,   inverterCount: 1, batteryUnitPrice: 1500,  batteryUnitKWh: 5.12,
+                        logisticsCost: 150,     permitsCost: 250,     miscMaterialsCost: 550,
+                        laborMode: 'percent' as 'flat' | 'percent', laborFlatAmount: 0, laborPercent: 18, profitMarginPct: 15 }
+        },
         regionDefaults: {
             africa:  { currencyLabel: 'USD', regionalMultiplier: 1.04, laborPct: 18, softCostPct: 8, marginPct: 12, taxPct: 0, supplierPricePack: 'west_africa_import', financeMode: 'generator_energy_offset',
             energyRatePerKWh: 1.00, exportCreditPerKWh: 0.02, energyRatePerKWhUSD: 1.00, exportCreditPerKWhUSD: 0.02, gridTariffRatePerKWhUSD: 0.22, generatorOffsetRatePerKWhUSD: 1.00, blendedRatePerKWhUSD: 0.55,
