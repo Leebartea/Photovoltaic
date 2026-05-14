@@ -18353,7 +18353,17 @@ const PVCalculator = {
             resolvedRates: { mode: 'local_build_up', fxRateUsed: fx, currencyLabel: currLabel },
             usesStandaloneMPPT: config?.systemType === 'off_grid',
             inputs,
-            isLocalBuildUp: true
+            isLocalBuildUp: true,
+            options: [],
+            profileHeadline: '',
+            profileNote: '',
+            profileLabel: 'Local Cost Build-Up',
+            pricingSource: 'local_build_up',
+            notes: [],
+            terms: { validityDays: inputs.validityDays || 30, installWindowDays: inputs.installWindowDays || 3, installWindowLabel: `${inputs.installWindowDays || 3} working day${(inputs.installWindowDays || 3) === 1 ? '' : 's'}` },
+            scopeIncluded: [],
+            exclusions: [],
+            nextSteps: [],
         };
     },
 
@@ -18395,6 +18405,20 @@ const PVCalculator = {
         if (mode === 'local_build_up') {
             const panel = document.getElementById('localPanelUnitPrice');
             if (panel && !panel.value) this.applyCommercialDefaultsByLocation?.();
+        }
+        const benchmarkOnlyFields = document.querySelectorAll('.benchmark-only-field');
+        benchmarkOnlyFields.forEach(el => {
+            el.style.display = (mode === 'local_build_up') ? 'none' : '';
+        });
+        if (mode === 'local_build_up') {
+            const kwhField = document.getElementById('localBatteryUnitKWh');
+            if (kwhField && (!kwhField.value || kwhField.value === '0')) {
+                const ah = this.getBatteryUnitAh ? this.getBatteryUnitAh() : 0;
+                const v = this.getBatteryUnitVoltage ? this.getBatteryUnitVoltage() : 0;
+                if (ah > 0 && v > 0) {
+                    kwhField.value = parseFloat(((ah * v) / 1000).toFixed(2));
+                }
+            }
         }
         this.onLaborModeChange();
         this.onProposalPricingChange?.();
@@ -20425,7 +20449,7 @@ const PVCalculator = {
                 bodyText(intro);
                 y += 1;
                 subTitle(compact ? 'Package Comparison' : 'Pricing Basis Comparison');
-                const packageRows = commercial.options.map(option => [
+                const packageRows = (commercial.options || []).map(option => [
                     option.label,
                     option.isCurrent ? 'Current' : option.isRecommended ? 'Default' : 'Alternate',
                     formatPdfMoney(option.totals.finalQuote),
@@ -23946,7 +23970,9 @@ const PVCalculator = {
         const finance = commercial.finance || null;
         const quoteLabel = isClientMode ? 'Proposal Budget' : 'Commercial Estimate';
         const comparisonLabel = isClientMode ? 'Package Options' : 'Pricing Basis Comparison';
-        const currentOption = commercial.options.find(option => option.isCurrent) || commercial.options[0];
+        const currentOption = (commercial.options && commercial.options.length > 0)
+            ? (commercial.options.find(option => option.isCurrent) || commercial.options[0])
+            : null;
         const pricingSource = commercial.pricingSource || this.resolveSupplierPricingSource(commercial.inputs, details);
         const quoteIntro = isClientMode
             ? 'Client-safe budget view derived from the recommended design. Use it to position package level, payment plan, and scope before you prepare the final contract.'
@@ -24212,7 +24238,7 @@ const PVCalculator = {
                     </div>
                 </div>
                 <div class="proposal-options">
-                    ${commercial.options.map(option => `
+                    ${(commercial.options || []).map(option => `
                         <div class="proposal-option${option.isCurrent ? ' current' : ''}${option.isRecommended ? ' recommended' : ''}">
                             <span class="proposal-option-badge">${option.badge}</span>
                             <div class="proposal-option-title">${option.label}</div>
@@ -26315,8 +26341,7 @@ const PVCalculator = {
             return;
         }
         // Calculate Ah from kWh using bank voltage (from config or default 48V for lithium)
-        const config = this.getConfig();
-        const bankVoltage = config.batteryBankVoltage || 48;
+        const bankVoltage = this.getBatteryUnitVoltage() || 48;
         const ah = Math.round((kwhVal * 1000) / bankVoltage);
         if (resultDiv) resultDiv.textContent = `${ah} Ah (at ${bankVoltage}V bank)`;
 
