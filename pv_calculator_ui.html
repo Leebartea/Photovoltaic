@@ -4520,6 +4520,9 @@ input:checked + .toggle-slider:before {
                     <span class="sni-num">7</span><span class="sni-label">Pricing</span>
                 </a>
                 <hr style="border:none;border-top:1px solid var(--border-color);margin:6px 0;">
+                <a class="section-nav-item" href="#" onclick="event.preventDefault();PVCalculator.calculate();" style="font-weight:600;color:var(--primary-color);">
+                    &#9889; Calculate
+                </a>
                 <a class="section-nav-item" href="#" onclick="event.preventDefault();PVCalculator.clearProject();" style="color:var(--primary-color);">
                     &#8617; New Project
                 </a>
@@ -36740,8 +36743,14 @@ const PVCalculator = {
 
         const { depositPct, validityDays, installWindowDays, scopeIncluded,
                 exclusions, nextSteps, currencyLabel } = context || {};
-        let paymentPlan = null;
-        try { paymentPlan = this.buildPaymentPlan?.(totals.finalQuote, depositPct, currencyLabel, inputs.effectiveFxRate); } catch(e) {}
+        const clampedDepositPct = Math.min(90, Math.max(10, depositPct || 30));
+        const depositSuggestion = totals.finalQuote * (clampedDepositPct / 100);
+        const paymentPlan = {
+            depositPct: clampedDepositPct,
+            completionPct: 100 - clampedDepositPct,
+            deposit: depositSuggestion,
+            completion: totals.finalQuote - depositSuggestion
+        };
 
         return {
             key: 'local_build_up',
@@ -36751,7 +36760,7 @@ const PVCalculator = {
             note: `Per-unit procurement · ${panelCount} panels · ${battUnits} battery unit${battUnits !== 1 ? 's' : ''}`,
             items,
             totals,
-            band: { low: toUsd(finalQuote * 0.97), high: toUsd(finalQuote * 1.05) },
+            band: { low: toUsd(finalQuote * 0.97), high: toUsd(finalQuote * 1.05), spreadPct: 8 },
             paymentPlan,
             finance,
             resolvedRates: { mode: 'local_build_up', fxRateUsed: fx, currencyLabel: currLabel },
@@ -36762,7 +36771,7 @@ const PVCalculator = {
             profileHeadline: '',
             profileNote: '',
             profileLabel: 'Local Cost Build-Up',
-            pricingSource: 'local_build_up',
+            pricingSource: null,
             notes: [],
             terms: { validityDays: inputs.validityDays || 30, installWindowDays: inputs.installWindowDays || 3, installWindowLabel: `${inputs.installWindowDays || 3} working day${(inputs.installWindowDays || 3) === 1 ? '' : 's'}` },
             scopeIncluded: [],
