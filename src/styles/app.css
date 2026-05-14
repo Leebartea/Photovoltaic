@@ -2291,6 +2291,12 @@ textarea {
     margin-top: 8px;
 }
 
+@media (max-width: 480px) {
+    .proposal-hero-main {
+        grid-template-columns: 1fr;
+    }
+}
+
 .proposal-breakdown {
     margin-top: 16px;
     display: grid;
