@@ -31804,10 +31804,13 @@ const PVCalculator = {
                 const invStatus = invUnderCont ? 'UNDERSIZED — cannot handle continuous load' : inv.recommendedSizeVA < (inv.autoSuggestedSizeVA || 0) ? 'UNDERSIZED — less headroom than recommended' : 'MEETS requirements';
                 const statusColor = invUnderCont ? RED : inv.recommendedSizeVA < (inv.autoSuggestedSizeVA || 0) ? AMBER : GREEN;
                 checkSpace(LH);
-                doc.setFont('helvetica', 'bold');
+                doc.setFont('helvetica', 'normal');
                 doc.setFontSize(8.5);
+                setColor(MUTED);
+                doc.text('Inverter Validation:', mL, y);
+                doc.setFont('helvetica', 'bold');
                 setColor(statusColor);
-                doc.text(`Validation: ${invStatus}`, mL + 62, y);
+                doc.text(invStatus, mL + 62, y);
                 y += LH;
                 setColor(DARK);
             } else {
@@ -31823,7 +31826,9 @@ const PVCalculator = {
                 labelValue('Battery Bank:', `${Math.round(batt.totalCapacityAh)} Ah  |  ${batt.cellsInSeries}S${batt.stringsInParallel}P  |  ${batt.chemistryName}  |  ${fmtEnergy(batt.totalCapacityWh)}`);
             }
             labelValue('PV Array:', `${fmtWp(pv.arrayWattage)}  |  ${pv.panelsInSeries}S × ${pv.stringsInParallel}P = ${pv.totalPanels} panels`);
-            labelValue('MPPT Validation:', R.mpptValidation.isValid ? 'PASS — All checks within limits' : 'ISSUES — See warnings below');
+            if (commercial?.usesStandaloneMPPT && R.mpptValidation) {
+                labelValue('MPPT Validation:', R.mpptValidation.isValid ? 'PASS — All checks within limits' : 'ISSUES — See warnings below');
+            }
             labelValue('Total Appliances:', `${LoadEngine.appliances.length}  |  Daily: ${Math.round(agg.dailyEnergyWh)} Wh`);
             if (phaseAllocation) {
                 labelValue('3-Phase Balance:', `${phaseAllocation.classificationLabel} (${phaseAllocation.imbalancePct}%)  |  Limiting phase: ${phaseAllocation.limitingPhase} at ${Math.round(phaseAllocation.limitingPhasePeakVA)}VA`);
@@ -32231,55 +32236,7 @@ const PVCalculator = {
                 });
             }
 
-            // Coping Score in PDF (if undersized)
-            if (inv.isManualOverride || batt.isManualOverride) {
-                const invUsableW_pdf = (inv.recommendedSizeVA || 0) * DEFAULTS.INVERTER_DERATING;
-                const contNeeded_pdf = agg.designContinuousVA || agg.peakSimultaneousVA || 0;
-                const invRatio_pdf = contNeeded_pdf > 0 ? Math.min(invUsableW_pdf / contNeeded_pdf, 1.0) : 1.0;
-                const surgeNeeded_pdf = agg.highestSurgeVA || agg.designSurgeVA || 0;
-                const surgeCap_pdf = (inv.recommendedSizeVA || 0) * (R.config?.inverterSurgeMultiplier || 2.0);
-                const surgeRatio_pdf = surgeNeeded_pdf > 0 ? Math.min(surgeCap_pdf / surgeNeeded_pdf, 1.0) : 1.0;
-                const autoAh_pdf = batt.autoSuggestedAh || batt.totalCapacityAh;
-                const battRatio_pdf = autoAh_pdf > 0 ? Math.min(batt.totalCapacityAh / autoAh_pdf, 1.0) : 1.0;
-                const copingScore_pdf = Math.round((invRatio_pdf * 0.40 + surgeRatio_pdf * 0.25 + battRatio_pdf * 0.35) * 100);
 
-                if (copingScore_pdf < 95) {
-                    checkSpace(20);
-                    y += 4;
-                    const scoreColor_pdf = copingScore_pdf >= 75 ? [22, 163, 74] : copingScore_pdf >= 50 ? [217, 119, 6] : [220, 38, 38];
-                    const scoreLabel_pdf = copingScore_pdf >= 75 ? 'Manageable' : copingScore_pdf >= 50 ? 'Tight' : 'Critical';
-                    doc.setFillColor(...scoreColor_pdf);
-                    doc.roundedRect(mL, y, contentW, 14, 2, 2, 'F');
-                    doc.setFontSize(10);
-                    doc.setFont('helvetica', 'bold');
-                    doc.setTextColor(255, 255, 255);
-                    doc.text(`Coping Score: ${copingScore_pdf}% — ${scoreLabel_pdf} (with load management)`, mL + contentW / 2, y + 9, { align: 'center' });
-                    y += 18;
-                    const _copFS1 = doc.getFontSize();
-                    doc.setFontSize(8);
-                    doc.setTextColor(130, 130, 130);
-                    checkSpace(13);
-                    doc.text(`Inverter fit: ${Math.round(invRatio_pdf * 100)}%  (40% weight)`, mL + 4, y);
-                    y += 4;
-                    doc.text(`Surge headroom: ${Math.round(surgeRatio_pdf * 100)}%  (25% weight)`, mL + 4, y);
-                    y += 4;
-                    doc.text(`Battery autonomy: ${Math.round(battRatio_pdf * 100)}%  (35% weight)`, mL + 4, y);
-                    y += 4;
-                    doc.setFontSize(_copFS1);
-                    doc.setTextColor(0, 0, 0);
-                    // Inverter technology note in PDF coping section
-                    const copeTech_pdf = config.inverterTechnology || 'unknown';
-                    if (copeTech_pdf !== 'unknown') {
-                        const copeTechNote = copeTech_pdf === 'transformer'
-                            ? 'Transformer-based inverter (2.5x surge tolerance) — better motor surge handling'
-                            : 'Transformerless inverter (2.0x surge tolerance) — stricter overload window';
-                        doc.setFontSize(7);
-                        doc.setTextColor(...MUTED);
-                        doc.text(copeTechNote, mL, y);
-                        y += 5;
-                    }
-                }
-            }
 
             // ══════════════════════════════════════════════════════════
             // PAGE 4: ADVISORY — PRACTICAL TIPS
@@ -32556,7 +32513,7 @@ const PVCalculator = {
                     const appSubtotalWh = appRows.reduce((sum, row) => sum + row[row.length - 1], 0);
                     const marginWh = Math.round(agg.dailyEnergyWh) - appSubtotalWh;
                     labelValue('Appliance subtotal (pre-margin):', `${fmtEnergy(appSubtotalWh)}`);
-                    if (marginWh !== 0) {
+                    if (Math.abs(marginWh) > 2) {
                         labelValue('+ Design allowance (margin & derating):', `+${fmtEnergy(Math.abs(marginWh))}`);
                     }
                     labelValue('= Daily energy total:', `${fmtEnergy(agg.dailyEnergyWh)}`);
