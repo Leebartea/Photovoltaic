@@ -161,6 +161,32 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 15D — Mobile Hero Stack, PDF Polish (commit 00c1a70 — 2026-05-14)
+
+**Issue #A7 — Mobile "Why this package" block now stacks full-width at 375px**
+- `.proposal-hero-main` grid had no mobile breakpoint — right column (`.proposal-hero-focus`) was squished at narrow viewports
+- Added `@media (max-width: 480px) { .proposal-hero-main { grid-template-columns: 1fr; } }` immediately after `.proposal-hero-focus li + li` block in `app.css`
+
+**Issue #A8 — Coping Score block no longer prints twice in installer PDF**
+- Duplicate 49-line filled-rectangle coping score block on Page 3 (Warnings & Hard Blocks) deleted entirely
+- Page 4 advisory bar (track + filled bar + component breakdown) retained as the sole coping score render
+
+**Issue #A9 — Appliance reconciliation "+1 Wh" rounding-noise row suppressed**
+- Design allowance row threshold changed from `marginWh !== 0` to `Math.abs(marginWh) > 2` — rows showing "+1 Wh" or "+2 Wh" noise are now silent
+
+**Issue #A10 — Duplicate hybrid-topology advisory bullet (subsumed by #A11 + #A13)**
+- No separate edit required; visual duplication was caused by the stranded inverter validation row (#A11) colliding with the ungated MPPT row (#A13) — fixed by those two edits
+
+**Issue #A11 — "Validation: MEETS requirements" given proper label**
+- Row previously floated as `doc.text(...)` in the value column only (no left-hand label at `mL`)
+- Now rendered with explicit `Inverter Validation:` label in muted/normal font at `mL`, value in bold colored font at `mL + 62` — consistent with all other label/value rows
+
+**Issue #A13 — MPPT Validation row gated to standalone-MPPT systems only**
+- `labelValue('MPPT Validation:', ...)` now wrapped in `if (commercial?.usesStandaloneMPPT && R.mpptValidation)` gate
+- Hybrid and grid-tie paths (built-in MPPT) no longer show a standalone-MPPT validation row
+
+---
+
 ### Batch 15C — Africa Region Rate Correction (commit 1b7ed32 — 2026-05-09)
 
 **Issue #A4 — Africa generator_offset rate corrected from 0.28 → 1.00 USD/kWh**

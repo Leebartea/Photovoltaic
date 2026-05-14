@@ -47,6 +47,7 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 | 2026-05-09 | Batch 15A | PDF footer double-print fixed (brand stamp moved to footY+3.5, page stamp to post-build only); header company-name fallback suppressed | 97c5450 |
 | 2026-05-09 | Batch 15B | #A1 (rate clamp ceiling 5→1.0 USD/kWh, export credit 2→0.5 USD/kWh); #A3 (formatProposalMoney now applies fxRate identical to formatCommercialMoney); #A6 (Payment & Acceptance page decoupled from clientExport flag — now gates on audienceMode==='client' directly) | ce04338 |
 | 2026-05-09 | Batch 15C | #A4 (Africa generator_offset rate corrected 0.28→1.00 USD/kWh; per-basis rate fields added: gridTariffRatePerKWhUSD 0.22, blendedRatePerKWhUSD 0.55; applyCommercialDefaultsByLocation now auto-fills basis-matched rate; parseFinanceRate clamp raised 1.0→2.5 USD/kWh) | 1b7ed32 |
+| 2026-05-14 | Batch 15D | #A7 (mobile hero @media 480px stacks to 1-column); #A8 (coping score duplicate block deleted from Page 3); #A9 (rounding-noise margin row threshold raised to >2 Wh); #A10 (subsumed by #A11+#A13); #A11 (Inverter Validation: label added at mL); #A13 (MPPT Validation row gated to usesStandaloneMPPT) | 00c1a70 |
 
 ---
 
@@ -62,13 +63,13 @@ PDFs tested: `PV_System_Design_Lagos__Nigeria_2026-05-09 (4).pdf` (client) and `
 | #A4 | Africa generator_offset rate = USD 0.28/kWh (utility tariff magnitude, not diesel cost) | MEDIUM | **FIXED — Batch 15C (1b7ed32)** |
 | #A5 | PDF header prints company name fallback twice when companyName unset | MEDIUM | **FIXED — Batch 15A (97c5450)** |
 | #A6 | Payment & Acceptance page gated by !includeDetails — suppressed on most client exports | MEDIUM | **FIXED — Batch 15B (ce04338)** |
-| #A7 | Mobile "Why this package" popup not full-width at 375px | MEDIUM | Open — Batch 15D |
-| #A8 | Coping Score block printed twice in installer PDF | LOW | Open — Batch 15D |
-| #A9 | Appliance reconciliation "+1 Wh" rounding-noise row not suppressed | LOW | Open — Batch 15D |
-| #A10 | Duplicate hybrid-topology advisory bullet from two list-builders | LOW | Open — Batch 15D |
-| #A11 | "Validation: MEETS requirements" stranded under Auto-Rec row | LOW | Open — Batch 15D |
+| #A7 | Mobile "Why this package" popup not full-width at 375px | MEDIUM | **FIXED — Batch 15D (00c1a70)** |
+| #A8 | Coping Score block printed twice in installer PDF | LOW | **FIXED — Batch 15D (00c1a70)** |
+| #A9 | Appliance reconciliation "+1 Wh" rounding-noise row not suppressed | LOW | **FIXED — Batch 15D (00c1a70)** |
+| #A10 | Duplicate hybrid-topology advisory bullet from two list-builders | LOW | **FIXED — Batch 15D (00c1a70) — subsumed by #A11+#A13** |
+| #A11 | "Validation: MEETS requirements" stranded under Auto-Rec row | LOW | **FIXED — Batch 15D (00c1a70)** |
 | #A12 | SVG system diagram visual verify (installer PDF) | INFO | Needs runtime check |
-| #A13 | MPPT validation label shown even in auto-sized path | INFO | Open — Batch 15D |
+| #A13 | MPPT validation label shown even in auto-sized path | INFO | **FIXED — Batch 15D (00c1a70)** |
 | Feature | Panel/battery wattage auto-select scales with array size (≥5kWp → 550–600Wp, small → 100–200Wp) | Enhancement | Open — needs Opus dive |
 
 ---
