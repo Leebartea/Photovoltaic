@@ -1,7 +1,7 @@
 # Fix Batch Roadmap — PV Calculator
 
 This document tracks all planned fix batches in priority order.
-Updated after each batch. Last update: 2026-05-14 (post-Batch 16B).
+Updated after each batch. Last update: 2026-05-14 (post-Batch 17).
 
 ---
 
@@ -31,27 +31,11 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 16B).
 | Batch 15E | — (verification) | 2026-05-14 | SVG verified, all 15D fixes confirmed, #A14/#A15/#A16 logged |
 | Batch 16A | b05b728 | 2026-05-14 | Continuous discharge safety check, disclaimer gate fix, residential_backup schedule, evening_overnight schedule |
 | Batch 16B | 0ec81ae | 2026-05-14 | Mobile nav hamburger (fixed bottom-right popover), New/Clear project button, #A16 confidence score PDF breakdown |
+| Batch 17  | 572261c | 2026-05-14 | Local Cost Build-Up pricing mode — per-unit prices (panel/inverter/battery), logistics, permits, flat/% labour, profit margin, FX-safe, client PDF toggle |
 
 ---
 
 ## Open Batches (Planned)
-
-### Batch 17 — Local Market Pricing Engine
-**Priority: HIGH value — installer usability**
-**Scope:** New "Local Cost Build-Up" pricing mode alongside the existing $/Wp model.
-
-**Why this matters:** The current model uses international wholesale USD rates (e.g. $0.29/Wp panels, $0.14/VA inverter, $245/kWh battery). Nigerian installers buying locally pay significantly different amounts per unit. The app quotes NGN 16.5M for systems that real installers charge NGN 3–5M.
-
-**Proposed features:**
-- Per-unit actual prices (e.g. ₦65,000/panel, ₦420,000 for the specific inverter model)
-- Fixed cost fields: logistics, transport, permit, documentation
-- Installer labor charge (flat fee OR % of material cost)
-- Installer profit margin
-- The existing $/Wp model stays as "Benchmark Estimate" mode
-
-**Needs Opus design dive:** YES — before any code. The data structure for per-unit costs, how they interact with the existing BOM, and how the UI switch works all need careful design.
-
----
 
 ### Batch 18 — 24V Bus Auto-Escalation Recommendation (#R1)
 **Priority: LOW — product policy improvement**

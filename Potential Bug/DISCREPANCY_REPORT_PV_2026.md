@@ -51,6 +51,7 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 | 2026-05-14 | Batch 15E | Verification only — no code changes. #A8/#A9/#A13 confirmed via source + dist audit. #A12 SVG verified functional for 24V Off-Grid and 48V Hybrid cases. New issues #A14/#A15/#A16 logged from engineering audit of May 14 PDFs. | — |
 | 2026-05-14 | Batch 16A | #A14 (continuous discharge warning added to BatterySizingEngine); #A15 (disclaimer gate changed to audienceMode !== 'client'); residential_backup.recommendedSchedule fixed to 'evening_overnight'; new evening_overnight schedule added to OPERATING_SCHEDULES | b05b728 |
 | 2026-05-14 | Batch 16B | Mobile nav hamburger re-enabled (fixed bottom-right, upward popover, collapses on load); New/Clear project button + clearProject() method; #A16 confidence penalty breakdown added under PDF confidence bar | 0ec81ae |
+| 2026-05-14 | Batch 17  | Local Cost Build-Up pricing mode: per-unit prices (panel/inverter/battery), logistics, permits, flat/% labour, profit margin; FX-safe via fxRateToUSD; client PDF per-unit toggle; region-aware defaults; benchmarkPricingBlock/localBuildUpBlock show-hide | 572261c |
 
 ---
 

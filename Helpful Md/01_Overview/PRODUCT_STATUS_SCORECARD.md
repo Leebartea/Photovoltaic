@@ -161,6 +161,39 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 17 — Local Cost Build-Up Pricing Mode (commit 572261c — 2026-05-14)
+
+**Problem solved:** The benchmark $/Wp model quoted NGN 16.5M for systems Nigerian installers charge NGN 3–5M. Gap = international wholesale rates vs local procurement reality.
+
+**New mode: "Local Cost Build-Up"**
+- Pricing Mode select at top of Pricing card toggles between `Benchmark Estimate ($/Wp)` and `Local Cost Build-Up (per-unit)`
+- Benchmark block (`#benchmarkPricingBlock`) hides in local mode; local block (`#localBuildUpBlock`) shows
+- 12 new fields: panel/inverter/battery unit price, inverter qty, battery kWh/module, mounting+cable+BOS, logistics, permits, labour mode (flat or %), labour amount, profit margin %, client PDF toggle
+
+**Calculation design**
+- `_buildLocalBuildUpEstimate()` method added to `30-controller.js` alongside `buildProfileEstimate`
+- All local-currency amounts divided by `inputs.fxRateToUSD` (raw rate, not `effectiveFxRate`) to produce USD-internal values — works correctly even in installer mode where `effectiveFxRate = 1`
+- Item labels preserved: `"Solar modules"`, `"Inverter"`, `"Battery storage"` — finance extractors that use label-prefix matching are unaffected
+- `totals` shape identical to benchmark: `equipmentSubtotal`, `laborCost`, `softCost`, `marginAmount`, `preTaxTotal`, `taxAmount`, `finalQuote`
+- Finance summary (`calculateCommercialFinanceSummary`) reused unchanged
+
+**Variable names (STEP 0 findings — use in future engine work):**
+- Panel count: `pv.totalPanels` (line 17910)
+- Battery kWh: `(batt.totalCapacityWh || 0) / 1000` (line 17912)
+- Raw FX rate: `inputs.fxRateToUSD` (line 17418)
+- Location key: `locationKey` in `applyCommercialDefaultsByLocation` (line 17454)
+
+**Region-aware defaults seeded on location change:**
+Africa: ₦65k/panel, ₦420k/inverter, ₦380k/battery, flat labour ₦200k, 20% margin
+Americas/Europe/Oceania: USD/EUR amounts, % labour mode, 14–22% labour, 14–15% margin
+Asia: lower base costs, flat labour
+
+**Client PDF toggle:** `localShowUnitsInClientPdf` checkbox (default ON). When unchecked, client PDFs suppress per-unit basis text from BOM lines, showing only line totals. Installer PDFs always show full unit-cost breakdown.
+
+**Old projects:** Unaffected — `pricingMode` defaults to `'benchmark'`, so all saved projects open in benchmark mode unchanged.
+
+---
+
 ### Batch 16B — Mobile Nav, New/Clear Button, Confidence PDF Breakdown (commit 0ec81ae — 2026-05-14)
 
 **Mobile hamburger nav re-enabled**
