@@ -33,6 +33,7 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 | Batch 16B | 0ec81ae | 2026-05-14 | Mobile nav hamburger (fixed bottom-right popover), New/Clear project button, #A16 confidence score PDF breakdown |
 | Batch 17  | 572261c | 2026-05-14 | Local Cost Build-Up pricing mode — per-unit prices (panel/inverter/battery), logistics, permits, flat/% labour, profit margin, FX-safe, client PDF toggle |
 | Batch 18  | f9ef5f4 | 2026-05-14 | 24V bus advisory (BatterySizingEngine warning when >500Ah at 24V); renderBatteryTab warnings loop; New Project button rename + tooltip + footer reset CTA |
+| Batch 19  | 00a5038 | 2026-05-14 | Fix local build-up crash (options undefined in renderCommercialSummary); battery kWh→Ah display uses correct voltage; auto-sniff battery kWh on mode switch; hide duplicate labour/margin fields; New Project in hamburger nav |
 
 ---
 
@@ -61,7 +62,11 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 **Commit rules:**
 - No `Co-Authored-By` line in any commit
 - Code commit first (Sonnet Max), then docs commit (Sonnet 4.6)
-- Every code commit must include: `git add src/... dist/web/assets/app.js dist/web/assets/app.css pv_calculator_ui.html`
+- Every code commit must include ALL of these (recurring pattern — do not skip any):
+  ```
+  git add src/... dist/web/assets/app.js dist/web/assets/app.css dist/web/index.html dist/web/pv_calculator_ui.html src/scripts/app.js pv_calculator_ui.html
+  ```
 - Build must pass (`npm run build` exit 0) before any commit
+- After committing, run `git log origin/main..HEAD --oneline` — if any lines appear, those commits are NOT pushed. Run `git push origin main`.
 
-*Last updated: 2026-05-14 (post-Batch 18)*
+*Last updated: 2026-05-14 (post-Batch 19)*

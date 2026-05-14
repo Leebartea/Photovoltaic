@@ -53,6 +53,7 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 | 2026-05-14 | Batch 16B | Mobile nav hamburger re-enabled (fixed bottom-right, upward popover, collapses on load); New/Clear project button + clearProject() method; #A16 confidence penalty breakdown added under PDF confidence bar | 0ec81ae |
 | 2026-05-14 | Batch 17  | Local Cost Build-Up pricing mode: per-unit prices (panel/inverter/battery), logistics, permits, flat/% labour, profit margin; FX-safe via fxRateToUSD; client PDF per-unit toggle; region-aware defaults; benchmarkPricingBlock/localBuildUpBlock show-hide | 572261c |
 | 2026-05-14 | Batch 18  | #R1 (24V bus advisory: BatterySizingEngine pushes warning when bankVoltage ≤ 24 && actualCapacityAh > 500; renderBatteryTab now loops battery.warnings into alert-warning divs); New Project button renamed + tooltip + footer reset CTA | f9ef5f4 |
+| 2026-05-14 | Batch 19  | #B1 crash: _buildLocalBuildUpEstimate missing options/profileHeadline/etc — added + guarded 3 callsites; #B2 battery kWh display hardcoded 48V → getBatteryUnitVoltage(); #B3 auto-sniff localBatteryUnitKWh from Ah×V on mode switch; #B4 laborPct/softCostPct/proposalMarginPct now hidden in local build-up mode (benchmark-only-field class); #B5 ↩ New Project action added to hamburger nav | 00a5038 |
 
 ---
 

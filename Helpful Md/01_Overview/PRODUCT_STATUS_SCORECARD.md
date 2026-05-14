@@ -161,6 +161,32 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 19 — Local Build-Up Crash Fix + Battery Display + UX Polish (commit 00a5038 — 2026-05-14)
+
+**#B1 — CRITICAL crash fix: `commercial.options` undefined in Local Cost Build-Up mode**
+- `renderCommercialSummary` called `.find()` on `commercial.options` which was absent from `_buildLocalBuildUpEstimate()` return
+- Fix: added `options: []`, `profileHeadline`, `profileNote`, `profileLabel`, `pricingSource`, `notes`, `terms`, `scopeIncluded`, `exclusions`, `nextSteps` to the local build-up return object
+- Also guarded all three `.find()`/`.map()` callsites with `(commercial.options || [])` and null-safe `currentOption`
+
+**#B2 — Battery kWh → Ah display used wrong voltage (hardcoded 48V)**
+- `onBatteryKwhInput()` read `config.batteryBankVoltage || 48` — always showed "at 48V bank" regardless of selected unit voltage
+- Fix: changed to `this.getBatteryUnitVoltage() || 48` — now correctly shows "400 Ah (at 24V bank)" when 24V is selected
+
+**#B3 — localBatteryUnitKWh auto-sniff on mode switch**
+- Switching to Local Cost Build-Up now auto-fills `localBatteryUnitKWh` from `(batteryAh × batteryVoltage) / 1000` using live battery section inputs
+- Only fills when the field is currently empty (does not overwrite user edits)
+
+**#B4 — Duplicate labour/margin fields hidden in local build-up mode**
+- `laborPct`, `softCostPct`, `proposalMarginPct` lived outside `#benchmarkPricingBlock` so they remained visible when local build-up was active — creating confusing duplicate fields
+- Fix: added `benchmark-only-field` class to their wrappers; `onPricingModeChange` hides them when mode = `local_build_up`
+
+**#B5 — "↩ New Project" added to hamburger nav**
+- A separator + action link appended to `#sectionNavItems` in template.html
+- Existing `if (!target) return` guard in `initSectionNav` already skips it from scroll spy
+- Users can now reset the workspace from the mobile nav without scrolling to the footer
+
+---
+
 ### Batch 18 — 24V Bus Advisory + New Project UX Polish (commit f9ef5f4 — 2026-05-14)
 
 **Issue #R1 resolved:** When `BatterySizingEngine` calculates a bank where `bankVoltage ≤ 24` and `actualCapacityAh > 500`, a warning is now pushed into `battery.warnings`. Advisory text explains the DC current and cell-format rationale for switching to 48V.
