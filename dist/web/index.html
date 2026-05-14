@@ -566,6 +566,7 @@
                                 <button class="btn btn-secondary btn-small" onclick="PVCalculator.saveProjectCopy()">Save Copy</button>
                                 <button class="btn btn-secondary btn-small" onclick="PVCalculator.exportProjectToFile()">Export File</button>
                                 <button class="btn btn-secondary btn-small" onclick="PVCalculator.triggerProjectImport()">Import File</button>
+                                <button class="btn btn-secondary btn-small" onclick="PVCalculator.clearProject()" title="Start a fresh estimation. Your saved browser projects will not be deleted.">New Project</button>
                             </div>
                             <input type="file" id="projectImportInput" aria-label="Import project file" class="sr-only" accept=".json,.pvcalc,.pvcalc.json" onchange="PVCalculator.importProjectFromFile(event)">
                             <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Browser projects stay on this device. Exported files let you move a design to another browser or archive it outside loca">i</button><small class="field-help">Browser projects stay on this device. Exported files let you move a design to another browser or archive it outside local storage.</small></span>
@@ -2189,6 +2190,17 @@
                     </div>
                     <div class="form-row">
                         <div class="form-group">
+                            <label for="pricingMode">Pricing Mode</label>
+                            <select id="pricingMode" onchange="PVCalculator.onPricingModeChange()">
+                                <option value="benchmark">Benchmark Estimate ($/Wp)</option>
+                                <option value="local_build_up">Local Cost Build-Up (per-unit)</option>
+                            </select>
+                            <span class="field-help-wrap">Switch to Local Cost Build-Up to enter actual per-unit procurement prices in your installer currency. The benchmark model uses regional supplier rate cards.</span>
+                        </div>
+                    </div>
+                    <div id="benchmarkPricingBlock">
+                    <div class="form-row">
+                        <div class="form-group">
                             <label for="supplierPricePack">Supplier Reference Pack</label>
                             <select id="supplierPricePack" onchange="PVCalculator.onProposalPricingChange()"></select>
                             <span class="field-help-wrap"><button type="button" class="field-help-icon" title="Offline regional benchmark pack used as the base component pricing layer before package posture and market multiplier ar">i</button><small class="field-help">Offline regional benchmark pack used as the base component pricing layer before package posture and market multiplier are applied.</small></span>
@@ -2320,6 +2332,85 @@
                             </div>
                         </div>
                     </div>
+                    </div><!-- /#benchmarkPricingBlock -->
+                    <div id="localBuildUpBlock" style="display:none;">
+                        <div class="form-row three">
+                            <div class="form-group">
+                                <label for="localPanelUnitPrice">Panel Unit Price</label>
+                                <input type="number" id="localPanelUnitPrice" min="0" step="1" placeholder="e.g. 65000" oninput="PVCalculator.onProposalPricingChange()">
+                                <span class="field-help-wrap">Cost per solar panel in your local currency (NGN, KES, USD, etc.).</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="localInverterUnitPrice">Inverter Unit Price</label>
+                                <input type="number" id="localInverterUnitPrice" min="0" step="1" placeholder="e.g. 420000" oninput="PVCalculator.onProposalPricingChange()">
+                                <span class="field-help-wrap">Actual cost for the inverter model in your local currency.</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="localInverterCount">Inverter Qty</label>
+                                <input type="number" id="localInverterCount" min="1" step="1" value="1" placeholder="1" oninput="PVCalculator.onProposalPricingChange()">
+                                <span class="field-help-wrap">Number of inverter units (usually 1; set 2 for dual-inverter cluster).</span>
+                            </div>
+                        </div>
+                        <div class="form-row three">
+                            <div class="form-group">
+                                <label for="localBatteryUnitPrice">Battery Unit Price</label>
+                                <input type="number" id="localBatteryUnitPrice" min="0" step="1" placeholder="e.g. 380000" oninput="PVCalculator.onProposalPricingChange()">
+                                <span class="field-help-wrap">Cost per battery module in your local currency.</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="localBatteryUnitKWh">Battery kWh per Module</label>
+                                <input type="number" id="localBatteryUnitKWh" min="0.1" step="0.1" value="5.12" placeholder="5.12" oninput="PVCalculator.onProposalPricingChange()">
+                                <span class="field-help-wrap">Energy per battery module (e.g. 5.12 kWh for a 100Ah/51.2V unit).</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="localMiscMaterialsCost">Mounting, Cable &amp; BOS</label>
+                                <input type="number" id="localMiscMaterialsCost" min="0" step="1" placeholder="e.g. 150000" oninput="PVCalculator.onProposalPricingChange()">
+                                <span class="field-help-wrap">Bundled site materials in local currency: frames, cable, DC protection.</span>
+                            </div>
+                        </div>
+                        <div class="form-row three">
+                            <div class="form-group">
+                                <label for="localLogisticsCost">Logistics &amp; Transport</label>
+                                <input type="number" id="localLogisticsCost" min="0" step="1" placeholder="e.g. 50000" oninput="PVCalculator.onProposalPricingChange()">
+                                <span class="field-help-wrap">Freight and delivery costs in local currency.</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="localPermitsCost">Permits &amp; Documentation</label>
+                                <input type="number" id="localPermitsCost" min="0" step="1" placeholder="e.g. 20000" oninput="PVCalculator.onProposalPricingChange()">
+                                <span class="field-help-wrap">Permit fees and documentation costs in local currency.</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="localLaborMode">Labour Charge Type</label>
+                                <select id="localLaborMode" onchange="PVCalculator.onLaborModeChange()">
+                                    <option value="flat">Flat Amount</option>
+                                    <option value="percent">% of Material Cost</option>
+                                </select>
+                                <span class="field-help-wrap">How installer labour is calculated.</span>
+                            </div>
+                        </div>
+                        <div class="form-row three">
+                            <div class="form-group" id="localLaborFlatAmountGroup">
+                                <label for="localLaborFlatAmount">Labour Charge (Flat)</label>
+                                <input type="number" id="localLaborFlatAmount" min="0" step="1" placeholder="e.g. 200000" oninput="PVCalculator.onProposalPricingChange()">
+                                <span class="field-help-wrap">Fixed labour fee for the full installation in local currency.</span>
+                            </div>
+                            <div class="form-group" id="localLaborPercentGroup" style="display:none;">
+                                <label for="localLaborPercent">Labour Charge (%)</label>
+                                <input type="number" id="localLaborPercent" min="0" max="100" step="0.5" placeholder="e.g. 15" oninput="PVCalculator.onProposalPricingChange()">
+                                <span class="field-help-wrap">Labour as % of total material cost (panels + inverter + battery + BOS).</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="localProfitMarginPct">Profit Margin (%)</label>
+                                <input type="number" id="localProfitMarginPct" min="0" max="200" step="1" placeholder="e.g. 20" oninput="PVCalculator.onProposalPricingChange()">
+                                <span class="field-help-wrap">Installer margin applied after all costs and labour.</span>
+                            </div>
+                            <div class="form-group">
+                                <label class="checkbox-label"><input type="checkbox" id="localShowUnitsInClientPdf" checked onchange="PVCalculator.onProposalPricingChange()"> Show per-unit prices in client PDF</label>
+                                <span class="field-help-wrap">When checked, client PDF shows unit costs (e.g. ₦65,000/panel). Uncheck to show only line totals.</span>
+                            </div>
+                        </div>
+                        <div id="localBuildUpPreview" class="supplier-pack-preview" aria-live="polite" style="margin-top:8px;min-height:40px;"></div>
+                    </div><!-- /#localBuildUpBlock -->
                     <div class="form-row three">
                         <div class="form-group">
                             <label for="laborPct">Install &amp; Labor (%)</label>
@@ -2552,6 +2643,10 @@ Confirm installation date, payment schedule, and handover checklist with the cli
         line-height: 1.7;
     ">
         <div style="max-width: 800px; margin: 0 auto;">
+            <p style="margin: 0 0 18px;">
+                <button onclick="PVCalculator.clearProject()" style="background:none;border:1px solid var(--primary-color);border-radius:4px;cursor:pointer;color:var(--primary-color);font-size:0.95em;padding:5px 16px;font-family:inherit;" title="Clear workspace and start a fresh estimation. Your saved browser projects will not be deleted.">↩ Start a New Estimation</button>
+                <span style="display:block;font-size:0.82em;color:var(--text-muted);margin-top:5px;">Your saved projects will not be deleted.</span>
+            </p>
             <p style="margin: 0 0 6px; font-weight: 600; color: var(--text-color);">
                 Advanced Photovoltaic Estimation &nbsp;|&nbsp; v3.0.0 (Global Edition)
             </p>

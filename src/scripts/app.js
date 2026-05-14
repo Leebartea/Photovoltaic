@@ -1295,6 +1295,26 @@ const DEFAULTS = {
             nextSteps: [...PROPOSAL_DEFAULT_LISTS.nextSteps]
         },
         commercialPresets: PROPOSAL_COMMERCIAL_PRESETS,
+        localBuildUpDefaults: {
+            africa: { panelUnitPrice: 65000, inverterUnitPrice: 420000, inverterCount: 1, batteryUnitPrice: 380000, batteryUnitKWh: 5.12,
+                logisticsCost: 50000, permitsCost: 20000, miscMaterialsCost: 150000,
+                laborMode: 'flat', laborFlatAmount: 200000, laborPercent: 15, profitMarginPct: 20 },
+            americas: { panelUnitPrice: 220, inverterUnitPrice: 1400, inverterCount: 1, batteryUnitPrice: 1800, batteryUnitKWh: 5.12,
+                logisticsCost: 180, permitsCost: 350, miscMaterialsCost: 700,
+                laborMode: 'percent', laborFlatAmount: 0, laborPercent: 22, profitMarginPct: 14 },
+            europe: { panelUnitPrice: 200, inverterUnitPrice: 1300, inverterCount: 1, batteryUnitPrice: 1700, batteryUnitKWh: 5.12,
+                logisticsCost: 160, permitsCost: 400, miscMaterialsCost: 650,
+                laborMode: 'percent', laborFlatAmount: 0, laborPercent: 22, profitMarginPct: 14 },
+            asia: { panelUnitPrice: 150, inverterUnitPrice: 950, inverterCount: 1, batteryUnitPrice: 1300, batteryUnitKWh: 5.12,
+                logisticsCost: 90, permitsCost: 120, miscMaterialsCost: 450,
+                laborMode: 'flat', laborFlatAmount: 600, laborPercent: 16, profitMarginPct: 12 },
+            oceania: { panelUnitPrice: 240, inverterUnitPrice: 1500, inverterCount: 1, batteryUnitPrice: 1900, batteryUnitKWh: 5.12,
+                logisticsCost: 250, permitsCost: 450, miscMaterialsCost: 750,
+                laborMode: 'percent', laborFlatAmount: 0, laborPercent: 22, profitMarginPct: 14 },
+            global: { panelUnitPrice: 180, inverterUnitPrice: 1100, inverterCount: 1, batteryUnitPrice: 1500, batteryUnitKWh: 5.12,
+                logisticsCost: 150, permitsCost: 250, miscMaterialsCost: 550,
+                laborMode: 'percent', laborFlatAmount: 0, laborPercent: 18, profitMarginPct: 15 }
+        },
         regionDefaults: {
             africa: { currencyLabel: 'USD', regionalMultiplier: 1.04, laborPct: 18, softCostPct: 8, marginPct: 12, taxPct: 0, supplierPricePack: 'west_africa_import', financeMode: 'generator_energy_offset',
                 energyRatePerKWh: 1.00, exportCreditPerKWh: 0.02, energyRatePerKWhUSD: 1.00, exportCreditPerKWhUSD: 0.02, gridTariffRatePerKWhUSD: 0.22, generatorOffsetRatePerKWhUSD: 1.00, blendedRatePerKWhUSD: 0.55,
@@ -5720,6 +5740,11 @@ or reduce inverter VA.`);
         // Note about 51.2V standard
         if (isLithium && bankVoltage >= 48) {
             suggestions.push(`LiFePO4 standard: 51.2V nominal (16S × 3.2V). Modern rack batteries (Pylontech, Felicity, BYD, Deye) use this standard. Actual terminal voltage: 44.8V–58.4V operating range.`);
+        }
+        if (bankVoltage <= 24 && actualCapacityAh > 500) {
+            warnings.push(`24V bus with ${Math.round(actualCapacityAh)}Ah bank: consider upgrading to 48V. ` +
+                `48V halves DC current (reduces cable sizing and heat) and uses standard 100–200Ah rack modules. ` +
+                `24V at this scale typically requires uncommon 400Ah+ cells.`);
         }
         return {
             chemistry,
@@ -16279,6 +16304,8 @@ const PVCalculator = {
         this.renderProjectTemplatePreview();
         this.renderEquipmentLibraryPreview();
         this.renderSupplierPricingPreview();
+        this.onPricingModeChange?.();
+        this.onLaborModeChange?.();
         this.refreshInputSectionFlow({ preserveState: true });
 
         if (options.recalculate !== false && LoadEngine.appliances.length > 0) {
@@ -17398,6 +17425,15 @@ const PVCalculator = {
 
     triggerProjectImport() {
         document.getElementById('projectImportInput')?.click();
+    },
+
+    clearProject() {
+        if (!confirm('Clear the current workspace and start fresh? Saved browser projects will not be deleted.')) return;
+        const keys = this.getProjectStorageKeys();
+        localStorage.removeItem(keys.autosave);
+        localStorage.removeItem(keys.legacyAutosave);
+        localStorage.removeItem(keys.currentProject);
+        location.reload();
     },
 
     importProjectFromFile(event) {
@@ -28712,7 +28748,23 @@ const PVCalculator = {
             },
             includedScopeText: document.getElementById('proposalIncludedScope')?.value?.trim() || listDefaults.includedScope.join('\n'),
             exclusionsText: document.getElementById('proposalExclusions')?.value?.trim() || listDefaults.exclusions.join('\n'),
-            nextStepsText: document.getElementById('proposalNextSteps')?.value?.trim() || listDefaults.nextSteps.join('\n')
+            nextStepsText: document.getElementById('proposalNextSteps')?.value?.trim() || listDefaults.nextSteps.join('\n'),
+            pricingMode: document.getElementById('pricingMode')?.value || 'benchmark',
+            localBuildUp: {
+                panelUnitPrice:      parseFloat(document.getElementById('localPanelUnitPrice')?.value) || 0,
+                inverterUnitPrice:   parseFloat(document.getElementById('localInverterUnitPrice')?.value) || 0,
+                inverterCount:       parseInt(document.getElementById('localInverterCount')?.value) || 1,
+                batteryUnitPrice:    parseFloat(document.getElementById('localBatteryUnitPrice')?.value) || 0,
+                batteryUnitKWh:      parseFloat(document.getElementById('localBatteryUnitKWh')?.value) || 5.12,
+                logisticsCost:       parseFloat(document.getElementById('localLogisticsCost')?.value) || 0,
+                permitsCost:         parseFloat(document.getElementById('localPermitsCost')?.value) || 0,
+                miscMaterialsCost:   parseFloat(document.getElementById('localMiscMaterialsCost')?.value) || 0,
+                laborMode:           document.getElementById('localLaborMode')?.value || 'flat',
+                laborFlatAmount:     parseFloat(document.getElementById('localLaborFlatAmount')?.value) || 0,
+                laborPercent:        parseFloat(document.getElementById('localLaborPercent')?.value) || 0,
+                profitMarginPct:     parseFloat(document.getElementById('localProfitMarginPct')?.value) || 0,
+                showUnitsInClientPdf: document.getElementById('localShowUnitsInClientPdf')?.checked !== false
+            }
         };
     },
 
@@ -28800,6 +28852,32 @@ const PVCalculator = {
         this.renderSupplierQuoteFreshnessPreview();
         this.renderSupplierRefreshRequestPreview();
         this.renderSupplierQuoteImportPreview();
+
+        const lbDefaults = (typeof DEFAULTS !== 'undefined') && DEFAULTS?.PROPOSAL_PRICING?.localBuildUpDefaults;
+        if (lbDefaults) {
+            const loc = (locationKey || '').toLowerCase();
+            const regionKey = loc.includes('africa') || loc.includes('nigeria') || loc.includes('kenya') || loc.includes('ghana') || loc.includes('lagos') || loc.includes('nairobi') || loc.includes('accra') ? 'africa'
+                : loc.includes('us_') || loc.includes('brazil') || loc.includes('canada') ? 'americas'
+                : loc.includes('eu_') || loc.includes('uk') || loc.includes('europe') ? 'europe'
+                : loc.includes('india') || loc.includes('uae') || loc.includes('asia') ? 'asia'
+                : loc.includes('australia') || loc.includes('oceania') ? 'oceania'
+                : 'global';
+            const lbd = lbDefaults[regionKey] || lbDefaults.global;
+            if (lbd) {
+                const seedIfEmpty = (id, val) => { const el = document.getElementById(id); if (el && !el.value) el.value = val; };
+                seedIfEmpty('localPanelUnitPrice', lbd.panelUnitPrice);
+                seedIfEmpty('localInverterUnitPrice', lbd.inverterUnitPrice);
+                seedIfEmpty('localBatteryUnitPrice', lbd.batteryUnitPrice);
+                seedIfEmpty('localBatteryUnitKWh', lbd.batteryUnitKWh);
+                seedIfEmpty('localLogisticsCost', lbd.logisticsCost);
+                seedIfEmpty('localPermitsCost', lbd.permitsCost);
+                seedIfEmpty('localMiscMaterialsCost', lbd.miscMaterialsCost);
+                seedIfEmpty('localLaborPercent', lbd.laborPercent);
+                seedIfEmpty('localProfitMarginPct', lbd.profitMarginPct);
+                if (lbd.laborMode === 'flat') seedIfEmpty('localLaborFlatAmount', lbd.laborFlatAmount);
+                const lm = document.getElementById('localLaborMode'); if (lm && !lm.value) lm.value = lbd.laborMode || 'flat';
+            }
+        }
     },
 
     /**
@@ -29222,6 +29300,14 @@ const PVCalculator = {
             return `${ratePart} × ${profilePart}${extraPart} × ${marketPart}`;
         };
 
+        if (inputs.pricingMode === 'local_build_up') {
+            return this._buildLocalBuildUpEstimate(
+                inputs, results, pv, inv, batt, cables, config, decision, supportSummary,
+                { depositPct, validityDays, installWindowDays, scopeIncluded,
+                  exclusions, nextSteps, currencyLabel, commercialPreset }
+            );
+        }
+
         const buildProfileEstimate = (profileKey, profile) => {
             const effectiveRates = Object.fromEntries(rateDefinitions.map(definition => [
                 definition.key,
@@ -29475,6 +29561,105 @@ const PVCalculator = {
         };
     },
 
+    _buildLocalBuildUpEstimate(inputs, results, pv, inv, batt, cables, config, decision, supportSummary, context) {
+        const lb = inputs.localBuildUp || {};
+        const fx = Math.max(1, inputs.fxRateToUSD || 1);
+        const toUsd = (n) => n / fx;
+        const currLabel = inputs.currencyLabel || 'USD';
+        const fmtL = (n) => Math.round(n).toLocaleString();
+
+        const panelWatts = parseInt(document.getElementById('panelWatts')?.value) || 400;
+        const panelCount = pv.totalPanels || Math.round((pv.arrayWattage || 0) / panelWatts) || 0;
+        const batteryKWh = (batt.totalCapacityWh || 0) / 1000 || batt.totalKWh || batt.totalCapacityKWh || 0;
+        const battUnits  = Math.max(1, Math.ceil(batteryKWh / Math.max(0.1, lb.batteryUnitKWh || 5.12)));
+        const invQty     = Math.max(1, lb.inverterCount || 1);
+        const invKVA     = inv.recommendedSizeVA ? (inv.recommendedSizeVA / 1000).toFixed(1) : '?';
+
+        const panelAmt    = panelCount * (lb.panelUnitPrice    || 0);
+        const invAmt      = invQty     * (lb.inverterUnitPrice || 0);
+        const battAmt     = battUnits  * (lb.batteryUnitPrice  || 0);
+        const miscAmt     = lb.miscMaterialsCost || 0;
+        const logAmt      = lb.logisticsCost     || 0;
+        const permAmt     = lb.permitsCost       || 0;
+        const matSub      = panelAmt + invAmt + battAmt + miscAmt;
+        const laborAmt    = lb.laborMode === 'percent' ? matSub * (lb.laborPercent || 0) / 100 : (lb.laborFlatAmount || 0);
+        const costBase    = matSub + logAmt + permAmt + laborAmt;
+        const marginAmt   = costBase * (lb.profitMarginPct || 0) / 100;
+        const preTax      = costBase + marginAmt;
+        const taxAmt      = preTax * (inputs.taxPct || 0) / 100;
+        const finalQuote  = preTax + taxAmt;
+
+        const audienceMode   = document.getElementById('audienceMode')?.value || 'installer';
+        const showUnits      = lb.showUnitsInClientPdf !== false || audienceMode !== 'client';
+        const gen            = 'Itemised supply and install';
+
+        const items = [
+            { label: `Solar modules (${panelCount} × ${panelWatts}Wp)`,
+              amount: toUsd(panelAmt),
+              basis: showUnits ? `${panelCount} × ${currLabel} ${fmtL(lb.panelUnitPrice || 0)}/panel` : gen },
+            { label: `Inverter (${invKVA}kVA)`,
+              amount: toUsd(invAmt),
+              basis: showUnits ? `${invQty} × ${currLabel} ${fmtL(lb.inverterUnitPrice || 0)} — actual procurement` : gen },
+            { label: `Battery storage (${battUnits} unit${battUnits !== 1 ? 's' : ''} / ${batteryKWh.toFixed(1)}kWh)`,
+              amount: toUsd(battAmt),
+              basis: showUnits ? `${battUnits} × ${currLabel} ${fmtL(lb.batteryUnitPrice || 0)} (${lb.batteryUnitKWh || 5.12}kWh each)` : gen },
+            { label: 'Mounting, cable & BOS materials',
+              amount: toUsd(miscAmt),
+              basis: showUnits ? `${currLabel} ${fmtL(miscAmt)} — bundled site materials` : gen },
+            { label: 'Logistics & transport',
+              amount: toUsd(logAmt),
+              basis: showUnits ? `${currLabel} ${fmtL(logAmt)} — flat freight allowance` : gen },
+            { label: 'Permits & documentation',
+              amount: toUsd(permAmt),
+              basis: showUnits ? `${currLabel} ${fmtL(permAmt)} — flat permit allowance` : gen },
+            { label: 'Installer labour',
+              amount: toUsd(laborAmt),
+              basis: showUnits
+                  ? (lb.laborMode === 'percent'
+                      ? `${lb.laborPercent || 0}% of ${currLabel} ${fmtL(matSub)} materials`
+                      : `${currLabel} ${fmtL(laborAmt)} — flat fee`)
+                  : gen },
+            { label: 'Installer profit margin',
+              amount: toUsd(marginAmt),
+              basis: showUnits ? `${lb.profitMarginPct || 0}% of ${currLabel} ${fmtL(costBase)} cost base` : gen }
+        ];
+
+        const totals = {
+            equipmentSubtotal: toUsd(matSub),
+            laborCost:         toUsd(logAmt + permAmt + laborAmt),
+            softCost:          0,
+            marginAmount:      toUsd(marginAmt),
+            preTaxTotal:       toUsd(preTax),
+            taxAmount:         toUsd(taxAmt),
+            finalQuote:        toUsd(finalQuote)
+        };
+
+        let finance = null;
+        try { finance = this.calculateCommercialFinanceSummary(totals, inputs); } catch(e) {}
+
+        const { depositPct, validityDays, installWindowDays, scopeIncluded,
+                exclusions, nextSteps, currencyLabel } = context || {};
+        let paymentPlan = null;
+        try { paymentPlan = this.buildPaymentPlan?.(totals.finalQuote, depositPct, currencyLabel, inputs.effectiveFxRate); } catch(e) {}
+
+        return {
+            key: 'local_build_up',
+            label: 'Local Cost Build-Up',
+            badge: 'Local',
+            headline: `${currLabel} ${fmtL(finalQuote)}`,
+            note: `Per-unit procurement · ${panelCount} panels · ${battUnits} battery unit${battUnits !== 1 ? 's' : ''}`,
+            items,
+            totals,
+            band: { low: toUsd(finalQuote * 0.97), high: toUsd(finalQuote * 1.05) },
+            paymentPlan,
+            finance,
+            resolvedRates: { mode: 'local_build_up', fxRateUsed: fx, currencyLabel: currLabel },
+            usesStandaloneMPPT: config?.systemType === 'off_grid',
+            inputs,
+            isLocalBuildUp: true
+        };
+    },
+
     /**
      * Refresh rendered results when only presentation/commercial inputs changed.
      */
@@ -29502,6 +29687,27 @@ const PVCalculator = {
         this.saveToLocalStorageAuto();
         this.refreshInputSectionFlow({ preserveState: true });
         this.refreshRenderedResults();
+    },
+
+    onPricingModeChange() {
+        const mode = document.getElementById('pricingMode')?.value || 'benchmark';
+        const bm = document.getElementById('benchmarkPricingBlock');
+        const lb = document.getElementById('localBuildUpBlock');
+        if (bm) bm.style.display = (mode === 'benchmark') ? '' : 'none';
+        if (lb) lb.style.display = (mode === 'local_build_up') ? '' : 'none';
+        if (mode === 'local_build_up') {
+            const panel = document.getElementById('localPanelUnitPrice');
+            if (panel && !panel.value) this.applyCommercialDefaultsByLocation?.();
+        }
+        this.onLaborModeChange();
+        this.onProposalPricingChange?.();
+    },
+    onLaborModeChange() {
+        const mode = document.getElementById('localLaborMode')?.value || 'flat';
+        const flatEl = document.getElementById('localLaborFlatAmountGroup');
+        const pctEl  = document.getElementById('localLaborPercentGroup');
+        if (flatEl) flatEl.style.display = (mode === 'flat') ? '' : 'none';
+        if (pctEl)  pctEl.style.display  = (mode === 'percent') ? '' : 'none';
     },
 
     /**
@@ -31763,6 +31969,19 @@ const PVCalculator = {
             doc.setTextColor(255, 255, 255);
             doc.text(`System Confidence: ${pdfConfScore}% — ${pdfConfLevel}`, pageW / 2, y + 7, { align: 'center' });
             y += 14;
+
+            // Confidence penalty breakdown (#A16)
+            const invDev = confidenceData.invRisk?.deviation || 0;
+            const battDev = confidenceData.battRisk?.deviation || 0;
+            const pvDev = confidenceData.pvRisk?.deviation || 0;
+            const weightedDeviation = invDev * 0.40 + battDev * 0.35 + pvDev * 0.25;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7);
+            doc.setTextColor(...MUTED);
+            const breakdownText = `100 − ${weightedDeviation.toFixed(1)} (risk dev.) − ${(confidenceData.clusterPenalty || 0).toFixed(1)} (cluster) − ${(confidenceData.architecturePenalty || 0).toFixed(1)} (arch.) − ${(confidenceData.strategyPenalty || 0).toFixed(1)} (strategy) = ${pdfConfScore}%`;
+            doc.text(breakdownText, pageW / 2, y, { align: 'center' });
+            y += 4;
+            doc.setTextColor(...DARK);
 
             sectionTitle('Proposal Control');
             const pdfReadinessColor = readinessColorMap[proposalReadiness.tone] || BLUE;
@@ -36799,6 +37018,12 @@ const PVCalculator = {
                 </div>`;
         }
 
+        if (battery.warnings && battery.warnings.length > 0) {
+            battery.warnings.forEach(w => {
+                html += `<div class="alert alert-warning" style="margin-top:8px;">${w}</div>`;
+            });
+        }
+
         html += `
                 <div class="result-row">
                     <span class="result-label">Chemistry</span>
@@ -38685,6 +38910,10 @@ const PVCalculator = {
     },
 
     initSectionNav() {
+        if (window.innerWidth <= 768) {
+            const items = document.getElementById('sectionNavItems');
+            if (items && !items.classList.contains('collapsed')) items.classList.add('collapsed');
+        }
         const nav = document.getElementById('sectionNav');
         if (!nav) return;
         if (typeof IntersectionObserver === 'undefined') return;
