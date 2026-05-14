@@ -1887,6 +1887,15 @@ const BatterySizingEngine = {
             );
         }
 
+        // Continuous discharge check — surge check above covers peaks; this covers sustained draw
+        const continuousLoadCurrent = inverterReq.dcInputCurrentContinuous;
+        if (continuousLoadCurrent > maxDischargeCurrent) {
+            warnings.push(
+                `Continuous DC current ${Math.round(continuousLoadCurrent)}A exceeds battery sustained limit of ${Math.round(maxDischargeCurrent)}A (0.5C for ${actualCapacityAh}Ah bank). Increase bank capacity
+or reduce inverter VA.`
+            );
+        }
+
         const totalCells = cellsInSeries * stringsParallel;
 
         // Required nominal kWh — the engineering basis for module selection

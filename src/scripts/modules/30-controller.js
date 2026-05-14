@@ -21311,7 +21311,7 @@ const PVCalculator = {
 
                 // Managed Practical in PDF
                 const pdfManaged = inv.managedMode;
-                if (pdfManaged && !clientExport) {
+                if (pdfManaged && audienceMode !== 'client') {
                     y += 3;
                     checkSpace(40);
                     subTitle('Managed Practical Alternative');

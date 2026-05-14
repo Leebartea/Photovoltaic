@@ -1587,7 +1587,7 @@ const DEFAULTS = {
             phaseGuidance: 'Most homes should stay single-phase unless the site already has split-phase or a proven 3-phase service requirement.',
             recommendedIntent: 'backup_only',
             recommendedContinuity: 'convenience',
-            recommendedSchedule: 'business_day',
+            recommendedSchedule: 'evening_overnight',
             sampleTemplateId: 'residential_backup'
         },
         retail_shop: {
@@ -1802,6 +1802,14 @@ const DEFAULTS = {
             prefersDaytimeShift: true,
             expectsNightContinuity: true,
             preservationFocus: true
+        },
+        evening_overnight: {
+            label: 'Residential / Evening & Overnight',
+            summary: 'Home is mostly empty during the day. Loads peak from evening through to morning — lighting, fans, refrigeration, and TV. Not a daytime-shift operation.',
+            operatingDaysPerWeek: 7,
+            prefersDaytimeShift: false,
+            expectsNightContinuity: true,
+            preservationFocus: false
         }
     }) as Record<string, DefaultsOperatingScheduleDefinition>,
 

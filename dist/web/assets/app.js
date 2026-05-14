@@ -1494,7 +1494,7 @@ const DEFAULTS = {
             phaseGuidance: 'Most homes should stay single-phase unless the site already has split-phase or a proven 3-phase service requirement.',
             recommendedIntent: 'backup_only',
             recommendedContinuity: 'convenience',
-            recommendedSchedule: 'business_day',
+            recommendedSchedule: 'evening_overnight',
             sampleTemplateId: 'residential_backup'
         },
         retail_shop: {
@@ -1706,6 +1706,14 @@ const DEFAULTS = {
             prefersDaytimeShift: true,
             expectsNightContinuity: true,
             preservationFocus: true
+        },
+        evening_overnight: {
+            label: 'Residential / Evening & Overnight',
+            summary: 'Home is mostly empty during the day. Loads peak from evening through to morning — lighting, fans, refrigeration, and TV. Not a daytime-shift operation.',
+            operatingDaysPerWeek: 7,
+            prefersDaytimeShift: false,
+            expectsNightContinuity: true,
+            preservationFocus: false
         }
     }),
     LOAD_ROLE_DEFINITIONS: ({
@@ -5673,6 +5681,12 @@ const BatterySizingEngine = {
         if (peakLoadCurrent > maxDischargeCurrent * 1.5) {
             blocks.push(`HARD BLOCK: Peak load current ${peakLoadCurrent.toFixed(1)}A exceeds safe discharge limit of ${(maxDischargeCurrent * 1.5).toFixed(1)}A (150% of max). Risk of battery damage and fire.`);
             suggestions.push(`Increase battery capacity to at least ${Math.round(peakLoadCurrent / specs.maxDischargeRate)}Ah or reduce peak load by using soft-start motors.`);
+        }
+        // Continuous discharge check — surge check above covers peaks; this covers sustained draw
+        const continuousLoadCurrent = inverterReq.dcInputCurrentContinuous;
+        if (continuousLoadCurrent > maxDischargeCurrent) {
+            warnings.push(`Continuous DC current ${Math.round(continuousLoadCurrent)}A exceeds battery sustained limit of ${Math.round(maxDischargeCurrent)}A (0.5C for ${actualCapacityAh}Ah bank). Increase bank capacity
+or reduce inverter VA.`);
         }
         const totalCells = cellsInSeries * stringsParallel;
         // Required nominal kWh — the engineering basis for module selection
@@ -32575,7 +32589,7 @@ const PVCalculator = {
 
                 // Managed Practical in PDF
                 const pdfManaged = inv.managedMode;
-                if (pdfManaged && !clientExport) {
+                if (pdfManaged && audienceMode !== 'client') {
                     y += 3;
                     checkSpace(40);
                     subTitle('Managed Practical Alternative');
