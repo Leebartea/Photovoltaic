@@ -161,6 +161,32 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 20A — Local Build-Up paymentPlan Crash Fix + Calculate in Hamburger (commit 11e7cc3 — 2026-05-14)
+
+**#B6 — CRITICAL crash fix: `paymentPlan` null in Local Cost Build-Up mode**
+- `_buildLocalBuildUpEstimate()` called `this.buildPaymentPlan?.()` — that method does not exist on the controller; optional-chain returned `undefined` so `paymentPlan` stayed `null`
+- `renderCommercialSummary` then crashed on `commercial.paymentPlan.deposit` (and 7 further accesses: `depositPct`, `completion`, `completionPct`)
+- Fix: replaced the broken helper call with an inline literal matching the benchmark path:
+  `{ depositPct: clampedDepositPct, completionPct: 100 - clampedDepositPct, deposit, completion }`
+- Uses `depositPct` from `context` (DOM field `proposalDepositPct`), clamped to 10–90%
+
+**#B7 — `band.spreadPct` missing**
+- `renderCommercialSummary` line 23995 reads `commercial.band.spreadPct`; local build-up returned `band: { low, high }` with no `spreadPct`
+- Fix: added `spreadPct: 8` (matches the 0.97–1.05 = 8% low-to-high spread already in the return)
+
+**#B8 — `pricingSource: 'local_build_up'` (string) blocked renderer fallback**
+- Line 23976: `commercial.pricingSource || this.resolveSupplierPricingSource(...)` — the non-empty string is truthy, so the fallback to `resolveSupplierPricingSource` never fired
+- Renderer then accessed `.packLabel`, `.supplierLabel`, `.quoteFreshness`, `.referenceWindow`, `.coverage`, `.chemistryLabel`, `.overrides`, `.overrideLabels`, `.hasOverrides` on the string — all undefined
+- Fix: changed to `pricingSource: null` — fallback now fires correctly and renders proper supplier source panel
+
+**UX — ⚡ Calculate shortcut added to hamburger nav**
+- A `⚡ Calculate` link inserted between the Section 7 (Pricing) item and the `<hr>` separator in `#sectionNavItems`
+- Calls `PVCalculator.calculate()` — same as the main blue button at the bottom
+- Lets users trigger calculation from any scroll position on mobile without scrolling back to the footer
+- Hamburger flow now reads: 1 System → 2 Workspace → 3 Guide → 4 Identity → 5 Loads → 6 Equipment → 7 Pricing → **⚡ Calculate** → separator → ↩ New Project
+
+---
+
 ### Batch 19 — Local Build-Up Crash Fix + Battery Display + UX Polish (commit 00a5038 — 2026-05-14)
 
 **#B1 — CRITICAL crash fix: `commercial.options` undefined in Local Cost Build-Up mode**

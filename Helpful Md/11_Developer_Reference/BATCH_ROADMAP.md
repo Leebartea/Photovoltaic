@@ -34,6 +34,7 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 | Batch 17  | 572261c | 2026-05-14 | Local Cost Build-Up pricing mode — per-unit prices (panel/inverter/battery), logistics, permits, flat/% labour, profit margin, FX-safe, client PDF toggle |
 | Batch 18  | f9ef5f4 | 2026-05-14 | 24V bus advisory (BatterySizingEngine warning when >500Ah at 24V); renderBatteryTab warnings loop; New Project button rename + tooltip + footer reset CTA |
 | Batch 19  | 00a5038 | 2026-05-14 | Fix local build-up crash (options undefined in renderCommercialSummary); battery kWh→Ah display uses correct voltage; auto-sniff battery kWh on mode switch; hide duplicate labour/margin fields; New Project in hamburger nav |
+| Batch 20A | 11e7cc3 | 2026-05-14 | Fix local build-up paymentPlan null crash (inline-construct depositPct/deposit/completion); add band.spreadPct; fix pricingSource string blocking renderer fallback; add ⚡ Calculate shortcut to hamburger nav |
 
 ---
 
@@ -69,4 +70,4 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 - Build must pass (`npm run build` exit 0) before any commit
 - After committing, run `git log origin/main..HEAD --oneline` — if any lines appear, those commits are NOT pushed. Run `git push origin main`.
 
-*Last updated: 2026-05-14 (post-Batch 19)*
+*Last updated: 2026-05-14 (post-Batch 20A)*

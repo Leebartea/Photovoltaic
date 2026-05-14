@@ -54,6 +54,7 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 | 2026-05-14 | Batch 17  | Local Cost Build-Up pricing mode: per-unit prices (panel/inverter/battery), logistics, permits, flat/% labour, profit margin; FX-safe via fxRateToUSD; client PDF per-unit toggle; region-aware defaults; benchmarkPricingBlock/localBuildUpBlock show-hide | 572261c |
 | 2026-05-14 | Batch 18  | #R1 (24V bus advisory: BatterySizingEngine pushes warning when bankVoltage ≤ 24 && actualCapacityAh > 500; renderBatteryTab now loops battery.warnings into alert-warning divs); New Project button renamed + tooltip + footer reset CTA | f9ef5f4 |
 | 2026-05-14 | Batch 19  | #B1 crash: _buildLocalBuildUpEstimate missing options/profileHeadline/etc — added + guarded 3 callsites; #B2 battery kWh display hardcoded 48V → getBatteryUnitVoltage(); #B3 auto-sniff localBatteryUnitKWh from Ah×V on mode switch; #B4 laborPct/softCostPct/proposalMarginPct now hidden in local build-up mode (benchmark-only-field class); #B5 ↩ New Project action added to hamburger nav | 00a5038 |
+| 2026-05-14 | Batch 20A | #B6 paymentPlan null crash: inline-construct {depositPct, completionPct, deposit, completion} in _buildLocalBuildUpEstimate replacing broken buildPaymentPlan?. call; #B7 band.spreadPct missing (added = 8); #B8 pricingSource string 'local_build_up' blocked renderer fallback (changed to null); ⚡ Calculate shortcut added to hamburger nav | 11e7cc3 |
 
 ---
 
@@ -80,17 +81,21 @@ PDFs tested: `PV_System_Design_Lagos__Nigeria_2026-05-09 (4).pdf` (client) and `
 | #A15 | Disclaimer guard edge case: client mode + includeDetails=true still shows MANAGED PRACTICAL DISCLAIMER (gate is `!clientExport` not `audienceMode !== 'client'`) | LOW | **FIXED — Batch 16A (b05b728)** |
 | #A16 | Confidence score (e.g. 36% Stress) not itemised in PDF — installers cannot audit which penalty components drove the score | INFO | **FIXED — Batch 16B (0ec81ae)** |
 | #R1 | Product policy: 24V bus not auto-escalated to 48V when bank Ah > ~500Ah — produces unusually large-format cells (400Ah) and borderline DC current paths | INFO — Product policy | **FIXED — Batch 18 (f9ef5f4)** |
+| #B6 | Local build-up mode: `paymentPlan` is null — `this.buildPaymentPlan?.()` is not defined on controller; `renderCommercialSummary` crashes on `paymentPlan.deposit` | CRITICAL | **FIXED — Batch 20A (11e7cc3)** |
+| #B7 | `band.spreadPct` missing from local build-up return — renderer accesses it at statItems note | LOW | **FIXED — Batch 20A (11e7cc3)** |
+| #B8 | `pricingSource: 'local_build_up'` (string) truthy — blocks `resolveSupplierPricingSource` fallback, causing undefined property crashes on `.packLabel` etc. | HIGH | **FIXED — Batch 20A (11e7cc3)** |
 | Feature | Panel/battery wattage auto-select scales with array size (≥5kWp → 550–600Wp, small → 100–200Wp) | Enhancement | Open — needs Opus dive |
 
 ---
 
-## Severity Summary Table (updated after Batch 18, 2026-05-14)
+## Severity Summary Table (updated after Batch 20A, 2026-05-14)
 
 | Severity | Open | Fixed / Verified |
 |---|---|---|
-| CRITICAL | 0 | 6 (#1–6 original + #A1–A3 Audit 2) |
+| CRITICAL | 0 | 7 (#1–6 original + #A1–A3 Audit 2 + #B6 Batch 20A) |
+| HIGH | 0 | #B8 fixed (Batch 20A) |
 | MEDIUM | 0 | All fixed — #A14 (Batch 16A), battery continuous check, all original audit items |
-| LOW | 0 | All fixed — #A15 (Batch 16A), all others |
+| LOW | 0 | All fixed — #A15 (Batch 16A), #B7 (Batch 20A), all others |
 | INFO | 1 (panel-wattage auto-select feature) | #A12 verified; #A16 fixed (Batch 16B); #R1 fixed (Batch 18) |
 | POST-AUDIT (Audit 2) | 0 open | #A1–A18 all fixed or verified |
 
