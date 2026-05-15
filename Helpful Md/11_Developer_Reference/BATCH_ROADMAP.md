@@ -35,6 +35,7 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 | Batch 18  | f9ef5f4 | 2026-05-14 | 24V bus advisory (BatterySizingEngine warning when >500Ah at 24V); renderBatteryTab warnings loop; New Project button rename + tooltip + footer reset CTA |
 | Batch 19  | 00a5038 | 2026-05-14 | Fix local build-up crash (options undefined in renderCommercialSummary); battery kWh→Ah display uses correct voltage; auto-sniff battery kWh on mode switch; hide duplicate labour/margin fields; New Project in hamburger nav |
 | Batch 20A | 11e7cc3 | 2026-05-14 | Fix local build-up paymentPlan null crash (inline-construct depositPct/deposit/completion); add band.spreadPct; fix pricingSource string blocking renderer fallback; add ⚡ Calculate shortcut to hamburger nav |
+| Batch 21A | 330f78f | 2026-05-15 | PDF packLabel crash (guard commercial.pricingSource in PDF path, 7 sites); undefined BOM subtitle (item.notes || ''); duplicate labour rows (conditional totalRows for isLocalBuildUp); panel shows 400Wp (wrong DOM ID 'panelWatts' → config.panelWattage/'panelWattage'); zero Resolved Cost Rates (pricingSourceHtml gated on isLocalBuildUp); FX rate reverts to default (add !fxEl.value guard in applyCommercialDefaultsByLocation) |
 
 ---
 
@@ -70,4 +71,4 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 - Build must pass (`npm run build` exit 0) before any commit
 - After committing, run `git log origin/main..HEAD --oneline` — if any lines appear, those commits are NOT pushed. Run `git push origin main`.
 
-*Last updated: 2026-05-14 (post-Batch 20A)*
+*Last updated: 2026-05-15 (post-Batch 21A)*

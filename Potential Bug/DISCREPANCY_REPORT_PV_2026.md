@@ -55,6 +55,7 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 | 2026-05-14 | Batch 18  | #R1 (24V bus advisory: BatterySizingEngine pushes warning when bankVoltage ≤ 24 && actualCapacityAh > 500; renderBatteryTab now loops battery.warnings into alert-warning divs); New Project button renamed + tooltip + footer reset CTA | f9ef5f4 |
 | 2026-05-14 | Batch 19  | #B1 crash: _buildLocalBuildUpEstimate missing options/profileHeadline/etc — added + guarded 3 callsites; #B2 battery kWh display hardcoded 48V → getBatteryUnitVoltage(); #B3 auto-sniff localBatteryUnitKWh from Ah×V on mode switch; #B4 laborPct/softCostPct/proposalMarginPct now hidden in local build-up mode (benchmark-only-field class); #B5 ↩ New Project action added to hamburger nav | 00a5038 |
 | 2026-05-14 | Batch 20A | #B6 paymentPlan null crash: inline-construct {depositPct, completionPct, deposit, completion} in _buildLocalBuildUpEstimate replacing broken buildPaymentPlan?. call; #B7 band.spreadPct missing (added = 8); #B8 pricingSource string 'local_build_up' blocked renderer fallback (changed to null); ⚡ Calculate shortcut added to hamburger nav | 11e7cc3 |
+| 2026-05-15 | Batch 21A | #B9 PDF packLabel crash: 7 unguarded commercial.pricingSource.* dereferences in PDF path — guarded with if(commercial.pricingSource) + local build-up fallback text; #B10 undefined BOM subtitle: item.notes undefined → item.notes \|\| ''; #B11 duplicate labour rows: totalRows now conditional on isLocalBuildUp (local mode shows only tax+final); #B12 panel shows 400Wp wrong DOM ID: 'panelWatts' → config.panelWattage/'panelWattage'; #B13 zero Resolved Cost Rates: pricingSourceHtml gated on isLocalBuildUp, shows lean Pricing Basis panel instead; #B14 FX rate reverts: applyCommercialDefaultsByLocation line 17510 now only sets fxEl if !fxEl.value | 330f78f |
 
 ---
 
@@ -84,18 +85,24 @@ PDFs tested: `PV_System_Design_Lagos__Nigeria_2026-05-09 (4).pdf` (client) and `
 | #B6 | Local build-up mode: `paymentPlan` is null — `this.buildPaymentPlan?.()` is not defined on controller; `renderCommercialSummary` crashes on `paymentPlan.deposit` | CRITICAL | **FIXED — Batch 20A (11e7cc3)** |
 | #B7 | `band.spreadPct` missing from local build-up return — renderer accesses it at statItems note | LOW | **FIXED — Batch 20A (11e7cc3)** |
 | #B8 | `pricingSource: 'local_build_up'` (string) truthy — blocks `resolveSupplierPricingSource` fallback, causing undefined property crashes on `.packLabel` etc. | HIGH | **FIXED — Batch 20A (11e7cc3)** |
+| #B9 | PDF export crash: `Cannot read properties of null (reading 'packLabel')` — 7 unguarded `commercial.pricingSource.*` dereferences in PDF commercial section (lines 20482, 20483, 20501, 20507, 20577–20579) | CRITICAL | **FIXED — Batch 21A (330f78f)** |
+| #B10 | `undefined` subtitle under every BOM row in local build-up — renderer reads `item.notes` which local items don't have | MEDIUM | **FIXED — Batch 21A (330f78f)** |
+| #B11 | Duplicate labour rows: `Install & labor (18%)` in totalRows + `Installer labour` in BOM items — both render simultaneously in local build-up | MEDIUM | **FIXED — Batch 21A (330f78f)** |
+| #B12 | Panel shows 400Wp instead of user-entered value — `_buildLocalBuildUpEstimate` reads `getElementById('panelWatts')` (ID doesn't exist); correct ID is `panelWattage` | HIGH | **FIXED — Batch 21A (330f78f)** |
+| #B13 | Resolved Cost Rates shows USD 0.00 for all 8 rate cards in local build-up mode — `pricingSourceHtml` not gated on `isLocalBuildUp` | MEDIUM | **FIXED — Batch 21A (330f78f)** |
+| #B14 | FX Rate field reverts to location default (1550) after user edits — `applyCommercialDefaultsByLocation` unconditionally overwrites DOM field | MEDIUM | **FIXED — Batch 21A (330f78f)** |
 | Feature | Panel/battery wattage auto-select scales with array size (≥5kWp → 550–600Wp, small → 100–200Wp) | Enhancement | Open — needs Opus dive |
 
 ---
 
-## Severity Summary Table (updated after Batch 20A, 2026-05-14)
+## Severity Summary Table (updated after Batch 21A, 2026-05-15)
 
 | Severity | Open | Fixed / Verified |
 |---|---|---|
-| CRITICAL | 0 | 7 (#1–6 original + #A1–A3 Audit 2 + #B6 Batch 20A) |
-| HIGH | 0 | #B8 fixed (Batch 20A) |
-| MEDIUM | 0 | All fixed — #A14 (Batch 16A), battery continuous check, all original audit items |
-| LOW | 0 | All fixed — #A15 (Batch 16A), #B7 (Batch 20A), all others |
+| CRITICAL | 0 | 8 (original + Audit 2 + #B6 Batch 20A + #B9 Batch 21A) |
+| HIGH | 0 | #B8 (Batch 20A), #B12 (Batch 21A) fixed |
+| MEDIUM | 0 | All fixed — #B10/#B11/#B13/#B14 (Batch 21A), #A14 (Batch 16A), all others |
+| LOW | 0 | All fixed — #A15, #B7 (Batch 20A), all others |
 | INFO | 1 (panel-wattage auto-select feature) | #A12 verified; #A16 fixed (Batch 16B); #R1 fixed (Batch 18) |
 | POST-AUDIT (Audit 2) | 0 open | #A1–A18 all fixed or verified |
 

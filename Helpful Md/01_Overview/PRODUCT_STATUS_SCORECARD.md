@@ -161,6 +161,36 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 21A — Local Build-Up Mode Polish: PDF + BOM + Panel Wattage + FX Rate (commit 330f78f — 2026-05-15)
+
+**#B9 — CRITICAL: PDF export crash in local build-up mode**
+- `exportPDF()` PDF commercial section had 7 unguarded dereferences of `commercial.pricingSource.*` (lines 20482, 20483, 20501, 20507, 20577–20579) — now `null` after Batch 20A
+- Fix: wrapped all 7 sites with `if (commercial.pricingSource)` guards; else-branch prints compact "Local cost build-up | FX 1 USD = X Y" label
+- PDF export in local build-up mode now works without crashing
+
+**#B10 — `undefined` subtitle under every BOM row**
+- Renderer at line 24207 reads `item.notes` as subtitle; local build-up items only have `{ label, amount, basis }`
+- Fix: `item.notes || ''` — no more "undefined" text under each line item
+
+**#B11 — Duplicate labour rows (Install & labor 18% shown twice)**
+- `totalRows` always included `Install & labor (X%)` benchmark row even though local build-up BOM already has `Installer labour` line item
+- Fix: `totalRows` now conditional on `commercial.isLocalBuildUp` — local mode shows only tax (if applicable) + Final quoted amount
+
+**#B12 — Panel wattage shows 400Wp instead of user-entered value**
+- `_buildLocalBuildUpEstimate` read `getElementById('panelWatts')` — that element ID does not exist in the template (correct ID is `panelWattage`)
+- Fix: reads `config.panelWattage` first, then `getElementById('panelWattage')`, then derives from `pv.arrayWattage / pv.totalPanels`, then falls back to 400
+
+**#B13 — Resolved Cost Rates grid shows USD 0.00 in local build-up**
+- `pricingSourceHtml` block (Supplier Pricing Source + rate cards grid) rendered unconditionally with all-zero rates
+- Fix: `pricingSourceHtml` is now `isLocalBuildUp`-conditional — local mode shows a lean "Pricing Basis" panel with FX rate and tax note only
+
+**#B14 — FX Rate field reverts to location default after user edits**
+- `applyCommercialDefaultsByLocation` at line 17510 unconditionally set `fxEl.value = locationProfile.fxRateToUSD` (e.g., 1550 for Nigeria)
+- Triggered on: location change, pricing mode switch, and other events — wiping user-typed value
+- Fix: `if (fxEl && !fxEl.value)` — only sets the default when the field is empty
+
+---
+
 ### Batch 20A — Local Build-Up paymentPlan Crash Fix + Calculate in Hamburger (commit 11e7cc3 — 2026-05-14)
 
 **#B6 — CRITICAL crash fix: `paymentPlan` null in Local Cost Build-Up mode**
