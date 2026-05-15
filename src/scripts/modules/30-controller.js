@@ -17507,7 +17507,7 @@ const PVCalculator = {
 
         if (currencyEl) currencyEl.value = locationProfile?.currencyDisplay ?? defaults.currencyLabel ?? 'USD';
         const fxEl = document.getElementById('quoteFxRateToUSD');
-        if (fxEl) fxEl.value = locationProfile?.fxRateToUSD != null ? String(locationProfile.fxRateToUSD) : '';
+        if (fxEl && !fxEl.value) fxEl.value = locationProfile?.fxRateToUSD != null ? String(locationProfile.fxRateToUSD) : '';
         if (supplierPackEl && defaults.supplierPricePack) supplierPackEl.value = defaults.supplierPricePack;
         if (regionalEl) regionalEl.value = defaults.regionalMultiplier.toFixed(2);
         if (laborEl) laborEl.value = defaults.laborPct;
@@ -18265,7 +18265,7 @@ const PVCalculator = {
         const currLabel = inputs.currencyLabel || 'USD';
         const fmtL = (n) => Math.round(n).toLocaleString();
 
-        const panelWatts = parseInt(document.getElementById('panelWatts')?.value) || 400;
+        const panelWatts = Number(config?.panelWattage) || parseInt(document.getElementById('panelWattage')?.value, 10) || (pv.totalPanels > 0 ? Math.round((pv.arrayWattage || 0) / pv.totalPanels) : 0) || 400;
         const panelCount = pv.totalPanels || Math.round((pv.arrayWattage || 0) / panelWatts) || 0;
         const batteryKWh = (batt.totalCapacityWh || 0) / 1000 || batt.totalKWh || batt.totalCapacityKWh || 0;
         const battUnits  = Math.max(1, Math.ceil(batteryKWh / Math.max(0.1, lb.batteryUnitKWh || 5.12)));
@@ -20479,8 +20479,12 @@ const PVCalculator = {
                 if (commercial.preset) {
                     labelValue('Commercial Preset:', `${commercial.preset.label}  |  ${commercial.preset.badge}  |  ${commercial.preset.summary}`);
                 }
-                labelValue('Supplier Source:', `${commercial.pricingSource.packLabel}  |  ${commercial.pricingSource.referenceWindow}`);
-                labelValue('Supplier Quote Freshness:', `${commercial.pricingSource.quoteFreshness?.label || 'Benchmark-only'}  |  ${commercial.pricingSource.quoteFreshness?.reviewBadge || 'Not dated'}${commercial.pricingSource.quoteFreshness?.quoteReference ? `  |  ${commercial.pricingSource.quoteFreshness.quoteReference}` : ''}`);
+                if (commercial.pricingSource) {
+                    labelValue('Supplier Source:', `${commercial.pricingSource.packLabel}  |  ${commercial.pricingSource.referenceWindow}`);
+                    labelValue('Supplier Quote Freshness:', `${commercial.pricingSource.quoteFreshness?.label || 'Benchmark-only'}  |  ${commercial.pricingSource.quoteFreshness?.reviewBadge || 'Not dated'}${commercial.pricingSource.quoteFreshness?.quoteReference ? `  |  ${commercial.pricingSource.quoteFreshness.quoteReference}` : ''}`);
+                } else {
+                    labelValue('Pricing Basis:', `Local cost build-up  |  FX 1 USD = ${(commercial.resolvedRates?.fxRateUsed || 1).toLocaleString()} ${commercial.resolvedRates?.currencyLabel || 'USD'}`);
+                }
                 labelValue('Commercial Strategy:', `${decisionStrategy.label}  |  ${decisionStrategy.score}% fit  |  ${decisionStrategy.status === 'pass' ? 'Aligned' : decisionStrategy.status === 'warn' ? 'Review' : 'Reframe'}`);
                 if (plantScoping) {
                     labelValue('Plant Scope:', `${plantScoping.plantScope?.definition?.label || 'Captive Site / Single Premises'}  |  ${plantScoping.distributionTopology?.definition?.label || 'Single Main Board'}  |  ${plantScoping.interconnectionScope?.definition?.label || 'Islanded / No External Interconnection'}`);
@@ -20498,13 +20502,13 @@ const PVCalculator = {
                         labelValue('Scenario View:', `Cash 10Y ${formatPdfMoney(finance.scenarioComparison.cashPurchase.tenYearNet)}  |  Financed 10Y ${formatPdfMoney(finance.scenarioComparison.financedPurchase.tenYearNet)}`);
                     }
                 }
-                labelValue('Override State:', commercial.pricingSource.hasOverrides ? `${commercial.pricingSource.overrideCount} override${commercial.pricingSource.overrideCount === 1 ? '' : 's'}  |  ${commercial.pricingSource.overrideLabels.join(', ')}` : 'No manual component overrides');
+                labelValue('Override State:', commercial.pricingSource?.hasOverrides ? `${commercial.pricingSource.overrideCount} override${commercial.pricingSource.overrideCount === 1 ? '' : 's'}  |  ${commercial.pricingSource.overrideLabels.join(', ')}` : 'No manual component overrides');
                 labelValue('Modeled Adders:', `Labor ${commercial.inputs.laborPct}%  |  Soft costs ${commercial.inputs.softCostPct}%  |  Margin ${commercial.inputs.marginPct}%${commercial.inputs.taxPct > 0 ? `  |  Tax ${commercial.inputs.taxPct}%` : ''}`);
                 labelValue('Payment Plan:', `${commercial.paymentPlan.depositPct}% deposit  |  ${commercial.paymentPlan.completionPct}% completion`);
                 labelValue('Commercial Terms:', `${commercial.terms.validityDays} day validity  |  ${commercial.terms.installWindowLabel}`);
                 labelValue('Regional Compliance:', `${compliance.statusLabel}  |  ${compliance.pathLabel}`);
                 mutedText(decisionStrategy.detail, 2);
-                mutedText(`Pack coverage: ${commercial.pricingSource.coverage}`, 2);
+                if (commercial.pricingSource) mutedText(`Pack coverage: ${commercial.pricingSource.coverage}`, 2);
                 y += 2;
                 const resolvedRateSummary = supplierRateDefinitions.map(definition => {
                     const rate = commercial.resolvedRates?.[definition.key] || 0;
@@ -20574,9 +20578,13 @@ const PVCalculator = {
                     commercial.notes.forEach(note => bulletItem(note, 'info', 2));
                     bulletItem(`Budget band: ${formatPdfMoney(commercial.band.low)} to ${formatPdfMoney(commercial.band.high)} for ${commercial.profileLabel.toLowerCase()} assumptions.`, 'info', 2);
                     bulletItem(`Currency label is ${displayCurrencyLabel}. Replace it with your invoice currency only after tuning the market multiplier to local conditions.`, 'info', 2);
-                    bulletItem(`Supplier price source: ${commercial.pricingSource.packLabel} (${commercial.pricingSource.supplierLabel}). ${commercial.pricingSource.note || commercial.pricingSource.coverage}`, 'info', 2);
-                    bulletItem(`Supplier quote freshness: ${commercial.pricingSource.quoteFreshness?.label || 'Benchmark-only'}. ${commercial.pricingSource.quoteFreshness?.detail || 'The current quote path is still benchmark-led.'}`, commercial.pricingSource.quoteFreshness?.status === 'fail' ? 'critical' : commercial.pricingSource.quoteFreshness?.status === 'warn' ? 'warning' : 'info', 2);
-                    bulletItem(`Resolved package-adjusted rates: ${resolvedRateSummary}`, commercial.pricingSource.hasOverrides ? 'warning' : 'info', 2);
+                    if (commercial.pricingSource) {
+                        bulletItem(`Supplier price source: ${commercial.pricingSource.packLabel} (${commercial.pricingSource.supplierLabel}). ${commercial.pricingSource.note || commercial.pricingSource.coverage}`, 'info', 2);
+                        bulletItem(`Supplier quote freshness: ${commercial.pricingSource.quoteFreshness?.label || 'Benchmark-only'}. ${commercial.pricingSource.quoteFreshness?.detail || 'The current quote path is still benchmark-led.'}`, commercial.pricingSource.quoteFreshness?.status === 'fail' ? 'critical' : commercial.pricingSource.quoteFreshness?.status === 'warn' ? 'warning' : 'info', 2);
+                        bulletItem(`Resolved package-adjusted rates: ${resolvedRateSummary}`, commercial.pricingSource.hasOverrides ? 'warning' : 'info', 2);
+                    } else {
+                        bulletItem(`Pricing basis: Local cost build-up using per-unit prices entered by installer. FX 1 USD = ${(commercial.resolvedRates?.fxRateUsed || 1).toLocaleString()} ${commercial.resolvedRates?.currencyLabel || 'USD'}.`, 'info', 2);
+                    }
                     if (finance) {
                         subTitle('Commercial Value Outlook');
                         bulletItem(`Modeled annual value: ${formatPdfMoney(finance.annualSavings)} using ${finance.basisLabel} at ${PVCalculator.formatCommercialUnitRate(finance.energyRatePerKWh, displayCurrencyLabel)}/kWh and ${finance.operatingDaysPerYear} operating days/year.`, finance.status === 'fail' ? 'warning' : 'info', 2);
@@ -24031,7 +24039,12 @@ const PVCalculator = {
             }
         ];
 
-        const totalRows = [
+        const totalRows = commercial.isLocalBuildUp
+            ? [
+                ...(commercial.inputs.taxPct > 0 ? [{ label: `Tax / VAT (${commercial.inputs.taxPct}%)`, amount: commercial.totals.taxAmount }] : []),
+                { label: 'Final quoted amount', amount: commercial.totals.finalQuote, total: true }
+              ]
+            : [
             { label: 'Equipment subtotal', amount: commercial.totals.equipmentSubtotal },
             { label: `Install & labor (${commercial.inputs.laborPct}%)`, amount: commercial.totals.laborCost },
             { label: `Soft costs (${commercial.inputs.softCostPct}%)`, amount: commercial.totals.softCost },
@@ -24066,7 +24079,18 @@ const PVCalculator = {
                 <div class="supplier-rate-note">${pricingSource.overrides?.[definition.key] ? 'Manual base rate' : 'Pack-derived base rate'}</div>
             </div>
         `).join('');
-        const pricingSourceHtml = `
+        const pricingSourceHtml = commercial.isLocalBuildUp ? `
+                <div class="proposal-assumptions">
+                    <div class="executive-panel">
+                        <h3>Pricing Basis</h3>
+                        <ul>
+                            <li>Local cost build-up — per-unit procurement prices entered by installer.</li>
+                            <li>FX rate: 1 USD = ${(commercial.resolvedRates?.fxRateUsed || 1).toLocaleString()} ${commercial.resolvedRates?.currencyLabel || 'USD'}.</li>
+                            <li>${commercial.inputs.taxPct > 0 ? `Tax / VAT: ${commercial.inputs.taxPct}%.` : 'No tax / VAT applied.'}</li>
+                        </ul>
+                    </div>
+                </div>
+        ` : `
                 <div class="proposal-assumptions">
                     <div class="executive-panel">
                         <h3>Supplier Pricing Source</h3>
@@ -24204,7 +24228,7 @@ const PVCalculator = {
                         <div class="proposal-table-row">
                             <div class="proposal-table-item">
                                 <strong>${item.label}</strong>
-                                <small>${item.notes}</small>
+                                <small>${item.notes || ''}</small>
                             </div>
                             <div class="proposal-table-basis">${item.basis}</div>
                             <div class="proposal-table-value">${money(item.amount)}</div>
