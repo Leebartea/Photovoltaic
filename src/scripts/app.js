@@ -39015,6 +39015,37 @@ const PVCalculator = {
         el.textContent = `Effective PSH: ${effectivePSH.toFixed(2)} h (${pct}% of rated — orientation + tilt derate)`;
     },
 
+    navigateToResultTab(tabName) {
+        if (tabName) {
+            // Expand the Detailed Results section if it was collapsed
+            const detailsBody = document.getElementById('resultsDetailsSectionBody');
+            if (detailsBody && detailsBody.hidden) {
+                this.toggleResultSection('resultsDetailsSection', null);
+            }
+            // Switch tab without the focus() side-effect that causes conflicting scroll
+            document.querySelectorAll('.tab-content[role="tabpanel"]').forEach(panel => {
+                const isActive = panel.id === `tab-${tabName}`;
+                panel.classList.toggle('active', isActive);
+                panel.hidden = !isActive;
+                panel.setAttribute('aria-hidden', String(!isActive));
+                panel.tabIndex = isActive ? 0 : -1;
+            });
+            document.querySelectorAll('.tab[role="tab"]').forEach(tab => {
+                const isActive = tab.dataset.tab === tabName;
+                tab.classList.toggle('active', isActive);
+                tab.setAttribute('aria-selected', String(isActive));
+                tab.tabIndex = isActive ? 0 : -1;
+            });
+            // Scroll to Detailed Results section (not the top of resultsContainer)
+            const target = document.getElementById('resultsDetailsSection') || document.getElementById('resultsContainer');
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            // Client mode: no tabs — scroll to results top
+            const target = document.getElementById('resultsContainer');
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    },
+
     updateHamburgerResultNav(isClientMode) {
         const container = document.getElementById('resultNavLinks');
         if (!container) return;
@@ -39022,7 +39053,7 @@ const PVCalculator = {
             container.innerHTML = `
                 <hr style="border:none;border-top:1px solid var(--border-color);margin:6px 0;">
                 <a class="section-nav-item" href="#" style="color:var(--primary-color);"
-                   onclick="event.preventDefault(); document.getElementById('resultsContainer')?.scrollIntoView({behavior:'smooth',block:'start'}); if(window.innerWidth<=768) PVCalculator.toggleSectionNav();">
+                   onclick="event.preventDefault(); PVCalculator.navigateToResultTab(null); if(window.innerWidth<=768) PVCalculator.toggleSectionNav();">
                     &#128202; Results
                 </a>`;
             return;
@@ -39043,7 +39074,7 @@ const PVCalculator = {
         ];
         const links = tabs.map(([id, label]) =>
             `<a class="section-nav-item" href="#" style="padding-left:20px;font-size:0.82rem;"
-                onclick="event.preventDefault(); PVCalculator.showTab('${id}', document.getElementById('tab-btn-${id}')); document.getElementById('resultsContainer')?.scrollIntoView({behavior:'smooth',block:'start'}); if(window.innerWidth<=768) PVCalculator.toggleSectionNav();">
+                onclick="event.preventDefault(); PVCalculator.navigateToResultTab('${id}'); if(window.innerWidth<=768) PVCalculator.toggleSectionNav();">
                 ${label}
             </a>`
         ).join('');
