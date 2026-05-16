@@ -36676,9 +36676,12 @@ const PVCalculator = {
         const panelCount = pv.totalPanels || Math.round((pv.arrayWattage || 0) / panelWatts) || 0;
         // Use engine's stringsInParallel as unit count (accounts for manual override correctly)
         const battUnits  = batt.stringsInParallel > 0 ? batt.stringsInParallel : Math.max(1, Math.ceil(((batt.totalCapacityWh || 0) / 1000) / Math.max(0.1, lb.batteryUnitKWh || 5.12)));
-        // Per-unit kWh using nominal voltage (matches UI display)
+        // Per-unit kWh using nominal voltage — use actual Ah/unit when manual override (recommendedAhPerCell stays at auto value after override)
+        const ahPerUnitForKWh = (batt.isManualOverride || batt.isUnitCountOverride)
+            ? (batt.totalCapacityAh / Math.max(1, batt.stringsInParallel || 1))
+            : (batt.recommendedAhPerCell || 0);
         const battUnitKWh = batt.stringsInParallel > 0
-            ? Math.round((batt.recommendedAhPerCell || 0) * (batt.bankVoltageNominal || batt.bankVoltage || 48) / 10) / 100
+            ? Math.round(ahPerUnitForKWh * (batt.bankVoltageNominal || batt.bankVoltage || 48) / 10) / 100
             : (lb.batteryUnitKWh || 5.12);
         const batteryKWh = battUnits * battUnitKWh || (batt.totalCapacityWh || 0) / 1000;
         const invQty     = Math.max(1, lb.inverterCount || 1);
@@ -38916,7 +38919,12 @@ const PVCalculator = {
                     }
                 }
                 labelValue('Override State:', commercial.pricingSource?.hasOverrides ? `${commercial.pricingSource.overrideCount} override${commercial.pricingSource.overrideCount === 1 ? '' : 's'}  |  ${commercial.pricingSource.overrideLabels.join(', ')}` : 'No manual component overrides');
-                labelValue('Modeled Adders:', `Labor ${commercial.inputs.laborPct}%  |  Soft costs ${commercial.inputs.softCostPct}%  |  Margin ${commercial.inputs.marginPct}%${commercial.inputs.taxPct > 0 ? `  |  Tax ${commercial.inputs.taxPct}%` : ''}`);
+                if (commercial.isLocalBuildUp) {
+                    const lb2 = commercial.inputs.localBuildUp || {};
+                    labelValue('Local Build-Up Rates:', `Labor ${lb2.laborMode === 'percent' ? (lb2.laborPercent || 0) + '% of materials' : 'Flat fee'}  |  Margin ${lb2.profitMarginPct || 0}%${commercial.inputs.taxPct > 0 ? `  |  Tax ${commercial.inputs.taxPct}%` : ''}`);
+                } else {
+                    labelValue('Modeled Adders:', `Labor ${commercial.inputs.laborPct}%  |  Soft costs ${commercial.inputs.softCostPct}%  |  Margin ${commercial.inputs.marginPct}%${commercial.inputs.taxPct > 0 ? `  |  Tax ${commercial.inputs.taxPct}%` : ''}`);
+                }
                 labelValue('Payment Plan:', `${commercial.paymentPlan.depositPct}% deposit  |  ${commercial.paymentPlan.completionPct}% completion`);
                 labelValue('Commercial Terms:', `${commercial.terms.validityDays} day validity  |  ${commercial.terms.installWindowLabel}`);
                 labelValue('Regional Compliance:', `${compliance.statusLabel}  |  ${compliance.pathLabel}`);
