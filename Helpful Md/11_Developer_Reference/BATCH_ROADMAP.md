@@ -42,6 +42,7 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 | Batch 22B | 7475f12 | 2026-05-16 | V1: falsy-zero ambientTempMin fix (|| → ??) at 5 engine sites; V2: VOC_HEADROOM_PERCENT 0.03→0.05 + 90% soft-warn tier in validateUserConfig; V3: pvArray.blocks[]/warnings[] resynced after desiredCount/auto-sync/multi-MPPT mutations |
 | Batch 22C | 0dfcaf4 | 2026-05-16 | Results nav in hamburger: updateHamburgerResultNav() injects 12 tab links (installer) or single Results link (client) after calculate; auto-collapses nav on mobile |
 | Batch 22D | 075a473 | 2026-05-16 | Effective PSH advisory: read-only display below PSH field showing effective PSH after orientation+tilt derate; updates live on input, initialised on page load |
+| Enh 1     | b3ae61f | 2026-05-16 | Panel wattage auto-suggest: PANEL_WATTAGE_TIERS buckets (<3kWp→250Wp, 3–10→450Wp, ≥10→580Wp); hint + Apply link shown below panelWattage field after calculate; no forced override, no feedback loop |
 
 ---
 
@@ -51,20 +52,6 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 **Priority: LOW**
 - **V4:** `mpptMaxVoltage` advisory if still at default after inverter named
 - **V5:** Editable design min temp (ambientTempMin) as advanced input field
-
----
-
-### Batch 22C — Results Navigation in Hamburger
-**Priority: MEDIUM — UX quality**
-**Scope:** When results exist, inject result tab links (Overview, Load, Inverter, Battery, PV Array, PV Config, Cables, Protection, Losses, Upgrade, Advisory) into hamburger below the Calculate link — acts as a table-of-contents for the result column.
-**Needs Opus dive:** NO — template + controller section-nav injection pattern already known.
-
----
-
-### Enhancement — Panel/Battery Wattage Auto-Select
-**Priority: MEDIUM — UX quality**
-**Scope:** Auto-select panel wattage tier based on array size (small: 200–300Wp, medium: 400–450Wp, large: 550–600Wp).
-**Needs Opus dive:** YES — into `PVArrayEngine` to understand how panel wattage feeds into panel count and whether auto-selection creates feedback loops.
 
 ---
 
@@ -90,4 +77,4 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 - Build must pass (`npm run build` exit 0) before any commit
 - After committing, run `git log origin/main..HEAD --oneline` — if any lines appear, those commits are NOT pushed. Run `git push origin main`.
 
-*Last updated: 2026-05-16 (post-Batch 22D)*
+*Last updated: 2026-05-16 (post-Enh 1 — panel wattage auto-suggest)*
