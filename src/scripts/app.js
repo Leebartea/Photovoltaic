@@ -35010,6 +35010,7 @@ const PVCalculator = {
         container.innerHTML = html;
         container.setAttribute('aria-busy', 'false');
         this.announceResults(`Results updated. System confidence ${confidenceScore}% ${confLevel}.`);
+        this.updateHamburgerResultNav(isClientMode);
     },
 
     /**
@@ -38997,6 +38998,44 @@ const PVCalculator = {
             input.addEventListener('input', update);
             update();
         }
+    },
+
+    updateHamburgerResultNav(isClientMode) {
+        const container = document.getElementById('resultNavLinks');
+        if (!container) return;
+        if (isClientMode) {
+            container.innerHTML = `
+                <hr style="border:none;border-top:1px solid var(--border-color);margin:6px 0;">
+                <a class="section-nav-item" href="#" style="color:var(--primary-color);"
+                   onclick="event.preventDefault(); document.getElementById('resultsContainer')?.scrollIntoView({behavior:'smooth',block:'start'}); if(window.innerWidth<=768) PVCalculator.toggleSectionNav();">
+                    &#128202; Results
+                </a>`;
+            return;
+        }
+        const tabs = [
+            ['overview',   'Overview'],
+            ['load',       'Load'],
+            ['inverter',   'Inverter'],
+            ['battery',    'Battery'],
+            ['battconfig', 'Batt Config'],
+            ['pv',         'PV Array'],
+            ['pvconfig',   'PV Config'],
+            ['cables',     'Cables'],
+            ['protection', 'Protection'],
+            ['losses',     'Losses'],
+            ['upgrade',    'Upgrade'],
+            ['advisory',   'Advisory'],
+        ];
+        const links = tabs.map(([id, label]) =>
+            `<a class="section-nav-item" href="#" style="padding-left:20px;font-size:0.82rem;"
+                onclick="event.preventDefault(); PVCalculator.showTab('${id}', document.getElementById('tab-btn-${id}')); document.getElementById('resultsContainer')?.scrollIntoView({behavior:'smooth',block:'start'}); if(window.innerWidth<=768) PVCalculator.toggleSectionNav();">
+                ${label}
+            </a>`
+        ).join('');
+        container.innerHTML = `
+            <hr style="border:none;border-top:1px solid var(--border-color);margin:6px 0;">
+            <span class="section-nav-item" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);pointer-events:none;padding-bottom:2px;">Results</span>
+            ${links}`;
     },
 
     initSectionNav() {
