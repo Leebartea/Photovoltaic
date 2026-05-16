@@ -44,15 +44,11 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 | Batch 22D | 075a473 | 2026-05-16 | Effective PSH advisory: read-only display below PSH field showing effective PSH after orientation+tilt derate; updates live on input, initialised on page load |
 | Enh 1     | b3ae61f | 2026-05-16 | Panel wattage auto-suggest: PANEL_WATTAGE_TIERS buckets (<3kWp→250Wp, 3–10→450Wp, ≥10→580Wp); hint + Apply link shown below panelWattage field after calculate; no forced override, no feedback loop |
 | Enh 2     | 498ea2f | 2026-05-16 | Hamburger result nav two-tier hierarchy: section links (Executive Snapshot, Commercial Estimate, Warnings[conditional], Detailed Results, Disclaimer, Export) + indented tab sub-links under Detailed Results; adds navigateToResultSection(sectionId) helper |
+| Batch 22B V4+V5 | 8c373e6 | 2026-05-16 | V4: info advisory when all MPPT fields at HTML defaults (500V/27A/7500W); V5: getConfig ambientTempMin/Max falsy-zero fix (|| → isNaN guard) |
 
 ---
 
 ## Open Batches (Planned)
-
-### Batch 22B Remainder — V4/V5 (low priority)
-**Priority: LOW**
-- **V4:** `mpptMaxVoltage` advisory if still at default after inverter named
-- **V5:** Editable design min temp (ambientTempMin) as advanced input field
 
 ---
 
@@ -78,4 +74,4 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 - Build must pass (`npm run build` exit 0) before any commit
 - After committing, run `git log origin/main..HEAD --oneline` — if any lines appear, those commits are NOT pushed. Run `git push origin main`.
 
-*Last updated: 2026-05-16 (post-Enh 2 — hamburger two-tier result nav)*
+*Last updated: 2026-05-16 (post-Batch 22B V4+V5 — MPPT defaults advisory, ambientTempMin zero fix)*
