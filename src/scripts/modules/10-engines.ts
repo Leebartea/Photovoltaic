@@ -4557,7 +4557,7 @@ const UpgradeSimulator = {
         };
 
         // Check how many more panels the current MPPT can handle
-        const tempDeltaCold = (config.ambientTempMin || 20) - DEFAULTS.STC_TEMP;
+        const tempDeltaCold = (config.ambientTempMin ?? 20) - DEFAULTS.STC_TEMP;
         const vocTempFactor = 1 + (panel.tempCoeffVoc / 100 * tempDeltaCold);
         const vocCold = panel.voc * vocTempFactor;
         const maxSeriesPerMPPT = Math.floor(mppt.maxVoltage / vocCold);
@@ -4727,7 +4727,7 @@ const ConfigurationComparisonEngine = {
     ): EngineConfigurationComparisonResult {
         const configs: EnginePanelConfigurationResult[] = [];
         const seen = new Set<string>(); // track unique S×P combos to avoid duplicates
-        const tempDeltaCold = (config.ambientTempMin || 20) - DEFAULTS.STC_TEMP;
+        const tempDeltaCold = (config.ambientTempMin ?? 20) - DEFAULTS.STC_TEMP;
         const vocTempFactor = 1 + (panel.tempCoeffVoc / 100 * tempDeltaCold);
         const vocCold = panel.voc * vocTempFactor;
 
@@ -4866,7 +4866,7 @@ const ConfigurationComparisonEngine = {
         mppt: EngineMPPTSpec,
         config: EngineSystemConfig
     ): EngineNearbyPanelConfiguration[] | null {
-        const tempDeltaCold = (config.ambientTempMin || 20) - DEFAULTS.STC_TEMP;
+        const tempDeltaCold = (config.ambientTempMin ?? 20) - DEFAULTS.STC_TEMP;
         const vocTempFactor = 1 + (panel.tempCoeffVoc / 100 * tempDeltaCold);
         const vocCold = panel.voc * vocTempFactor;
         const iscTolerance = panel.isc * 1.04;
@@ -4972,7 +4972,7 @@ const ConfigurationComparisonEngine = {
         mppt: EngineMPPTSpec,
         config: EngineSystemConfig
     ): EnginePanelConfigurationResult {
-        const tempDeltaCold = (config.ambientTempMin || 20) - DEFAULTS.STC_TEMP;
+        const tempDeltaCold = (config.ambientTempMin ?? 20) - DEFAULTS.STC_TEMP;
         const vocTempFactor = 1 + (panel.tempCoeffVoc / 100 * tempDeltaCold);
         const vocCold = panel.voc * vocTempFactor;
         const iscTolerance = panel.isc * 1.04;
@@ -5002,6 +5002,7 @@ const ConfigurationComparisonEngine = {
         const blocks = [];
 
         if (!checks.vocOk) blocks.push(`HARD BLOCK: String Voc(cold) = ${stringVocCold}V EXCEEDS ${mppt.maxVoltage}V max. Risk of equipment damage.`);
+        else if (stringVocCold > mppt.maxVoltage * 0.9) warnings.push(`Cold Voc (${stringVocCold.toFixed(1)}V) is within 10% of MPPT max (${mppt.maxVoltage}V). Tight margin — consider reducing series count for cold-climate safety.`);
         if (!checks.currentOk) blocks.push(`HARD BLOCK: Array Isc (with tolerance) = ${arrayIscTol}A EXCEEDS ${mppt.maxCurrent}A max input current.`);
         if (!checks.vmpMaxOk) blocks.push(`String Vmp = ${stringVmp}V exceeds MPPT operating max ${mppt.maxOperatingVoltage}V. MPPT cannot track properly.`);
         if (!checks.vmpMinOk) warnings.push(`String Vmp = ${stringVmp}V is below min startup voltage ${mppt.minVoltage}V. System may not start in low light.`);
@@ -5245,7 +5246,7 @@ const MultiMPPTDistributor = {
         config: EngineSystemConfig,
         includeBest = false
     ): EnginePanelConfigurationResult | null {
-        const tempDeltaCold = (config.ambientTempMin || 20) - DEFAULTS.STC_TEMP;
+        const tempDeltaCold = (config.ambientTempMin ?? 20) - DEFAULTS.STC_TEMP;
         const vocTempFactor = 1 + (panel.tempCoeffVoc / 100 * tempDeltaCold);
         const vocCold = panel.voc * vocTempFactor;
         const iscTolerance = panel.isc * 1.04;

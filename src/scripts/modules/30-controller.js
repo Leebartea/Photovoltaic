@@ -23115,6 +23115,9 @@ const PVCalculator = {
                     pvArray.arrayImp = rec.arrayImp;
                     pvArray.arrayIsc = rec.arrayIsc;
                     pvArray.userSpecifiedCount = desiredCount;
+                    // V3: rebuild block/warning arrays so PDF reflects the mutated config, not the stale auto-calc
+                    pvArray.blocks = (rec.blocks || []).slice();
+                    pvArray.warnings = (rec.warnings || []).slice();
                 }
             }
 
@@ -23142,6 +23145,9 @@ const PVCalculator = {
                         pvArray.stringVocCold = rec.stringVocCold;
                         pvArray.arrayImp = rec.arrayImp;
                         pvArray.arrayIsc = rec.arrayIsc;
+                        // V3: rebuild block/warning arrays so PDF reflects the auto-resync, not the stale calc()
+                        pvArray.blocks = (rec.blocks || []).slice();
+                        pvArray.warnings = (rec.warnings || []).slice();
                     }
                 }
             }
@@ -23167,6 +23173,9 @@ const PVCalculator = {
                         pvArray.stringVmp = primaryAssignment.config.stringVmp;
                         pvArray.stringVocCold = primaryAssignment.config.stringVocCold;
                         pvArray.arrayIsc = primaryAssignment.config.arrayIscTol;
+                        // V3: rebuild block/warning arrays from the chosen MPPT assignment so PDF reflects the post-distribution config
+                        pvArray.blocks = (primaryAssignment.config.blocks || []).slice();
+                        pvArray.warnings = (primaryAssignment.config.warnings || []).slice();
                     }
 
                     // Calculate combined Isc for cable/protection sizing (sum of all MPPT currents)

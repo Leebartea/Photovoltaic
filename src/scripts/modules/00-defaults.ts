@@ -4142,7 +4142,7 @@ const DEFAULTS = {
     PV_SOILING_LOSS: 0.03,
     PV_MISMATCH_LOSS: 0.02,
     CABLE_LOSS_FACTOR: 0.02,
-    VOC_HEADROOM_PERCENT: 0.03
+    VOC_HEADROOM_PERCENT: 0.05
 };
 
 const RATE_BENCHMARKS: Record<string, { min: number; max: number; unit: string }> = {

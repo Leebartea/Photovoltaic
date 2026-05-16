@@ -3997,7 +3997,7 @@ const DEFAULTS = {
     PV_SOILING_LOSS: 0.03,
     PV_MISMATCH_LOSS: 0.02,
     CABLE_LOSS_FACTOR: 0.02,
-    VOC_HEADROOM_PERCENT: 0.03
+    VOC_HEADROOM_PERCENT: 0.05
 };
 const RATE_BENCHMARKS = {
     pvPerWp: { min: 0.20, max: 0.55, unit: 'USD/Wp' },
@@ -8074,7 +8074,7 @@ const UpgradeSimulator = {
             options: []
         };
         // Check how many more panels the current MPPT can handle
-        const tempDeltaCold = (config.ambientTempMin || 20) - DEFAULTS.STC_TEMP;
+        const tempDeltaCold = (config.ambientTempMin ?? 20) - DEFAULTS.STC_TEMP;
         const vocTempFactor = 1 + (panel.tempCoeffVoc / 100 * tempDeltaCold);
         const vocCold = panel.voc * vocTempFactor;
         const maxSeriesPerMPPT = Math.floor(mppt.maxVoltage / vocCold);
@@ -8226,7 +8226,7 @@ const ConfigurationComparisonEngine = {
     compare(numPanels, panel, mppt, config) {
         const configs = [];
         const seen = new Set(); // track unique S×P combos to avoid duplicates
-        const tempDeltaCold = (config.ambientTempMin || 20) - DEFAULTS.STC_TEMP;
+        const tempDeltaCold = (config.ambientTempMin ?? 20) - DEFAULTS.STC_TEMP;
         const vocTempFactor = 1 + (panel.tempCoeffVoc / 100 * tempDeltaCold);
         const vocCold = panel.voc * vocTempFactor;
         // Isc with tolerance (typical +4% for real panels)
@@ -8359,7 +8359,7 @@ const ConfigurationComparisonEngine = {
      * Uses dynamic range based on panel count to handle large arrays.
      */
     findNearbyValidConfig(numPanels, panel, mppt, config) {
-        const tempDeltaCold = (config.ambientTempMin || 20) - DEFAULTS.STC_TEMP;
+        const tempDeltaCold = (config.ambientTempMin ?? 20) - DEFAULTS.STC_TEMP;
         const vocTempFactor = 1 + (panel.tempCoeffVoc / 100 * tempDeltaCold);
         const vocCold = panel.voc * vocTempFactor;
         const iscTolerance = panel.isc * 1.04;
@@ -8452,7 +8452,7 @@ const ConfigurationComparisonEngine = {
      * Validate a specific user-chosen configuration
      */
     validateUserConfig(series, parallel, numPanels, panel, mppt, config) {
-        const tempDeltaCold = (config.ambientTempMin || 20) - DEFAULTS.STC_TEMP;
+        const tempDeltaCold = (config.ambientTempMin ?? 20) - DEFAULTS.STC_TEMP;
         const vocTempFactor = 1 + (panel.tempCoeffVoc / 100 * tempDeltaCold);
         const vocCold = panel.voc * vocTempFactor;
         const iscTolerance = panel.isc * 1.04;
@@ -8478,6 +8478,8 @@ const ConfigurationComparisonEngine = {
         const blocks = [];
         if (!checks.vocOk)
             blocks.push(`HARD BLOCK: String Voc(cold) = ${stringVocCold}V EXCEEDS ${mppt.maxVoltage}V max. Risk of equipment damage.`);
+        else if (stringVocCold > mppt.maxVoltage * 0.9)
+            warnings.push(`Cold Voc (${stringVocCold.toFixed(1)}V) is within 10% of MPPT max (${mppt.maxVoltage}V). Tight margin — consider reducing series count for cold-climate safety.`);
         if (!checks.currentOk)
             blocks.push(`HARD BLOCK: Array Isc (with tolerance) = ${arrayIscTol}A EXCEEDS ${mppt.maxCurrent}A max input current.`);
         if (!checks.vmpMaxOk)
@@ -8696,7 +8698,7 @@ const MultiMPPTDistributor = {
      * If includeBest is true, returns the least-invalid config when none are valid.
      */
     findBestConfigForMPPT(numPanels, panel, mpptSpec, config, includeBest = false) {
-        const tempDeltaCold = (config.ambientTempMin || 20) - DEFAULTS.STC_TEMP;
+        const tempDeltaCold = (config.ambientTempMin ?? 20) - DEFAULTS.STC_TEMP;
         const vocTempFactor = 1 + (panel.tempCoeffVoc / 100 * tempDeltaCold);
         const vocCold = panel.voc * vocTempFactor;
         const iscTolerance = panel.isc * 1.04;
@@ -34425,6 +34427,9 @@ const PVCalculator = {
                     pvArray.arrayImp = rec.arrayImp;
                     pvArray.arrayIsc = rec.arrayIsc;
                     pvArray.userSpecifiedCount = desiredCount;
+                    // V3: rebuild block/warning arrays so PDF reflects the mutated config, not the stale auto-calc
+                    pvArray.blocks = (rec.blocks || []).slice();
+                    pvArray.warnings = (rec.warnings || []).slice();
                 }
             }
 
@@ -34452,6 +34457,9 @@ const PVCalculator = {
                         pvArray.stringVocCold = rec.stringVocCold;
                         pvArray.arrayImp = rec.arrayImp;
                         pvArray.arrayIsc = rec.arrayIsc;
+                        // V3: rebuild block/warning arrays so PDF reflects the auto-resync, not the stale calc()
+                        pvArray.blocks = (rec.blocks || []).slice();
+                        pvArray.warnings = (rec.warnings || []).slice();
                     }
                 }
             }
@@ -34477,6 +34485,9 @@ const PVCalculator = {
                         pvArray.stringVmp = primaryAssignment.config.stringVmp;
                         pvArray.stringVocCold = primaryAssignment.config.stringVocCold;
                         pvArray.arrayIsc = primaryAssignment.config.arrayIscTol;
+                        // V3: rebuild block/warning arrays from the chosen MPPT assignment so PDF reflects the post-distribution config
+                        pvArray.blocks = (primaryAssignment.config.blocks || []).slice();
+                        pvArray.warnings = (primaryAssignment.config.warnings || []).slice();
                     }
 
                     // Calculate combined Isc for cable/protection sizing (sum of all MPPT currents)
