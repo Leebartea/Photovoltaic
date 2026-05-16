@@ -42123,7 +42123,7 @@ const PVCalculator = {
         container.innerHTML = html;
         container.setAttribute('aria-busy', 'false');
         this.announceResults(`Results updated. System confidence ${confidenceScore}% ${confLevel}.`);
-        this.updateHamburgerResultNav(isClientMode);
+        this.updateHamburgerResultNav(isClientMode, report.warnings.length);
         this.updateWattageSuggestions(report.details);
     },
 
@@ -46155,6 +46155,15 @@ const PVCalculator = {
         }
     },
 
+    navigateToResultSection(sectionId) {
+        const body = document.getElementById(`${sectionId}Body`);
+        if (body && body.hidden) {
+            this.toggleResultSection(sectionId, null);
+        }
+        const target = document.getElementById(sectionId);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+
     navigateToResultTab(tabName) {
         if (tabName) {
             // Expand the Detailed Results section if it was collapsed
@@ -46186,18 +46195,32 @@ const PVCalculator = {
         }
     },
 
-    updateHamburgerResultNav(isClientMode) {
+    updateHamburgerResultNav(isClientMode, warningCount) {
         const container = document.getElementById('resultNavLinks');
         if (!container) return;
+
+        const nav = (label, sectionId, icon) =>
+            `<a class="section-nav-item" href="#" style="font-size:0.85rem;"
+                onclick="event.preventDefault(); PVCalculator.navigateToResultSection('${sectionId}'); if(window.innerWidth<=768) PVCalculator.toggleSectionNav();">
+                ${icon ? icon + ' ' : ''}${label}
+            </a>`;
+
+        const warningLink = warningCount > 0
+            ? nav('Warnings', 'resultsNotesSection', '&#9888;')
+            : '';
+
         if (isClientMode) {
             container.innerHTML = `
                 <hr style="border:none;border-top:1px solid var(--border-color);margin:6px 0;">
-                <a class="section-nav-item" href="#" style="color:var(--primary-color);"
-                   onclick="event.preventDefault(); PVCalculator.navigateToResultTab(null); if(window.innerWidth<=768) PVCalculator.toggleSectionNav();">
-                    &#128202; Results
-                </a>`;
+                <span class="section-nav-item" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);pointer-events:none;">Results</span>
+                ${nav('Executive Snapshot', 'resultsExecutiveSection')}
+                ${nav('Commercial Estimate', 'resultsCommercialSection')}
+                ${warningLink}
+                ${nav('Disclaimer', 'resultsCaveatsSection')}
+                ${nav('Export', 'resultsExportSection')}`;
             return;
         }
+
         const tabs = [
             ['overview',   'Overview'],
             ['load',       'Load'],
@@ -46212,16 +46235,26 @@ const PVCalculator = {
             ['upgrade',    'Upgrade'],
             ['advisory',   'Advisory'],
         ];
-        const links = tabs.map(([id, label]) =>
-            `<a class="section-nav-item" href="#" style="padding-left:20px;font-size:0.82rem;"
+        const tabLinks = tabs.map(([id, label]) =>
+            `<a class="section-nav-item" href="#" style="padding-left:24px;font-size:0.78rem;color:var(--text-muted);"
                 onclick="event.preventDefault(); PVCalculator.navigateToResultTab('${id}'); if(window.innerWidth<=768) PVCalculator.toggleSectionNav();">
-                ${label}
+                &#8627; ${label}
             </a>`
         ).join('');
+
         container.innerHTML = `
             <hr style="border:none;border-top:1px solid var(--border-color);margin:6px 0;">
-            <span class="section-nav-item" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);pointer-events:none;padding-bottom:2px;">Results</span>
-            ${links}`;
+            <span class="section-nav-item" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);pointer-events:none;">Results</span>
+            ${nav('Executive Snapshot', 'resultsExecutiveSection')}
+            ${nav('Commercial Estimate', 'resultsCommercialSection')}
+            ${warningLink}
+            <a class="section-nav-item" href="#" style="font-size:0.85rem;"
+                onclick="event.preventDefault(); PVCalculator.navigateToResultSection('resultsDetailsSection'); if(window.innerWidth<=768) PVCalculator.toggleSectionNav();">
+                Detailed Results
+            </a>
+            ${tabLinks}
+            ${nav('Disclaimer', 'resultsCaveatsSection')}
+            ${nav('Export', 'resultsExportSection')}`;
     },
 
     initSectionNav() {
