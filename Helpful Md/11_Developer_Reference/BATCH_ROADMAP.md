@@ -39,19 +39,16 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 | Batch 21B | 1cb5811 | 2026-05-16 | PDF BOM subtitle undefined (item.basis + item.notes guard); PDF Commercial Totals duplicate labour/soft/margin rows gated on isLocalBuildUp; footer single-print (remove brand line from addPageFooter, post-build loop now sole brand+page stamp); duplicate Pricing Basis row gated on !isLocalBuildUp; battery unit count uses batt.stringsInParallel + nominal-voltage per-unit kWh |
 | Batch 21C | cdf4a35 | 2026-05-16 | Battery BOM kWh uses actual Ah/unit on manual override (recommendedAhPerCell stale post-override → use totalCapacityAh/stringsInParallel); Modeled Adders PDF row shows local build-up rates (laborPercent/profitMarginPct) when isLocalBuildUp, not global benchmark fields |
 | Batch 22A | 37cd111 | 2026-05-16 | Transformer advisory escalation: critical severity at ≥2 motors OR complianceRisk=high (was: warning at ≥1 motor); inverter.warnings rendered inline in inverter tab (bus-voltage warnings previously invisible to user) |
+| Batch 22B | 7475f12 | 2026-05-16 | V1: falsy-zero ambientTempMin fix (|| → ??) at 5 engine sites; V2: VOC_HEADROOM_PERCENT 0.03→0.05 + 90% soft-warn tier in validateUserConfig; V3: pvArray.blocks[]/warnings[] resynced after desiredCount/auto-sync/multi-MPPT mutations |
 
 ---
 
 ## Open Batches (Planned)
 
-### Batch 22B — Voc Safety Hardening (from Opus engineering audit)
-**Priority: MEDIUM — engineering correctness**
-**Scope (in priority order):**
-- **V3:** Resync `pvArray.blocks[]` after desiredCount/auto-sync/multi-MPPT mutations (controller.js:23110, 23138, 23168) — eliminates stale hard-block messages in PDF
-- **V1:** Fix falsy-zero `ambientTempMin` fallback at engines.ts:4560/4730/4869/4975/5248 — `0 || 20` silently coerces 0°C to 20°C (wrong for cold sites)
-- **V2:** Tiered Voc headroom — raise `VOC_HEADROOM_PERCENT` to 0.05; add 90% soft-warn tier in validator
-- **V4/V5:** `mpptMaxVoltage` advisory if still at default after inverter named; editable design min temp field (advanced)
-**Needs Opus dive:** YES — exact line numbers for blocks[] rebuild points.
+### Batch 22B Remainder — V4/V5 (low priority)
+**Priority: LOW**
+- **V4:** `mpptMaxVoltage` advisory if still at default after inverter named
+- **V5:** Editable design min temp (ambientTempMin) as advanced input field
 
 ---
 
@@ -98,4 +95,4 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 - Build must pass (`npm run build` exit 0) before any commit
 - After committing, run `git log origin/main..HEAD --oneline` — if any lines appear, those commits are NOT pushed. Run `git push origin main`.
 
-*Last updated: 2026-05-16 (post-Batch 22A)*
+*Last updated: 2026-05-16 (post-Batch 22B)*
