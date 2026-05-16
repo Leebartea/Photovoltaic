@@ -43,6 +43,7 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 | Batch 22C | 0dfcaf4 | 2026-05-16 | Results nav in hamburger: updateHamburgerResultNav() injects 12 tab links (installer) or single Results link (client) after calculate; auto-collapses nav on mobile |
 | Batch 22D | 075a473 | 2026-05-16 | Effective PSH advisory: read-only display below PSH field showing effective PSH after orientation+tilt derate; updates live on input, initialised on page load |
 | Enh 1     | b3ae61f | 2026-05-16 | Panel wattage auto-suggest: PANEL_WATTAGE_TIERS buckets (<3kWp→250Wp, 3–10→450Wp, ≥10→580Wp); hint + Apply link shown below panelWattage field after calculate; no forced override, no feedback loop |
+| Enh 2     | 498ea2f | 2026-05-16 | Hamburger result nav two-tier hierarchy: section links (Executive Snapshot, Commercial Estimate, Warnings[conditional], Detailed Results, Disclaimer, Export) + indented tab sub-links under Detailed Results; adds navigateToResultSection(sectionId) helper |
 
 ---
 
@@ -77,4 +78,4 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 - Build must pass (`npm run build` exit 0) before any commit
 - After committing, run `git log origin/main..HEAD --oneline` — if any lines appear, those commits are NOT pushed. Run `git push origin main`.
 
-*Last updated: 2026-05-16 (post-Enh 1 — panel wattage auto-suggest)*
+*Last updated: 2026-05-16 (post-Enh 2 — hamburger two-tier result nav)*
