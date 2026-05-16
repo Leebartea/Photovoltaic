@@ -46205,6 +46205,15 @@ const PVCalculator = {
         }
     },
 
+    toggleDetailResultNav() {
+        const list = document.getElementById('detailTabLinks');
+        const caret = document.getElementById('detailNavCaret');
+        if (!list) return;
+        const isCollapsed = list.style.display === 'none';
+        list.style.display = isCollapsed ? '' : 'none';
+        if (caret) caret.textContent = isCollapsed ? '▾' : '▸';
+    },
+
     updateHamburgerResultNav(isClientMode, warningCount) {
         const container = document.getElementById('resultNavLinks');
         if (!container) return;
@@ -46258,11 +46267,20 @@ const PVCalculator = {
             ${nav('Executive Snapshot', 'resultsExecutiveSection')}
             ${nav('Commercial Estimate', 'resultsCommercialSection')}
             ${warningLink}
-            <a class="section-nav-item" href="#" style="font-size:0.85rem;"
-                onclick="event.preventDefault(); PVCalculator.navigateToResultSection('resultsDetailsSection'); if(window.innerWidth<=768) PVCalculator.toggleSectionNav();">
-                Detailed Results
-            </a>
-            ${tabLinks}
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+                <a class="section-nav-item" href="#" style="font-size:0.85rem;flex:1;"
+                    onclick="event.preventDefault(); PVCalculator.navigateToResultSection('resultsDetailsSection');">
+                    Detailed Results
+                </a>
+                <button type="button" id="detailNavCaret" title="Expand/collapse tab list"
+                    style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:0.85rem;padding:2px 6px;line-height:1;"
+                    onclick="event.stopPropagation(); PVCalculator.toggleDetailResultNav();">
+                    &#9662;
+                </button>
+            </div>
+            <div id="detailTabLinks">
+                ${tabLinks}
+            </div>
             ${nav('Disclaimer', 'resultsCaveatsSection')}
             ${nav('Export', 'resultsExportSection')}`;
     },
