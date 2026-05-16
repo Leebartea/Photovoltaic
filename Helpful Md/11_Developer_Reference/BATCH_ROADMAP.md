@@ -38,20 +38,11 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 | Batch 21A | 330f78f | 2026-05-15 | PDF packLabel crash (guard commercial.pricingSource in PDF path, 7 sites); undefined BOM subtitle (item.notes || ''); duplicate labour rows (conditional totalRows for isLocalBuildUp); panel shows 400Wp (wrong DOM ID 'panelWatts' → config.panelWattage/'panelWattage'); zero Resolved Cost Rates (pricingSourceHtml gated on isLocalBuildUp); FX rate reverts to default (add !fxEl.value guard in applyCommercialDefaultsByLocation) |
 | Batch 21B | 1cb5811 | 2026-05-16 | PDF BOM subtitle undefined (item.basis + item.notes guard); PDF Commercial Totals duplicate labour/soft/margin rows gated on isLocalBuildUp; footer single-print (remove brand line from addPageFooter, post-build loop now sole brand+page stamp); duplicate Pricing Basis row gated on !isLocalBuildUp; battery unit count uses batt.stringsInParallel + nominal-voltage per-unit kWh |
 | Batch 21C | cdf4a35 | 2026-05-16 | Battery BOM kWh uses actual Ah/unit on manual override (recommendedAhPerCell stale post-override → use totalCapacityAh/stringsInParallel); Modeled Adders PDF row shows local build-up rates (laborPercent/profitMarginPct) when isLocalBuildUp, not global benchmark fields |
+| Batch 22A | 37cd111 | 2026-05-16 | Transformer advisory escalation: critical severity at ≥2 motors OR complianceRisk=high (was: warning at ≥1 motor); inverter.warnings rendered inline in inverter tab (bus-voltage warnings previously invisible to user) |
 
 ---
 
 ## Open Batches (Planned)
-
-### Batch 22A — Bus Voltage Advisory + Transformer Inverter Advice
-**Priority: HIGH — engineering safety**
-**Scope:**
-- Warn when inverter VA exceeds safe range for selected bus voltage: 12V > 1500VA → warn; 24V > 3500VA → warn; 48V handles up to ~10kVA
-- When motor-type appliances ≥ 2 units OR high inrush detected AND user selected transformerless inverter → advisory to consider transformer-based
-- Logic: `BatterySizingEngine` / `InverterSizingEngine` already has surge data; append to `warnings[]`
-**Needs Opus dive:** YES — find exact warning push sites and `inverterTechnology` field consumption.
-
----
 
 ### Batch 22B — Voc Safety Hardening (from Opus engineering audit)
 **Priority: MEDIUM — engineering correctness**
@@ -107,4 +98,4 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 - Build must pass (`npm run build` exit 0) before any commit
 - After committing, run `git log origin/main..HEAD --oneline` — if any lines appear, those commits are NOT pushed. Run `git push origin main`.
 
-*Last updated: 2026-05-16 (post-Batch 21C)*
+*Last updated: 2026-05-16 (post-Batch 22A)*
