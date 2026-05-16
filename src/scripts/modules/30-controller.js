@@ -23699,6 +23699,7 @@ const PVCalculator = {
         container.setAttribute('aria-busy', 'false');
         this.announceResults(`Results updated. System confidence ${confidenceScore}% ${confLevel}.`);
         this.updateHamburgerResultNav(isClientMode);
+        this.updateWattageSuggestions(report.details);
     },
 
     /**
@@ -27701,6 +27702,32 @@ const PVCalculator = {
         const effectivePSH = Math.round(psh * combined * 100) / 100;
         const pct = Math.round(combined * 100);
         el.textContent = `Effective PSH: ${effectivePSH.toFixed(2)} h (${pct}% of rated — orientation + tilt derate)`;
+    },
+
+    updateWattageSuggestions(details) {
+        const hint = document.getElementById('panelWattageSuggestHint');
+        if (!hint || !details) return;
+        const config = details.config || {};
+        const aggregation = details.aggregation || {};
+        const dailyWh = aggregation.dailyEnergyWh || 0;
+        if (!dailyWh) { hint.innerHTML = ''; return; }
+
+        // Estimate required kWp from load — independent of panel.wattage
+        const estKWp = (dailyWh / 0.78 * ((config.designMargin || 110) / 100)) / ((config.avgPSH || 4.5) * 1000);
+        const tiers = DEFAULTS.PANEL_WATTAGE_TIERS || [];
+        const tier = tiers.find(t => estKWp < t.maxKWp) || tiers[tiers.length - 1];
+        if (!tier) { hint.innerHTML = ''; return; }
+
+        const currentWp = parseInt(document.getElementById('panelWattage')?.value) || 0;
+        const inTier = currentWp === tier.suggested || tier.alternates.includes(currentWp);
+
+        if (inTier) {
+            hint.innerHTML = `&#10003; Good fit for a ~${estKWp.toFixed(1)} kWp array (${tier.label.toLowerCase()}).`;
+            hint.style.color = 'var(--success-color, #16a34a)';
+        } else {
+            hint.innerHTML = `For ~${estKWp.toFixed(1)} kWp (${tier.label.toLowerCase()}), <strong>${tier.suggested} Wp</strong> is typically optimal. <a href="#" onclick="event.preventDefault(); document.getElementById('panelWattage').value=${tier.suggested}; PVCalculator.autoSuggestPanelSpecs();" style="color:var(--primary-color);font-weight:600;">Apply</a>`;
+            hint.style.color = 'var(--text-muted)';
+        }
     },
 
     navigateToResultTab(tabName) {

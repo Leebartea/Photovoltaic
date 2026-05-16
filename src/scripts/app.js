@@ -3673,6 +3673,12 @@ const DEFAULTS = {
         'toaster|sandwich\\s*maker': { watt: 800, loadType: 'resistive', startMethod: 'dol', surgeFactor: 1.0, powerFactor: 1.0, dutyCycle: 100, hours: 0.3, dutyFrequency: 'daily', canStagger: 'yes', isDaytimeOnly: 'no', hint: 'Pure resistive heating element.' },
         'heater|space\\s*heater': { watt: 1500, loadType: 'resistive', startMethod: 'dol', surgeFactor: 1.0, powerFactor: 1.0, dutyCycle: 100, hours: 6, dutyFrequency: 'rare', canStagger: 'yes', isDaytimeOnly: 'no', hint: 'Resistive heating element. No surge.' }
     },
+    // Tier boundaries for panel wattage auto-suggestion (based on estimated array kWp)
+    PANEL_WATTAGE_TIERS: [
+        { maxKWp: 3, suggested: 250, alternates: [200, 300], label: 'Small array' },
+        { maxKWp: 10, suggested: 450, alternates: [400, 450], label: 'Medium array' },
+        { maxKWp: Infinity, suggested: 580, alternates: [550, 600], label: 'Large array' }
+    ],
     // Panel spec presets by wattage (typical industry values)
     PANEL_PRESETS: {
         50: { vmp: 18.2, voc: 22.0, imp: 2.75, isc: 2.95, tempCoeffPmax: -0.40, tempCoeffVoc: -0.30 },
@@ -35011,6 +35017,7 @@ const PVCalculator = {
         container.setAttribute('aria-busy', 'false');
         this.announceResults(`Results updated. System confidence ${confidenceScore}% ${confLevel}.`);
         this.updateHamburgerResultNav(isClientMode);
+        this.updateWattageSuggestions(report.details);
     },
 
     /**
@@ -39013,6 +39020,32 @@ const PVCalculator = {
         const effectivePSH = Math.round(psh * combined * 100) / 100;
         const pct = Math.round(combined * 100);
         el.textContent = `Effective PSH: ${effectivePSH.toFixed(2)} h (${pct}% of rated — orientation + tilt derate)`;
+    },
+
+    updateWattageSuggestions(details) {
+        const hint = document.getElementById('panelWattageSuggestHint');
+        if (!hint || !details) return;
+        const config = details.config || {};
+        const aggregation = details.aggregation || {};
+        const dailyWh = aggregation.dailyEnergyWh || 0;
+        if (!dailyWh) { hint.innerHTML = ''; return; }
+
+        // Estimate required kWp from load — independent of panel.wattage
+        const estKWp = (dailyWh / 0.78 * ((config.designMargin || 110) / 100)) / ((config.avgPSH || 4.5) * 1000);
+        const tiers = DEFAULTS.PANEL_WATTAGE_TIERS || [];
+        const tier = tiers.find(t => estKWp < t.maxKWp) || tiers[tiers.length - 1];
+        if (!tier) { hint.innerHTML = ''; return; }
+
+        const currentWp = parseInt(document.getElementById('panelWattage')?.value) || 0;
+        const inTier = currentWp === tier.suggested || tier.alternates.includes(currentWp);
+
+        if (inTier) {
+            hint.innerHTML = `&#10003; Good fit for a ~${estKWp.toFixed(1)} kWp array (${tier.label.toLowerCase()}).`;
+            hint.style.color = 'var(--success-color, #16a34a)';
+        } else {
+            hint.innerHTML = `For ~${estKWp.toFixed(1)} kWp (${tier.label.toLowerCase()}), <strong>${tier.suggested} Wp</strong> is typically optimal. <a href="#" onclick="event.preventDefault(); document.getElementById('panelWattage').value=${tier.suggested}; PVCalculator.autoSuggestPanelSpecs();" style="color:var(--primary-color);font-weight:600;">Apply</a>`;
+            hint.style.color = 'var(--text-muted)';
+        }
     },
 
     navigateToResultTab(tabName) {

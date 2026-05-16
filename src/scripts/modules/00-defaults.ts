@@ -3806,6 +3806,13 @@ const DEFAULTS = {
         'heater|space\\s*heater': { watt: 1500, loadType: 'resistive', startMethod: 'dol', surgeFactor: 1.0, powerFactor: 1.0, dutyCycle: 100, hours: 6, dutyFrequency: 'rare', canStagger: 'yes', isDaytimeOnly: 'no', hint: 'Resistive heating element. No surge.' }
     },
 
+    // Tier boundaries for panel wattage auto-suggestion (based on estimated array kWp)
+    PANEL_WATTAGE_TIERS: [
+        { maxKWp: 3,        suggested: 250, alternates: [200, 300], label: 'Small array' },
+        { maxKWp: 10,       suggested: 450, alternates: [400, 450], label: 'Medium array' },
+        { maxKWp: Infinity, suggested: 580, alternates: [550, 600], label: 'Large array'  }
+    ],
+
     // Panel spec presets by wattage (typical industry values)
     PANEL_PRESETS: {
         50:  { vmp: 18.2, voc: 22.0, imp: 2.75, isc: 2.95, tempCoeffPmax: -0.40, tempCoeffVoc: -0.30 },
