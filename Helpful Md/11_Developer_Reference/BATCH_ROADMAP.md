@@ -41,6 +41,7 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 | Batch 22A | 37cd111 | 2026-05-16 | Transformer advisory escalation: critical severity at ≥2 motors OR complianceRisk=high (was: warning at ≥1 motor); inverter.warnings rendered inline in inverter tab (bus-voltage warnings previously invisible to user) |
 | Batch 22B | 7475f12 | 2026-05-16 | V1: falsy-zero ambientTempMin fix (|| → ??) at 5 engine sites; V2: VOC_HEADROOM_PERCENT 0.03→0.05 + 90% soft-warn tier in validateUserConfig; V3: pvArray.blocks[]/warnings[] resynced after desiredCount/auto-sync/multi-MPPT mutations |
 | Batch 22C | 0dfcaf4 | 2026-05-16 | Results nav in hamburger: updateHamburgerResultNav() injects 12 tab links (installer) or single Results link (client) after calculate; auto-collapses nav on mobile |
+| Batch 22D | 075a473 | 2026-05-16 | Effective PSH advisory: read-only display below PSH field showing effective PSH after orientation+tilt derate; updates live on input, initialised on page load |
 
 ---
 
@@ -57,13 +58,6 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 **Priority: MEDIUM — UX quality**
 **Scope:** When results exist, inject result tab links (Overview, Load, Inverter, Battery, PV Array, PV Config, Cables, Protection, Losses, Upgrade, Advisory) into hamburger below the Calculate link — acts as a table-of-contents for the result column.
 **Needs Opus dive:** NO — template + controller section-nav injection pattern already known.
-
----
-
-### Batch 22D — Effective PSH Advisory
-**Priority: LOW — UX polish**
-**Scope:** Read-only "Effective PSH: X.X h (accounting for orientation and tilt)" shown below the Peak Sun Hours field — a derived display, not editing the input. Orientation derate already applied in engine; this just surfaces it.
-**Needs Opus dive:** NO — small template + tooltip addition.
 
 ---
 
@@ -96,4 +90,4 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 - Build must pass (`npm run build` exit 0) before any commit
 - After committing, run `git log origin/main..HEAD --oneline` — if any lines appear, those commits are NOT pushed. Run `git push origin main`.
 
-*Last updated: 2026-05-16 (post-Batch 22C)*
+*Last updated: 2026-05-16 (post-Batch 22D)*
