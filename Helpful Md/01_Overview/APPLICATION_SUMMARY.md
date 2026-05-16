@@ -66,6 +66,12 @@ The Advanced PV System Calculator is an **offline-first, browser-based** PV desi
 - The workspace toolbar now includes a **New Project** button (with tooltip) and a **↩ Start a New Estimation** footer link, so users can start fresh without hunting for a reset action after reviewing results
 - `BatterySizingEngine` now emits a soft 24V bus advisory when the battery bank exceeds 500Ah at 24V, recommending a switch to 48V, with the advisory rendered as an in-app warning in the battery tab
 - The regression suite now includes locked commercial benchmark projects with both acceptance and constrained references
+- Voc cold-weather safety hardened: `VOC_HEADROOM_PERCENT` raised from 3% to 5%; 90% soft-warn tier added to `validateUserConfig`; falsy-zero ambientTempMin bug fixed at 5 engine sites (`?? 20` replaces `|| 20`); `pvArray.blocks[]/warnings[]` resynced after every desiredCount/auto-sync/multi-MPPT mutation
+- Transformerless inverter advisory escalates to `critical` severity when ≥2 motor loads are present or compliance risk is high; inverter tab now renders `inverter.warnings[]` inline so bus-voltage advisories are visible during design
+- Effective PSH advisory shown live below the Peak Sun Hours field — orientation × tilt derate factors applied in real time so the user sees the actual usable PSH before calculating
+- Panel wattage auto-suggest: after Calculate, a tier hint appears below the panel wattage field showing the optimal Wp for the estimated array kWp; one-click Apply available; no forced override
+- MPPT specs at-default advisory: when all three primary MPPT fields remain at HTML placeholder values (500V/27A/7500W), an info advisory prompts the user to enter actual datasheet values
+- Mobile hamburger result navigation: after Calculate, a two-tier nav block appears in the hamburger menu with section-level links (Executive Snapshot, Commercial Estimate, Warnings, Detailed Results, Disclaimer, Export) and indented ↳ tab sub-links under Detailed Results; the "Detailed Results" entry has a ▾/▸ caret for collapsing the tab sub-list; all links use `navigateToResultSection`/`navigateToResultTab` helpers that expand collapsed sections and scroll precisely without focus-scroll conflict
 
 **Target users:** Solar installers, electrical engineers, proposal teams, and system designers working with off-grid and hybrid PV installations for residential, commercial, and small-industrial captive sites across global markets.
 

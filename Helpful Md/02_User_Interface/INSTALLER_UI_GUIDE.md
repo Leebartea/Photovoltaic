@@ -33,6 +33,40 @@ The toolbar at the top of the page has five project management buttons:
 
 If you finish reviewing results and want to start a new estimation without scrolling back to the top, there is also a **↩ Start a New Estimation** button at the very bottom of the page, just above the footer. It does the same thing as "New Project" in the toolbar.
 
+## Mobile Hamburger Nav (☰)
+
+On mobile (≤768px) the left-side section navigator collapses into a ☰ button fixed at the bottom-right of the screen. Tapping it opens the nav panel.
+
+**Before Calculate:** Shows section links 1 System → 2 Workspace → 3 Guide → 4 Identity → 5 Loads → 6 Equipment → 7 Pricing, plus a ⚡ Calculate shortcut and ↩ New Project.
+
+**After Calculate:** A Results group is injected at the bottom of the nav panel:
+
+```
+━━━ Results ━━━
+  Executive Snapshot       ← scrolls + expands that section
+  Commercial Estimate      ← scrolls + expands that section
+  ⚠ Warnings              ← only shown when warnings exist
+  Detailed Results  ▾      ← scrolls + expands; caret collapses sub-list
+    ↳ Overview
+    ↳ Load
+    ↳ Inverter
+    ↳ Battery
+    ↳ Batt Config
+    ↳ PV Array
+    ↳ PV Config
+    ↳ Cables
+    ↳ Protection
+    ↳ Losses
+    ↳ Upgrade
+    ↳ Advisory
+  Disclaimer
+  Export
+```
+
+- Clicking any section link scrolls and auto-expands the target section, then closes the hamburger on mobile.
+- Clicking a ↳ tab sub-link switches the active tab inside Detailed Results, scrolls to it, and closes the hamburger.
+- The ▾/▸ caret next to "Detailed Results" expands or collapses the sub-list **without** closing the hamburger or navigating — useful when you only need a section link, not a specific tab.
+
 ## Recommended Navigation Order
 
 1. Start in `Installer Design`
@@ -417,6 +451,23 @@ Read it as four staged questions:
 - `Engineering Review`: equipment validation and upgrade stress checks
 
 If the page feels wide, that is expected. The right move is to collapse finished sections, not to rush through terms that still affect the design outcome.
+
+## Live Advisories During Input
+
+Several fields now show live hints before you press Calculate:
+
+**Effective PSH advisory** (below the Peak Sun Hours field)
+- Shows `Effective PSH: X.XX h (Y% of rated — orientation + tilt derate)` in real time as you type or change orientation/tilt
+- Use this to immediately see the impact of a suboptimal roof direction before committing to the panel count
+
+**Panel wattage suggestion** (below the Panel Wattage field, appears after Calculate)
+- After Calculate, a tier hint shows the optimal Wp for your estimated array size: `<3 kWp → 250 Wp`, `3–10 kWp → 450 Wp`, `≥10 kWp → 580 Wp`
+- If the current wattage is already in the right tier, shows a green ✓ confirmation
+- If not, shows the suggested wattage with a one-click **Apply** link — clicking Apply does not auto-recalculate; use the Calculate button after applying
+
+**MPPT defaults advisory** (Advisory tab, after Calculate)
+- If all three MPPT fields (Max Voc / Max Current / Max Power) are still at their HTML placeholder values (500V / 27A / 7500W), an info advisory appears prompting you to enter real datasheet values
+- This matters most for Voc safety checks and string configuration — placeholder values give a 500V ceiling that may be too generous or not generous enough for your actual inverter
 
 ## How To Read Results Properly
 

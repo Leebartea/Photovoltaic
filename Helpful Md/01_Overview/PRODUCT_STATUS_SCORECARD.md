@@ -161,6 +161,83 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Enh 3 — Collapsible Detailed Results Sub-Nav in Hamburger (commit fb3f6d8 — 2026-05-16)
+
+- "Detailed Results" in hamburger nav now has a ▾/▸ caret button beside it — clicking the caret expands or collapses the 12 tab sub-links without triggering navigation
+- Clicking the "Detailed Results" label itself still scrolls and expands the section
+- Adds `toggleDetailResultNav()` to the controller; caret text updates live on toggle
+
+---
+
+### Batch 22B V4+V5 — MPPT Defaults Advisory + ambientTempMin Zero Fix (commit 8c373e6 — 2026-05-16)
+
+**V4 — MPPT at-default advisory**
+- When all three primary MPPT fields remain at their HTML placeholder values (500V / 27A / 7500W), an `info` advisory appears in the Advisory tab reminding the user to fill in actual datasheet values
+- Advisory disappears automatically once any field is changed from default
+
+**V5 — ambientTempMin/Max zero coercion fixed in getConfig()**
+- `parseFloat('0') || 20` was coercing 0°C to 20°C before the value even reached the engine
+- `(v => isNaN(v) ? 20 : v)(parseFloat(...))` guard applied to both `ambientTempMin` and `ambientTempMax` — valid entries including 0°C now pass through correctly
+
+---
+
+### Enh 2 — Hamburger Two-Tier Result Nav (commit 498ea2f — 2026-05-16)
+
+- Replaced 12 flat tab links in hamburger with section-level links (Executive Snapshot, Commercial Estimate, Warnings [conditional], Detailed Results, Disclaimer, Export) plus indented ↳ tab sub-links under Detailed Results
+- Warnings section link only appears when `report.warnings.length > 0`
+- Adds `navigateToResultSection(sectionId)` helper — scrolls to + auto-expands a result shell section
+
+---
+
+### Enh 1 — Panel Wattage Auto-Suggest (commit b3ae61f — 2026-05-16)
+
+- Added `DEFAULTS.PANEL_WATTAGE_TIERS` buckets: <3 kWp → 250 Wp, 3–10 kWp → 450 Wp, ≥10 kWp → 580 Wp
+- After Calculate, a hint line appears below the Panel Wattage field showing the optimal tier for the estimated array kWp
+- If the current wattage is already in tier: shows a green ✓ confirmation
+- If not: shows the suggested wattage + a one-click "Apply" link; no forced override, no feedback loop
+
+---
+
+### Batch 22D — Effective PSH Advisory (commit 075a473 — 2026-05-16)
+
+- Live read-only display appears below the Peak Sun Hours field showing effective PSH after orientation × tilt derate
+- Updates on every PSH input keystroke, orientation change, and tilt change
+- Initialised on page load via `updateEffectivePSHDisplay()`; reads `DEFAULTS.ORIENTATION_FACTORS` and `DEFAULTS.TILT_FACTORS`
+
+---
+
+### Batch 22C — Results Navigation in Hamburger + Tab Link Fix (commit 0dfcaf4 — 2026-05-16)
+
+- `updateHamburgerResultNav(isClientMode)` injected into hamburger after Calculate — installer mode shows 12 tab links under a "Results" header; client mode shows a single Results link
+- **Bug fixed:** All tab links were navigating to Overview regardless of which tab was clicked
+  - Root cause: `showTab()` calls `activeTab.focus()` which triggers conflicting browser scroll; `scrollIntoView` was targeting `resultsContainer` (top of results) instead of `resultsDetailsSection` (where tabs live)
+  - Fix: New `navigateToResultTab(tabName)` method — directly manipulates panel/tab DOM without `focus()`, scrolls to `resultsDetailsSection`, expands section if collapsed
+
+---
+
+### Batch 22B — Voc Safety Hardening (commit 7475f12 — 2026-05-16)
+
+**V1 — falsy-zero ambientTempMin at 5 engine sites**
+- `(config.ambientTempMin || 20)` → `(config.ambientTempMin ?? 20)` at 5 cold-Voc calculation sites in `10-engines.ts`
+- Prevents 0°C sites being silently treated as 20°C (coercion bug — 0 is falsy)
+
+**V2 — VOC headroom raised + soft-warn tier**
+- `VOC_HEADROOM_PERCENT`: `0.03` → `0.05` in `00-defaults.ts` (safety margin increased from 3% to 5%)
+- 90% soft-warn tier added to `validateUserConfig`: string Voc within 10% of MPPT max triggers a warning even when below the hard limit
+
+**V3 — pvArray.blocks[]/warnings[] resync after mutations**
+- Three mutation sites (desiredCount, auto-sync, multi-MPPT) were not copying `rec.blocks`/`rec.warnings` back to `pvArray`
+- Fixed by `.slice()` copy after each mutation — stale validation state no longer survives mutations
+
+---
+
+### Batch 22A — Transformer Advisory Escalation + Inverter Tab Warnings (commit 37cd111 — 2026-05-16)
+
+- Transformerless inverter advisory in `SmartAdvisoryEngine` upgraded from flat `warning` to `critical` severity when ≥2 motor loads are present OR `complianceRisk === 'high'`; still `warning` for single motor
+- `inverter.warnings[]` (bus-voltage advisories, etc.) now rendered inline in the Inverter tab as `.alert.alert-warning` divs — previously the warnings array was populated but never shown to the user
+
+---
+
 ### Batch 21B — PDF Rendering Fixes: Footer, BOM Subtitle, Totals, Battery Count (commit 1cb5811 — 2026-05-16)
 
 **#B15 — PDF BOM subtitle still showed `undefined`**
