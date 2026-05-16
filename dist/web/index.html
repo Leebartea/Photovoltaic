@@ -471,7 +471,8 @@
                     <div class="form-row three">
                         <div class="form-group">
                             <label for="avgPSH">Peak Sun Hours</label>
-                            <input type="number" id="avgPSH" value="4.5" step="0.1" min="2" max="8">
+                            <input type="number" id="avgPSH" value="4.5" step="0.1" min="2" max="8" oninput="PVCalculator.updateEffectivePSHDisplay()">
+                            <div id="effectivePSHDisplay" style="font-size:0.78rem;color:var(--text-muted);margin-top:3px;line-height:1.4;"></div>
                         </div>
                         <div class="form-group">
                             <label for="autonomyDays">Autonomy Days</label>
@@ -506,7 +507,7 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="panelOrientation">Panel Orientation</label>
-                            <select id="panelOrientation" onchange="if(PVCalculator.results)PVCalculator.calculate();">
+                            <select id="panelOrientation" onchange="PVCalculator.updateEffectivePSHDisplay(); if(PVCalculator.results)PVCalculator.calculate();">
                                 <option value="south">South — Optimal (100%)</option>
                                 <option value="se_sw">South-East / South-West (95%)</option>
                                 <option value="east_west">East / West (90%)</option>
@@ -517,7 +518,7 @@
                         </div>
                         <div class="form-group">
                             <label for="panelTilt">Panel Tilt</label>
-                            <select id="panelTilt" onchange="if(PVCalculator.results)PVCalculator.calculate();">
+                            <select id="panelTilt" onchange="PVCalculator.updateEffectivePSHDisplay(); if(PVCalculator.results)PVCalculator.calculate();">
                                 <option value="optimal">Optimal / Latitude-matched (100%)</option>
                                 <option value="low">Low tilt &lt;10° (95%)</option>
                                 <option value="high">High tilt &gt;40° (97%)</option>

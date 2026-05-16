@@ -27688,6 +27688,21 @@ const PVCalculator = {
         }
     },
 
+    updateEffectivePSHDisplay() {
+        const el = document.getElementById('effectivePSHDisplay');
+        if (!el) return;
+        const psh = parseFloat(document.getElementById('avgPSH')?.value);
+        if (!psh || !isFinite(psh)) { el.textContent = ''; return; }
+        const orientVal = document.getElementById('panelOrientation')?.value || 'unknown';
+        const tiltVal = document.getElementById('panelTilt')?.value || 'unknown';
+        const orientFactor = DEFAULTS.ORIENTATION_FACTORS[orientVal] ?? 0.93;
+        const tiltFactor = DEFAULTS.TILT_FACTORS[tiltVal] ?? 0.97;
+        const combined = orientFactor * tiltFactor;
+        const effectivePSH = Math.round(psh * combined * 100) / 100;
+        const pct = Math.round(combined * 100);
+        el.textContent = `Effective PSH: ${effectivePSH.toFixed(2)} h (${pct}% of rated — orientation + tilt derate)`;
+    },
+
     updateHamburgerResultNav(isClientMode) {
         const container = document.getElementById('resultNavLinks');
         if (!container) return;

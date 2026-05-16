@@ -4938,7 +4938,8 @@ input:checked + .toggle-slider:before {
                     <div class="form-row three">
                         <div class="form-group">
                             <label for="avgPSH">Peak Sun Hours</label>
-                            <input type="number" id="avgPSH" value="4.5" step="0.1" min="2" max="8">
+                            <input type="number" id="avgPSH" value="4.5" step="0.1" min="2" max="8" oninput="PVCalculator.updateEffectivePSHDisplay()">
+                            <div id="effectivePSHDisplay" style="font-size:0.78rem;color:var(--text-muted);margin-top:3px;line-height:1.4;"></div>
                         </div>
                         <div class="form-group">
                             <label for="autonomyDays">Autonomy Days</label>
@@ -4973,7 +4974,7 @@ input:checked + .toggle-slider:before {
                     <div class="form-row">
                         <div class="form-group">
                             <label for="panelOrientation">Panel Orientation</label>
-                            <select id="panelOrientation" onchange="if(PVCalculator.results)PVCalculator.calculate();">
+                            <select id="panelOrientation" onchange="PVCalculator.updateEffectivePSHDisplay(); if(PVCalculator.results)PVCalculator.calculate();">
                                 <option value="south">South — Optimal (100%)</option>
                                 <option value="se_sw">South-East / South-West (95%)</option>
                                 <option value="east_west">East / West (90%)</option>
@@ -4984,7 +4985,7 @@ input:checked + .toggle-slider:before {
                         </div>
                         <div class="form-group">
                             <label for="panelTilt">Panel Tilt</label>
-                            <select id="panelTilt" onchange="if(PVCalculator.results)PVCalculator.calculate();">
+                            <select id="panelTilt" onchange="PVCalculator.updateEffectivePSHDisplay(); if(PVCalculator.results)PVCalculator.calculate();">
                                 <option value="optimal">Optimal / Latitude-matched (100%)</option>
                                 <option value="low">Low tilt &lt;10° (95%)</option>
                                 <option value="high">High tilt &gt;40° (97%)</option>
@@ -46105,6 +46106,21 @@ const PVCalculator = {
         }
     },
 
+    updateEffectivePSHDisplay() {
+        const el = document.getElementById('effectivePSHDisplay');
+        if (!el) return;
+        const psh = parseFloat(document.getElementById('avgPSH')?.value);
+        if (!psh || !isFinite(psh)) { el.textContent = ''; return; }
+        const orientVal = document.getElementById('panelOrientation')?.value || 'unknown';
+        const tiltVal = document.getElementById('panelTilt')?.value || 'unknown';
+        const orientFactor = DEFAULTS.ORIENTATION_FACTORS[orientVal] ?? 0.93;
+        const tiltFactor = DEFAULTS.TILT_FACTORS[tiltVal] ?? 0.97;
+        const combined = orientFactor * tiltFactor;
+        const effectivePSH = Math.round(psh * combined * 100) / 100;
+        const pct = Math.round(combined * 100);
+        el.textContent = `Effective PSH: ${effectivePSH.toFixed(2)} h (${pct}% of rated — orientation + tilt derate)`;
+    },
+
     updateHamburgerResultNav(isClientMode) {
         const container = document.getElementById('resultNavLinks');
         if (!container) return;
@@ -46490,6 +46506,7 @@ document.addEventListener('DOMContentLoaded', () => {
     PVCalculator.updateReadinessGuide();
     PVCalculator.updateCardStatus();
     PVCalculator.initRateBadges();
+    PVCalculator.updateEffectivePSHDisplay();
     initFieldHelpPopovers();
 
     // Add input validation listeners for real-time feedback
