@@ -37,15 +37,50 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 | Batch 20A | 11e7cc3 | 2026-05-14 | Fix local build-up paymentPlan null crash (inline-construct depositPct/deposit/completion); add band.spreadPct; fix pricingSource string blocking renderer fallback; add ⚡ Calculate shortcut to hamburger nav |
 | Batch 21A | 330f78f | 2026-05-15 | PDF packLabel crash (guard commercial.pricingSource in PDF path, 7 sites); undefined BOM subtitle (item.notes || ''); duplicate labour rows (conditional totalRows for isLocalBuildUp); panel shows 400Wp (wrong DOM ID 'panelWatts' → config.panelWattage/'panelWattage'); zero Resolved Cost Rates (pricingSourceHtml gated on isLocalBuildUp); FX rate reverts to default (add !fxEl.value guard in applyCommercialDefaultsByLocation) |
 | Batch 21B | 1cb5811 | 2026-05-16 | PDF BOM subtitle undefined (item.basis + item.notes guard); PDF Commercial Totals duplicate labour/soft/margin rows gated on isLocalBuildUp; footer single-print (remove brand line from addPageFooter, post-build loop now sole brand+page stamp); duplicate Pricing Basis row gated on !isLocalBuildUp; battery unit count uses batt.stringsInParallel + nominal-voltage per-unit kWh |
+| Batch 21C | cdf4a35 | 2026-05-16 | Battery BOM kWh uses actual Ah/unit on manual override (recommendedAhPerCell stale post-override → use totalCapacityAh/stringsInParallel); Modeled Adders PDF row shows local build-up rates (laborPercent/profitMarginPct) when isLocalBuildUp, not global benchmark fields |
 
 ---
 
 ## Open Batches (Planned)
 
+### Batch 22A — Bus Voltage Advisory + Transformer Inverter Advice
+**Priority: HIGH — engineering safety**
+**Scope:**
+- Warn when inverter VA exceeds safe range for selected bus voltage: 12V > 1500VA → warn; 24V > 3500VA → warn; 48V handles up to ~10kVA
+- When motor-type appliances ≥ 2 units OR high inrush detected AND user selected transformerless inverter → advisory to consider transformer-based
+- Logic: `BatterySizingEngine` / `InverterSizingEngine` already has surge data; append to `warnings[]`
+**Needs Opus dive:** YES — find exact warning push sites and `inverterTechnology` field consumption.
+
+---
+
+### Batch 22B — Voc Safety Hardening (from Opus engineering audit)
+**Priority: MEDIUM — engineering correctness**
+**Scope (in priority order):**
+- **V3:** Resync `pvArray.blocks[]` after desiredCount/auto-sync/multi-MPPT mutations (controller.js:23110, 23138, 23168) — eliminates stale hard-block messages in PDF
+- **V1:** Fix falsy-zero `ambientTempMin` fallback at engines.ts:4560/4730/4869/4975/5248 — `0 || 20` silently coerces 0°C to 20°C (wrong for cold sites)
+- **V2:** Tiered Voc headroom — raise `VOC_HEADROOM_PERCENT` to 0.05; add 90% soft-warn tier in validator
+- **V4/V5:** `mpptMaxVoltage` advisory if still at default after inverter named; editable design min temp field (advanced)
+**Needs Opus dive:** YES — exact line numbers for blocks[] rebuild points.
+
+---
+
+### Batch 22C — Results Navigation in Hamburger
+**Priority: MEDIUM — UX quality**
+**Scope:** When results exist, inject result tab links (Overview, Load, Inverter, Battery, PV Array, PV Config, Cables, Protection, Losses, Upgrade, Advisory) into hamburger below the Calculate link — acts as a table-of-contents for the result column.
+**Needs Opus dive:** NO — template + controller section-nav injection pattern already known.
+
+---
+
+### Batch 22D — Effective PSH Advisory
+**Priority: LOW — UX polish**
+**Scope:** Read-only "Effective PSH: X.X h (accounting for orientation and tilt)" shown below the Peak Sun Hours field — a derived display, not editing the input. Orientation derate already applied in engine; this just surfaces it.
+**Needs Opus dive:** NO — small template + tooltip addition.
+
+---
+
 ### Enhancement — Panel/Battery Wattage Auto-Select
 **Priority: MEDIUM — UX quality**
 **Scope:** Auto-select panel wattage tier based on array size (small: 200–300Wp, medium: 400–450Wp, large: 550–600Wp).
-
 **Needs Opus dive:** YES — into `PVArrayEngine` to understand how panel wattage feeds into panel count and whether auto-selection creates feedback loops.
 
 ---
@@ -72,4 +107,4 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 - Build must pass (`npm run build` exit 0) before any commit
 - After committing, run `git log origin/main..HEAD --oneline` — if any lines appear, those commits are NOT pushed. Run `git push origin main`.
 
-*Last updated: 2026-05-16 (post-Batch 21B)*
+*Last updated: 2026-05-16 (post-Batch 21C)*

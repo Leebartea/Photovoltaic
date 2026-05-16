@@ -97,18 +97,22 @@ PDFs tested: `PV_System_Design_Lagos__Nigeria_2026-05-09 (4).pdf` (client) and `
 | #B17 | Footer prints twice on every page — `addPageFooter()` brand line + post-build page-stamp loop both writing at same Y position | HIGH | **FIXED — Batch 21B (1cb5811)** |
 | #B18 | Duplicate "Pricing Basis:" row in PDF — benchmark path and local build-up path both rendered | LOW | **FIXED — Batch 21B (1cb5811)** |
 | #B19 | Battery unit count wrong in local build-up BOM (showed 2 units when user selected 1×150Ah@48V) — ceil(7.7kWh/7.2kWh)=2 due to effective vs nominal voltage mismatch | HIGH | **FIXED — Batch 21B (1cb5811)** |
+| #B20 | Battery BOM kWh shows 11.0 kWh instead of 7.2 kWh for 150Ah@48V manual override — `recommendedAhPerCell` retains auto value after manual override; correct is `totalCapacityAh / stringsInParallel` | HIGH | **FIXED — Batch 21C (cdf4a35)** |
+| #B21 | "Modeled Adders" PDF row shows global benchmark rates (18/8/12%) while BOM uses local build-up rates (10%/-/15%) — visible mismatch for client | MEDIUM | **FIXED — Batch 21C (cdf4a35)** |
+| #V1 | Falsy-zero `ambientTempMin` fallback at 5 of 8 Voc call sites — `0 \|\| 20` coerces 0°C to 20°C (wrong for cold-climate sites) | MEDIUM (cold sites) | Open — Batch 22B |
+| #V3 | `pvArray.blocks[]` not rebuilt after desiredCount/auto-sync/multi-MPPT mutations — stale hard-block messages can leak into PDF | HIGH | Open — Batch 22B |
 | Feature | Panel/battery wattage auto-select scales with array size (≥5kWp → 550–600Wp, small → 100–200Wp) | Enhancement | Open — needs Opus dive |
 
 ---
 
-## Severity Summary Table (updated after Batch 21B, 2026-05-16)
+## Severity Summary Table (updated after Batch 21C, 2026-05-16)
 
 | Severity | Open | Fixed / Verified |
 |---|---|---|
 | CRITICAL | 0 | 8 (original + Audit 2 + #B6 Batch 20A + #B9 Batch 21A) |
-| HIGH | 0 | #B8 (Batch 20A), #B12 (Batch 21A), #B17/#B19 (Batch 21B) fixed |
-| MEDIUM | 0 | All fixed — #B10/#B11/#B13/#B14 (Batch 21A), #B15/#B16 (Batch 21B), all others |
-| LOW | 0 | All fixed — #A15, #B7 (Batch 20A), #B18 (Batch 21B), all others |
+| HIGH | 2 open (#V3 stale blocks, #B20 was fixed) | #B8 (20A), #B12 (21A), #B17/#B19 (21B), #B20 (21C) fixed |
+| MEDIUM | 1 open (#V1 cold-temp fallback) | All others fixed including #B21 (21C) |
+| LOW | 0 | All fixed — #A15, #B7 (Batch 20A), #B18 (Batch 21B) |
 | INFO | 1 (panel-wattage auto-select feature) | #A12 verified; #A16 fixed (Batch 16B); #R1 fixed (Batch 18) |
 | POST-AUDIT (Audit 2) | 0 open | #A1–A18 all fixed or verified |
 
