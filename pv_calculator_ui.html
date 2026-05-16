@@ -41029,8 +41029,8 @@ const PVCalculator = {
             climate: locationProfile.climate || 'mixed',
             avgPSH: parseFloat(document.getElementById('avgPSH').value) || 4.5,
             autonomyDays: parseFloat(document.getElementById('autonomyDays').value) || 2,
-            ambientTempMin: parseFloat(document.getElementById('ambientTempMin').value) || 20,
-            ambientTempMax: parseFloat(document.getElementById('ambientTempMax').value) || 35,
+            ambientTempMin: (v => isNaN(v) ? 20 : v)(parseFloat(document.getElementById('ambientTempMin').value)),
+            ambientTempMax: (v => isNaN(v) ? 35 : v)(parseFloat(document.getElementById('ambientTempMax').value)),
             designMargin: parseFloat(document.getElementById('designMargin').value) || 125,
             inverterSurgeMultiplier: parseFloat(document.getElementById('inverterSurgeMultiplier').value) || 2.0,
             inverterTechnology: document.getElementById('inverterTechnology')?.value || 'unknown',
@@ -41680,6 +41680,16 @@ const PVCalculator = {
             const advisories = SmartAdvisoryEngine.generate({
                 config, aggregation, inverter, battery, pvArray, mpptValidation, cables, protection, losses, mismatchData
             });
+
+            // V4: Advisory when MPPT specs are still at all-default placeholder values
+            if (mppt.maxVoltage === 500 && mppt.maxCurrent === 27 && mppt.maxPower === 7500) {
+                advisories.push({
+                    category: 'PV Array',
+                    severity: 'info',
+                    title: 'MPPT Specs at Default — Enter From Datasheet',
+                    message: 'Your MPPT limits (500V max Voc / 27A max current / 7500W max power) are still at placeholder defaults. These values gate your Voc safety check and string sizing. Open the <strong>MPPT / Inverter PV Input Specs</strong> section and enter the actual figures from your inverter or charge controller datasheet for accurate validation.'
+                });
+            }
 
             // Phase 10: Upgrade Path Analysis
             const upgradePaths = UpgradeSimulator.analyzeUpgradePaths(
