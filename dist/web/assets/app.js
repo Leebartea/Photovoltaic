@@ -29570,8 +29570,13 @@ const PVCalculator = {
 
         const panelWatts = Number(config?.panelWattage) || parseInt(document.getElementById('panelWattage')?.value, 10) || (pv.totalPanels > 0 ? Math.round((pv.arrayWattage || 0) / pv.totalPanels) : 0) || 400;
         const panelCount = pv.totalPanels || Math.round((pv.arrayWattage || 0) / panelWatts) || 0;
-        const batteryKWh = (batt.totalCapacityWh || 0) / 1000 || batt.totalKWh || batt.totalCapacityKWh || 0;
-        const battUnits  = Math.max(1, Math.ceil(batteryKWh / Math.max(0.1, lb.batteryUnitKWh || 5.12)));
+        // Use engine's stringsInParallel as unit count (accounts for manual override correctly)
+        const battUnits  = batt.stringsInParallel > 0 ? batt.stringsInParallel : Math.max(1, Math.ceil(((batt.totalCapacityWh || 0) / 1000) / Math.max(0.1, lb.batteryUnitKWh || 5.12)));
+        // Per-unit kWh using nominal voltage (matches UI display)
+        const battUnitKWh = batt.stringsInParallel > 0
+            ? Math.round((batt.recommendedAhPerCell || 0) * (batt.bankVoltageNominal || batt.bankVoltage || 48) / 10) / 100
+            : (lb.batteryUnitKWh || 5.12);
+        const batteryKWh = battUnits * battUnitKWh || (batt.totalCapacityWh || 0) / 1000;
         const invQty     = Math.max(1, lb.inverterCount || 1);
         const invKVA     = inv.recommendedSizeVA ? (inv.recommendedSizeVA / 1000).toFixed(1) : '?';
 
@@ -29602,7 +29607,7 @@ const PVCalculator = {
               basis: showUnits ? `${invQty} × ${currLabel} ${fmtL(lb.inverterUnitPrice || 0)} — actual procurement` : gen },
             { label: `Battery storage (${battUnits} unit${battUnits !== 1 ? 's' : ''} / ${batteryKWh.toFixed(1)}kWh)`,
               amount: toUsd(battAmt),
-              basis: showUnits ? `${battUnits} × ${currLabel} ${fmtL(lb.batteryUnitPrice || 0)} (${lb.batteryUnitKWh || 5.12}kWh each)` : gen },
+              basis: showUnits ? `${battUnits} × ${currLabel} ${fmtL(lb.batteryUnitPrice || 0)} (${battUnitKWh.toFixed(1)}kWh each)` : gen },
             { label: 'Mounting, cable & BOS materials',
               amount: toUsd(miscAmt),
               basis: showUnits ? `${currLabel} ${fmtL(miscAmt)} — bundled site materials` : gen },
@@ -31496,7 +31501,6 @@ const PVCalculator = {
                 doc.setFont('helvetica', 'italic');
                 setColor(MUTED);
                 doc.text('Guidance only — real performance varies (dust, shading, temperature). Professional installation required for safety.', mL, footY);
-                doc.text(`${brandedExportEnabled ? (proposalContext.companyName || 'Branded export') : 'Leebartea'}${brandedExportEnabled && brandedFooterNote ? `  |  ${brandedFooterNote.slice(0, 34)}` : ''}  |  v3.0.0`, pageW - mR, footY + 3.5, { align: 'right' });
             }
 
             function newPage() {
@@ -31778,7 +31782,9 @@ const PVCalculator = {
                 });
                 y += statH + 6;
 
-                labelValue('Pricing Basis:', `${commercial.profileLabel}  |  ${displayCurrencyLabel}  |  Market factor ${commercial.inputs.regionalMultiplier.toFixed(2)}`);
+                if (!commercial.isLocalBuildUp) {
+                    labelValue('Pricing Basis:', `${commercial.profileLabel}  |  ${displayCurrencyLabel}  |  Market factor ${commercial.inputs.regionalMultiplier.toFixed(2)}`);
+                }
                 if (commercial.preset) {
                     labelValue('Commercial Preset:', `${commercial.preset.label}  |  ${commercial.preset.badge}  |  ${commercial.preset.summary}`);
                 }
@@ -31844,7 +31850,7 @@ const PVCalculator = {
                         doc.setFont('helvetica', 'normal');
                         doc.setFontSize(6.8);
                         setColor(MUTED);
-                        const basisLines = doc.splitTextToSize(`${item.basis}. ${item.notes}`, contentW - 8);
+                        const basisLines = doc.splitTextToSize(`${item.basis}${item.notes ? '. ' + item.notes : ''}`, contentW - 8);
                         basisLines.slice(0, 2).forEach(line => {
                             checkSpace(3.2);
                             doc.text(line, mL + 2, y);
@@ -31860,10 +31866,12 @@ const PVCalculator = {
                 }
 
                 subTitle('Commercial Totals');
-                labelValue('Equipment subtotal:', formatPdfMoney(commercial.totals.equipmentSubtotal));
-                labelValue(`Install & labor (${commercial.inputs.laborPct}%):`, formatPdfMoney(commercial.totals.laborCost));
-                labelValue(`Soft costs (${commercial.inputs.softCostPct}%):`, formatPdfMoney(commercial.totals.softCost));
-                labelValue(`Target margin (${commercial.inputs.marginPct}%):`, formatPdfMoney(commercial.totals.marginAmount));
+                if (!commercial.isLocalBuildUp) {
+                    labelValue('Equipment subtotal:', formatPdfMoney(commercial.totals.equipmentSubtotal));
+                    labelValue(`Install & labor (${commercial.inputs.laborPct}%):`, formatPdfMoney(commercial.totals.laborCost));
+                    labelValue(`Soft costs (${commercial.inputs.softCostPct}%):`, formatPdfMoney(commercial.totals.softCost));
+                    labelValue(`Target margin (${commercial.inputs.marginPct}%):`, formatPdfMoney(commercial.totals.marginAmount));
+                }
                 if (commercial.inputs.taxPct > 0) {
                     labelValue(`Tax / VAT (${commercial.inputs.taxPct}%):`, formatPdfMoney(commercial.totals.taxAmount));
                 }
@@ -33138,10 +33146,8 @@ const PVCalculator = {
                 doc.setPage(i);
                 doc.setFontSize(6.5);
                 doc.setFont('helvetica', 'italic');
-                doc.setFillColor(255, 255, 255);
-                doc.rect(pageW - mR - 62, pageH - 9, 64, 4, 'F');
                 doc.setTextColor(148, 163, 184);
-                doc.text(`Leebartea  |  v3.0.0  |  Page ${i} of ${totalPages}`, pageW - mR, pageH - 6.5, { align: 'right' });
+                doc.text(`${brandedExportEnabled ? (proposalContext.companyName || 'Branded export') : 'Leebartea'}${brandedExportEnabled && brandedFooterNote ? `  |  ${brandedFooterNote.slice(0, 30)}` : ''}  |  v3.0.0  |  Page ${i} of ${totalPages}`, pageW - mR, pageH - 6.5, { align: 'right' });
             }
 
             // Save
