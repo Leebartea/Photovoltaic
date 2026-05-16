@@ -36,6 +36,7 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 | Batch 19  | 00a5038 | 2026-05-14 | Fix local build-up crash (options undefined in renderCommercialSummary); battery kWh→Ah display uses correct voltage; auto-sniff battery kWh on mode switch; hide duplicate labour/margin fields; New Project in hamburger nav |
 | Batch 20A | 11e7cc3 | 2026-05-14 | Fix local build-up paymentPlan null crash (inline-construct depositPct/deposit/completion); add band.spreadPct; fix pricingSource string blocking renderer fallback; add ⚡ Calculate shortcut to hamburger nav |
 | Batch 21A | 330f78f | 2026-05-15 | PDF packLabel crash (guard commercial.pricingSource in PDF path, 7 sites); undefined BOM subtitle (item.notes || ''); duplicate labour rows (conditional totalRows for isLocalBuildUp); panel shows 400Wp (wrong DOM ID 'panelWatts' → config.panelWattage/'panelWattage'); zero Resolved Cost Rates (pricingSourceHtml gated on isLocalBuildUp); FX rate reverts to default (add !fxEl.value guard in applyCommercialDefaultsByLocation) |
+| Batch 21B | 1cb5811 | 2026-05-16 | PDF BOM subtitle undefined (item.basis + item.notes guard); PDF Commercial Totals duplicate labour/soft/margin rows gated on isLocalBuildUp; footer single-print (remove brand line from addPageFooter, post-build loop now sole brand+page stamp); duplicate Pricing Basis row gated on !isLocalBuildUp; battery unit count uses batt.stringsInParallel + nominal-voltage per-unit kWh |
 
 ---
 
@@ -71,4 +72,4 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 - Build must pass (`npm run build` exit 0) before any commit
 - After committing, run `git log origin/main..HEAD --oneline` — if any lines appear, those commits are NOT pushed. Run `git push origin main`.
 
-*Last updated: 2026-05-15 (post-Batch 21A)*
+*Last updated: 2026-05-16 (post-Batch 21B)*

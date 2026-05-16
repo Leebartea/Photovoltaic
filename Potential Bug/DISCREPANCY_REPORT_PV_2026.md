@@ -56,6 +56,7 @@ What was done instead: a **rigorous source-code audit** of `src/scripts/app.js` 
 | 2026-05-14 | Batch 19  | #B1 crash: _buildLocalBuildUpEstimate missing options/profileHeadline/etc — added + guarded 3 callsites; #B2 battery kWh display hardcoded 48V → getBatteryUnitVoltage(); #B3 auto-sniff localBatteryUnitKWh from Ah×V on mode switch; #B4 laborPct/softCostPct/proposalMarginPct now hidden in local build-up mode (benchmark-only-field class); #B5 ↩ New Project action added to hamburger nav | 00a5038 |
 | 2026-05-14 | Batch 20A | #B6 paymentPlan null crash: inline-construct {depositPct, completionPct, deposit, completion} in _buildLocalBuildUpEstimate replacing broken buildPaymentPlan?. call; #B7 band.spreadPct missing (added = 8); #B8 pricingSource string 'local_build_up' blocked renderer fallback (changed to null); ⚡ Calculate shortcut added to hamburger nav | 11e7cc3 |
 | 2026-05-15 | Batch 21A | #B9 PDF packLabel crash: 7 unguarded commercial.pricingSource.* dereferences in PDF path — guarded with if(commercial.pricingSource) + local build-up fallback text; #B10 undefined BOM subtitle: item.notes undefined → item.notes \|\| ''; #B11 duplicate labour rows: totalRows now conditional on isLocalBuildUp (local mode shows only tax+final); #B12 panel shows 400Wp wrong DOM ID: 'panelWatts' → config.panelWattage/'panelWattage'; #B13 zero Resolved Cost Rates: pricingSourceHtml gated on isLocalBuildUp, shows lean Pricing Basis panel instead; #B14 FX rate reverts: applyCommercialDefaultsByLocation line 17510 now only sets fxEl if !fxEl.value | 330f78f |
+| 2026-05-16 | Batch 21B | #B15 PDF BOM subtitle shows literal 'undefined': PDF renderer (line 20544) concatenated item.basis + item.notes without guard — fixed to append item.notes only if truthy; #B16 PDF duplicate labour/soft/margin totals rows: PDF Commercial Totals section not gated on isLocalBuildUp — added conditional; #B17 footer prints twice on every page: addPageFooter() brand line + post-build loop both printing at pageH-6.5 — removed brand line from addPageFooter(), post-build loop now sole brand+page stamp, removed white-rect cover hack; #B18 duplicate Pricing Basis row in PDF: benchmark path (line 20478) + local build-up path (Batch 21A) both rendering — gated benchmark row on !isLocalBuildUp; #B19 battery unit count wrong in local build-up BOM: ceil(totalCapacityWh/1000 / unitKWh) used engine Wh (effective voltage) vs UI kWh (nominal) giving ceil(7.7/7.2)=2 instead of 1 — now uses batt.stringsInParallel directly; per-unit kWh uses nominal voltage (recommendedAhPerCell × bankVoltageNominal / 1000) | 1cb5811 |
 
 ---
 
@@ -91,18 +92,23 @@ PDFs tested: `PV_System_Design_Lagos__Nigeria_2026-05-09 (4).pdf` (client) and `
 | #B12 | Panel shows 400Wp instead of user-entered value — `_buildLocalBuildUpEstimate` reads `getElementById('panelWatts')` (ID doesn't exist); correct ID is `panelWattage` | HIGH | **FIXED — Batch 21A (330f78f)** |
 | #B13 | Resolved Cost Rates shows USD 0.00 for all 8 rate cards in local build-up mode — `pricingSourceHtml` not gated on `isLocalBuildUp` | MEDIUM | **FIXED — Batch 21A (330f78f)** |
 | #B14 | FX Rate field reverts to location default (1550) after user edits — `applyCommercialDefaultsByLocation` unconditionally overwrites DOM field | MEDIUM | **FIXED — Batch 21A (330f78f)** |
+| #B15 | PDF BOM subtitle: `item.basis. undefined` printed under every local build-up BOM row — PDF path didn't have the `\|\| ''` guard added to HTML in Batch 21A | MEDIUM | **FIXED — Batch 21B (1cb5811)** |
+| #B16 | PDF Commercial Totals: duplicate `Install & labor (18%)`, `Soft costs`, `Target margin` rows alongside BOM items in local build-up | MEDIUM | **FIXED — Batch 21B (1cb5811)** |
+| #B17 | Footer prints twice on every page — `addPageFooter()` brand line + post-build page-stamp loop both writing at same Y position | HIGH | **FIXED — Batch 21B (1cb5811)** |
+| #B18 | Duplicate "Pricing Basis:" row in PDF — benchmark path and local build-up path both rendered | LOW | **FIXED — Batch 21B (1cb5811)** |
+| #B19 | Battery unit count wrong in local build-up BOM (showed 2 units when user selected 1×150Ah@48V) — ceil(7.7kWh/7.2kWh)=2 due to effective vs nominal voltage mismatch | HIGH | **FIXED — Batch 21B (1cb5811)** |
 | Feature | Panel/battery wattage auto-select scales with array size (≥5kWp → 550–600Wp, small → 100–200Wp) | Enhancement | Open — needs Opus dive |
 
 ---
 
-## Severity Summary Table (updated after Batch 21A, 2026-05-15)
+## Severity Summary Table (updated after Batch 21B, 2026-05-16)
 
 | Severity | Open | Fixed / Verified |
 |---|---|---|
 | CRITICAL | 0 | 8 (original + Audit 2 + #B6 Batch 20A + #B9 Batch 21A) |
-| HIGH | 0 | #B8 (Batch 20A), #B12 (Batch 21A) fixed |
-| MEDIUM | 0 | All fixed — #B10/#B11/#B13/#B14 (Batch 21A), #A14 (Batch 16A), all others |
-| LOW | 0 | All fixed — #A15, #B7 (Batch 20A), all others |
+| HIGH | 0 | #B8 (Batch 20A), #B12 (Batch 21A), #B17/#B19 (Batch 21B) fixed |
+| MEDIUM | 0 | All fixed — #B10/#B11/#B13/#B14 (Batch 21A), #B15/#B16 (Batch 21B), all others |
+| LOW | 0 | All fixed — #A15, #B7 (Batch 20A), #B18 (Batch 21B), all others |
 | INFO | 1 (panel-wattage auto-select feature) | #A12 verified; #A16 fixed (Batch 16B); #R1 fixed (Batch 18) |
 | POST-AUDIT (Audit 2) | 0 open | #A1–A18 all fixed or verified |
 

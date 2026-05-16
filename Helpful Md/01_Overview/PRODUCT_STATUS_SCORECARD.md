@@ -161,6 +161,31 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 21B — PDF Rendering Fixes: Footer, BOM Subtitle, Totals, Battery Count (commit 1cb5811 — 2026-05-16)
+
+**#B15 — PDF BOM subtitle still showed `undefined`**
+- Batch 21A fixed HTML renderer (`item.notes || ''`) but PDF renderer at line 20544 had its own concatenation: `` `${item.basis}. ${item.notes}` `` — no guard
+- Fix: `` `${item.basis}${item.notes ? '. ' + item.notes : ''}` `` — clean suppression when absent
+
+**#B16 — PDF Commercial Totals duplicate labour/soft/margin rows**
+- Same root cause as HTML Batch 21A fix — PDF `Commercial Totals` section printed `Install & labor (18%)`, `Soft costs (8%)`, `Target margin (12%)` unconditionally even in local build-up mode where the BOM already itemises these
+- Fix: benchmark-only rows gated on `!commercial.isLocalBuildUp` in the PDF path
+
+**#B17 — Footer prints twice on every page (persistent since Batch 15A)**
+- Root cause: `addPageFooter()` wrote the brand/version line at `pageH-6.5`, then the post-build page-number loop wrote its own brand+page line at the same Y, with a white-rect cover that was unreliable across PDF viewers
+- Fix: removed the brand line from `addPageFooter()` entirely — post-build loop is now the sole brand+page stamp, eliminating the race between two text writes at identical coordinates
+
+**#B18 — Duplicate "Pricing Basis:" label row in PDF**
+- Benchmark path (line 20478) + local build-up fallback (Batch 21A) both rendered a "Pricing Basis:" label in sequence
+- Fix: benchmark `Pricing Basis:` row gated on `!commercial.isLocalBuildUp`
+
+**#B19 — Battery unit count wrong in local build-up BOM**
+- Previous: `battUnits = ceil(totalCapacityWh/1000 / unitKWh)` — engine uses effective voltage (51.2V for 48V nominal) giving 7.7 kWh, while auto-sniffed `unitKWh` uses nominal voltage (7.2 kWh); `ceil(7.7/7.2) = 2` instead of 1
+- Fix: use `batt.stringsInParallel` directly from engine output — the definitive parallel-string count regardless of voltage convention
+- Per-unit kWh in label/basis now uses `recommendedAhPerCell × bankVoltageNominal / 1000` (consistent with UI display)
+
+---
+
 ### Batch 21A — Local Build-Up Mode Polish: PDF + BOM + Panel Wattage + FX Rate (commit 330f78f — 2026-05-15)
 
 **#B9 — CRITICAL: PDF export crash in local build-up mode**
