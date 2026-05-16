@@ -25757,7 +25757,10 @@ const PVCalculator = {
                     <span class="result-label">DC Input Current (Surge)</span>
                     <span class="result-value">${inverter.dcInputCurrentSurge} A</span>
                 </div>
-            </div>`;
+            </div>
+            ${inverter.warnings && inverter.warnings.length > 0
+                ? inverter.warnings.map(w => `<div class="alert alert-warning" style="margin-top:8px;">${w}</div>`).join('')
+                : ''}`;
 
         return html;
     },

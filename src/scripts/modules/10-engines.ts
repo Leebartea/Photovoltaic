@@ -5990,14 +5990,21 @@ const SmartAdvisoryEngine = {
                         + `Heavier copper windings absorb inrush current more gracefully than transformerless designs.`
                 });
             } else if (invTechnology === 'transformerless') {
+                const highInrushRisk = totalMotorCount >= 2 || agg?.complianceRisk === 'high';
                 advisories.push({
                     category: 'Inverter Technology',
-                    severity: 'warning',
-                    title: 'Transformerless Inverter — Tighter Overload Tolerance',
-                    message: `${totalMotorCount} motor load${totalMotorCount > 1 ? 's' : ''} detected. `
-                        + `Transformerless (high-frequency) inverter has 2.0x surge tolerance with a tighter overload window. `
-                        + `Strict load management recommended — avoid starting two heavy motors simultaneously. `
-                        + `Consider upgrading to transformer-based inverter if frequent motor trips occur.`
+                    severity: highInrushRisk ? 'critical' : 'warning',
+                    title: highInrushRisk
+                        ? 'Transformerless Inverter — High Motor Surge Risk'
+                        : 'Transformerless Inverter — Tighter Overload Tolerance',
+                    message: highInrushRisk
+                        ? `${totalMotorCount} motor load${totalMotorCount > 1 ? 's' : ''} detected with high-inrush risk. `
+                            + `Transformerless (high-frequency) inverter has only 2.0x surge tolerance — insufficient for simultaneous motor starts. `
+                            + `Strongly recommend upgrading to a transformer-based (low-frequency) inverter for reliable operation with this load profile.`
+                        : `${totalMotorCount} motor load detected. `
+                            + `Transformerless (high-frequency) inverter has 2.0x surge tolerance with a tighter overload window. `
+                            + `Strict load management recommended — avoid starting two heavy motors simultaneously. `
+                            + `Consider upgrading to transformer-based inverter if frequent motor trips occur.`
                 });
             } else {
                 advisories.push({
