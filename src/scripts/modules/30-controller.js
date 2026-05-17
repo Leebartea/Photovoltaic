@@ -20116,7 +20116,7 @@ const PVCalculator = {
             }
 
             // Pre-capture the overview SVG before generating pages
-            const overviewSvg = document.querySelector('#tab-overview svg');
+            const overviewSvg = document.getElementById('systemDiagramSvg');
             let svgImageData = null;
             if (overviewSvg) {
                 svgImageData = await captureSvgAsImage(overviewSvg, contentW);
@@ -20362,9 +20362,13 @@ const PVCalculator = {
                     setColor(DARK);
                     row.forEach((cell, i) => {
                         const cellText = String(cell);
-                        const truncated = cellText.length > Math.floor(colWidths[i] / 1.85) - 1
-                            ? cellText.substring(0, Math.floor(colWidths[i] / 1.85) - 1) + '…'
-                            : cellText;
+                        let truncated = cellText;
+                        if (doc.getTextWidth(cellText) > colWidths[i] - 4) {
+                            while (truncated.length > 1 && doc.getTextWidth(truncated + '…') > colWidths[i] - 4) {
+                                truncated = truncated.slice(0, -1);
+                            }
+                            truncated = truncated + '…';
+                        }
                         doc.text(truncated, cx, y);
                         cx += colWidths[i];
                     });
@@ -20513,7 +20517,9 @@ const PVCalculator = {
                         labelValue('Scenario View:', `Cash 10Y ${formatPdfMoney(finance.scenarioComparison.cashPurchase.tenYearNet)}  |  Financed 10Y ${formatPdfMoney(finance.scenarioComparison.financedPurchase.tenYearNet)}`);
                     }
                 }
-                labelValue('Override State:', commercial.pricingSource?.hasOverrides ? `${commercial.pricingSource.overrideCount} override${commercial.pricingSource.overrideCount === 1 ? '' : 's'}  |  ${commercial.pricingSource.overrideLabels.join(', ')}` : 'No manual component overrides');
+                if (!commercial.isLocalBuildUp) {
+                    labelValue('Override State:', commercial.pricingSource?.hasOverrides ? `${commercial.pricingSource.overrideCount} override${commercial.pricingSource.overrideCount === 1 ? '' : 's'}  |  ${commercial.pricingSource.overrideLabels.join(', ')}` : 'No manual component overrides');
+                }
                 if (commercial.isLocalBuildUp) {
                     const lb2 = commercial.inputs.localBuildUp || {};
                     labelValue('Local Build-Up Rates:', `Labor ${lb2.laborMode === 'percent' ? (lb2.laborPercent || 0) + '% of materials' : 'Flat fee'}  |  Margin ${lb2.profitMarginPct || 0}%${commercial.inputs.taxPct > 0 ? `  |  Tax ${commercial.inputs.taxPct}%` : ''}`);
@@ -20521,9 +20527,9 @@ const PVCalculator = {
                     labelValue('Modeled Adders:', `Labor ${commercial.inputs.laborPct}%  |  Soft costs ${commercial.inputs.softCostPct}%  |  Margin ${commercial.inputs.marginPct}%${commercial.inputs.taxPct > 0 ? `  |  Tax ${commercial.inputs.taxPct}%` : ''}`);
                 }
                 labelValue('Payment Plan:', `${commercial.paymentPlan.depositPct}% deposit  |  ${commercial.paymentPlan.completionPct}% completion`);
-                labelValue('Commercial Terms:', `${commercial.terms.validityDays} day validity  |  ${commercial.terms.installWindowLabel}`);
+                labelValue('Commercial Terms:', `${commercial.terms.validityDays} day${commercial.terms.validityDays === 1 ? '' : 's'} validity  |  ${commercial.terms.installWindowLabel}`);
                 labelValue('Regional Compliance:', `${compliance.statusLabel}  |  ${compliance.pathLabel}`);
-                mutedText(decisionStrategy.detail, 2);
+                if (decisionStrategy?.detail) mutedText(decisionStrategy.detail, 2);
                 if (commercial.pricingSource) mutedText(`Pack coverage: ${commercial.pricingSource.coverage}`, 2);
                 y += 2;
                 const resolvedRateSummary = supplierRateDefinitions.map(definition => {
@@ -20618,7 +20624,7 @@ const PVCalculator = {
                             bulletItem(`Scenario comparison: cash purchase gives ${formatPdfMoney(finance.scenarioComparison.cashPurchase.fiveYearNet)} at 5Y and ${formatPdfMoney(finance.scenarioComparison.cashPurchase.tenYearNet)} at 10Y, while financed purchase gives ${formatPdfMoney(finance.scenarioComparison.financedPurchase.fiveYearNet)} at 5Y and ${formatPdfMoney(finance.scenarioComparison.financedPurchase.tenYearNet)} at 10Y.`, 'info', 2);
                             bulletItem(finance.scenarioComparison.headline, finance.scenarioComparison.tenYearDelta < 0 ? 'warning' : 'info', 2);
                         }
-                        bulletItem(finance.strategicNote, 'info', 2);
+                        if (finance?.strategicNote) bulletItem(finance.strategicNote, 'info', 2);
                         finance.warnings.slice(0, 2).forEach(item => bulletItem(item, 'warning', 2));
                     }
                     subTitle('Commercial Terms');
@@ -20740,8 +20746,8 @@ const PVCalculator = {
             doc.setFontSize(7);
             doc.setTextColor(...MUTED);
             const breakdownText = `100 − ${weightedDeviation.toFixed(1)} (risk dev.) − ${(confidenceData.clusterPenalty || 0).toFixed(1)} (cluster) − ${(confidenceData.architecturePenalty || 0).toFixed(1)} (arch.) − ${(confidenceData.strategyPenalty || 0).toFixed(1)} (strategy) = ${pdfConfScore}%`;
-            doc.text(breakdownText, pageW / 2, y, { align: 'center' });
-            y += 4;
+            const breakdownLines = doc.splitTextToSize(breakdownText, contentW);
+            breakdownLines.forEach(line => { doc.text(line, pageW / 2, y, { align: 'center' }); y += 4; });
             doc.setTextColor(...DARK);
 
             sectionTitle('Proposal Control');
@@ -20758,7 +20764,7 @@ const PVCalculator = {
             y += LH * readinessHeadlineLines.length;
             setColor(DARK);
             labelValue('Commercial Strategy:', `${decisionStrategy.label}  |  ${decisionStrategy.score}% fit  |  ${decisionStrategy.status === 'pass' ? 'Aligned' : decisionStrategy.status === 'warn' ? 'Review' : 'Reframe'}`);
-            mutedText(decisionStrategy.detail, 2);
+            if (decisionStrategy?.detail) mutedText(decisionStrategy.detail, 2);
             labelValue('Installer / Contact:', `${proposalDisplay.installerLabel}  |  ${proposalDisplay.contactLabel}`);
             labelValue('Client / Site:', `${proposalDisplay.clientLabel}  |  ${proposalDisplay.siteLabel}`);
             labelValue('Quote Control:', `${proposalDisplay.quoteReferenceLabel}  |  Issue ${proposalDisplay.issueDateLabel}`);
@@ -20822,6 +20828,25 @@ const PVCalculator = {
             labelValue('PV Array:', `${fmtWp(pv.arrayWattage)}  |  ${pv.panelsInSeries}S × ${pv.stringsInParallel}P = ${pv.totalPanels} panels`);
             if (commercial?.usesStandaloneMPPT && R.mpptValidation) {
                 labelValue('MPPT Validation:', R.mpptValidation.isValid ? 'PASS — All checks within limits' : 'ISSUES — See warnings below');
+                if (R.multiMPPTResult?.distributions) {
+                    const rec = R.multiMPPTResult.recommended;
+                    const channels = R.multiMPPTResult.distributions?.[rec]?.channels;
+                    if (Array.isArray(channels) && channels.length > 0) {
+                        y += 2;
+                        checkSpace(channels.length * 8 + 16);
+                        subTitle(`Multi-MPPT Distribution (${rec})`);
+                        const mpptHeaders = ['Channel', 'Strings', 'Voc (cold)', 'Isc', 'Power'];
+                        const mpptRows = channels.map((ch, i) => [
+                            `MPPT ${i + 1}`,
+                            ch.strings ?? ch.stringCount ?? '—',
+                            ch.vocCold != null ? `${ch.vocCold.toFixed(1)}V` : '—',
+                            ch.isc != null ? `${ch.isc.toFixed(2)}A` : '—',
+                            ch.power != null ? `${Math.round(ch.power)}W` : '—'
+                        ]);
+                        drawTable(mpptHeaders, mpptRows, [24, 20, 28, 20, 28]);
+                        y += 3;
+                    }
+                }
             }
             labelValue('Total Appliances:', `${LoadEngine.appliances.length}  |  Daily: ${Math.round(agg.dailyEnergyWh)} Wh`);
             if (phaseAllocation) {
@@ -20987,7 +21012,7 @@ const PVCalculator = {
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(7.5);
                 setColor(DARK);
-                doc.text(`${pv.totalPanels} x ${config.panelWattage || Math.round(pv.arrayWattage / pv.totalPanels)}W = ${pv.arrayWattage}Wp`, diagramCenterX, y + 11.5, { align: 'center' });
+                doc.text(`${pv.totalPanels} x ${config.panelWattage || (pv.totalPanels > 0 ? Math.round(pv.arrayWattage / pv.totalPanels) : (config.panelWattage || 0))}W = ${pv.arrayWattage}Wp`, diagramCenterX, y + 11.5, { align: 'center' });
                 doc.text(`${pv.panelsInSeries}S x ${pv.stringsInParallel}P  |  Voc(cold): ${Math.round(pv.stringVocCold || 0)}V`, diagramCenterX, y + 15, { align: 'center' });
                 y += boxH;
 
@@ -21112,7 +21137,7 @@ const PVCalculator = {
 
                 const phaseRows = phaseAllocation.phases.map(p => ({
                     name: `Inverter AC ${p.label}`,
-                    current: Number(p.currentA),
+                    current: Number(p.currentA) || 0,
                     voltage: phaseAllocation.phaseVoltage,
                     lengthM: acRun?.lengthM || 0,
                     isDC: false,
@@ -21131,13 +21156,13 @@ const PVCalculator = {
                     name: neutralUpsize
                         ? 'Neutral Conductor (full-size — imbalance >50%)'
                         : 'Neutral Conductor',
-                    current: Number(neutralI),
+                    current: Number(neutralI) || 0,
                     voltage: phaseAllocation.phaseVoltage,
                     lengthM: acRun?.lengthM || 0,
                     isDC: false,
                     recommendedMm2: neutralUpsize
                         ? (acRun?.recommendedMm2 || 0)
-                        : Math.max(2.5, (acRun?.recommendedMm2 || 0) * 0.5),
+                        : (acRun?.recommendedMm2 || 0) > 16 ? Math.max(16, (acRun?.recommendedMm2 || 0) * 0.5) : (acRun?.recommendedMm2 || 0),
                     marketMm2: neutralUpsize
                         ? (acRun?.marketMm2 || 0)
                         : Math.max(2.5, (acRun?.marketMm2 || 0) * 0.5),
@@ -21200,7 +21225,7 @@ const PVCalculator = {
                 sectionTitle('Hard Blocks — Action Required');
                 y += 1;
                 setFillColor(RED_BG);
-                doc.roundedRect(mL, y - 2, contentW, Math.min(allBlocks.length * 14 + 6, 60), 2, 2, 'F');
+                doc.roundedRect(mL, y - 2, contentW, allBlocks.length * 14 + 6, 2, 2, 'F');
                 allBlocks.forEach(block => {
                     bulletItem(block, 'critical', 2);
                     y += 1;
@@ -21447,7 +21472,7 @@ const PVCalculator = {
                 labelValue('Total Real Power:', `${fmtPower(agg.totalRealPowerW || agg.designContinuousVA * 0.85)}`);
                 labelValue('Total Apparent Power:', `${fmtApparent(agg.totalApparentPowerVA || agg.designContinuousVA)}`);
                 labelValue('Daily Energy:', `${fmtEnergy(agg.dailyEnergyWh)}`);
-                labelValue('Daytime Energy:', `${fmtEnergy(agg.daytimeEnergyWh || 0)}  (${Math.round((agg.daytimeEnergyWh || 0) / agg.dailyEnergyWh * 100)}%)`);
+                labelValue('Daytime Energy:', `${fmtEnergy(agg.daytimeEnergyWh || 0)}  (${agg.dailyEnergyWh > 0 ? Math.round((agg.daytimeEnergyWh || 0) / agg.dailyEnergyWh * 100) : 0}%)`);
                 labelValue('Nighttime Energy:', `${fmtEnergy(agg.nighttimeEnergyWh || agg.dailyEnergyWh)}`);
                 labelValue('Worst-Case Surge:', `${fmtApparent(agg.highestSurgeVA || agg.designSurgeVA)}`);
                 if (agg.designStaggeredSurgeVA) {
@@ -21681,7 +21706,7 @@ const PVCalculator = {
                 sectionTitle('PV Array Detail');
                 y += 1;
                 labelValue('Array Wattage:', `${fmtWp(pv.arrayWattage)}  (${pv.totalPanels} panels)`);
-                labelValue('Panel Wattage:', `${Math.round(pv.arrayWattage / pv.totalPanels)} Wp`);
+                labelValue('Panel Wattage:', `${pv.totalPanels > 0 ? Math.round(pv.arrayWattage / pv.totalPanels) : (config.panelWattage || 0)} Wp`);
                 labelValue('Configuration:', `${pv.panelsInSeries}S x ${pv.stringsInParallel}P`);
                 labelValue('String Vmp:', `${(pv.stringVmp || 0).toFixed(1)} V`);
                 labelValue('String Voc (cold):', `${(pv.stringVocCold || 0).toFixed(1)} V`);
@@ -21853,22 +21878,20 @@ const PVCalculator = {
                 y += 1;
             });
 
-            // Final footer
-            addPageFooter();
-
             // Add total page count to all pages
             const totalPages = doc.getNumberOfPages();
+            const safeCompanyName = (proposalContext.companyName || '').slice(0, 40);
             for (let i = 1; i <= totalPages; i++) {
                 doc.setPage(i);
                 doc.setFontSize(6.5);
                 doc.setFont('helvetica', 'italic');
                 doc.setTextColor(148, 163, 184);
-                doc.text(`${brandedExportEnabled ? (proposalContext.companyName || 'Branded export') : 'Leebartea'}${brandedExportEnabled && brandedFooterNote ? `  |  ${brandedFooterNote.slice(0, 30)}` : ''}  |  v3.0.0  |  Page ${i} of ${totalPages}`, pageW - mR, pageH - 6.5, { align: 'right' });
+                doc.text(`${brandedExportEnabled ? (safeCompanyName || 'Branded export') : 'Leebartea'}${brandedExportEnabled && brandedFooterNote ? `  |  ${brandedFooterNote.slice(0, 30)}` : ''}  |  v3.0.0  |  Page ${i} of ${totalPages}`, pageW - mR, pageH - 6.5, { align: 'right' });
             }
 
             // Save
             const filePrefix = clientExport ? 'PV_Client_Estimate' : 'PV_System_Design';
-            const fileName = `${filePrefix}_${locName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
+            const fileName = `${filePrefix}_${locName.normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
             doc.save(fileName);
 
         } catch (e) {
@@ -24935,7 +24958,7 @@ const PVCalculator = {
 
         // Compute final SVG dimensions
         const svgH = Y + 20;
-        svg = `<svg viewBox="0 0 ${W} ${svgH}" style="width:100%; max-width:${W}px; height:auto; display:block; margin:0 auto;">` +
+        svg = `<svg id="systemDiagramSvg" viewBox="0 0 ${W} ${svgH}" style="width:100%; max-width:${W}px; height:auto; display:block; margin:0 auto;">` +
               `<rect width="${W}" height="${svgH}" rx="12" fill="var(--bg-color, #f8fafc)" stroke="var(--border-color, #e2e8f0)" stroke-width="1.5"/>` +
               `<text x="${cx}" y="28" text-anchor="middle" font-size="15" font-weight="bold" fill="var(--text-color, #1e293b)">${isHybrid ? 'Hybrid' : 'Off-Grid'} Solar System \u2014 Full Configuration</text>` +
               (() => {
