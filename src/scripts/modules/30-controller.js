@@ -18340,7 +18340,7 @@ const PVCalculator = {
         };
 
         let finance = null;
-        try { finance = this.calculateCommercialFinanceSummary(totals, inputs); } catch(e) {}
+        try { finance = this.calculateCommercialFinanceSummary(this.results, { inputs, totals }, {}); } catch(e) {}
 
         const { depositPct, validityDays, installWindowDays, scopeIncluded,
                 exclusions, nextSteps, currencyLabel } = context || {};
@@ -18373,11 +18373,11 @@ const PVCalculator = {
             profileNote: '',
             profileLabel: 'Local Cost Build-Up',
             pricingSource: null,
-            notes: [],
+            notes: ((document.getElementById('proposalNotes')?.value || '').split('\n').map(s => s.trim()).filter(Boolean)),
             terms: { validityDays: inputs.validityDays || 30, installWindowDays: inputs.installWindowDays || 3, installWindowLabel: `${inputs.installWindowDays || 3} working day${(inputs.installWindowDays || 3) === 1 ? '' : 's'}` },
-            scopeIncluded: [],
-            exclusions: [],
-            nextSteps: [],
+            scopeIncluded: ((document.getElementById('proposalIncludedScope')?.value || '').split('\n').map(s => s.trim()).filter(Boolean)),
+            exclusions: ((document.getElementById('proposalExclusions')?.value || '').split('\n').map(s => s.trim()).filter(Boolean)),
+            nextSteps: ((document.getElementById('proposalNextSteps')?.value || '').split('\n').map(s => s.trim()).filter(Boolean)),
         };
     },
 
@@ -20461,14 +20461,16 @@ const PVCalculator = {
                 sectionTitle(title);
                 bodyText(intro);
                 y += 1;
-                subTitle(compact ? 'Package Comparison' : 'Pricing Basis Comparison');
-                const packageRows = (commercial.options || []).map(option => [
-                    option.label,
-                    option.isCurrent ? 'Current' : option.isRecommended ? 'Default' : 'Alternate',
-                    formatPdfMoney(option.totals.finalQuote),
-                    `${formatPdfMoney(option.band.low)} - ${formatPdfMoney(option.band.high)}`
-                ]);
-                drawTable(['Package', 'Status', 'Target Quote', 'Budget Band'], packageRows, [44, 22, 32, 80]);
+                if ((commercial.options?.length || 0) > 0) {
+                    subTitle(compact ? 'Package Comparison' : 'Pricing Basis Comparison');
+                    const packageRows = (commercial.options || []).map(option => [
+                        option.label,
+                        option.isCurrent ? 'Current' : option.isRecommended ? 'Default' : 'Alternate',
+                        formatPdfMoney(option.totals.finalQuote),
+                        `${formatPdfMoney(option.band.low)} - ${formatPdfMoney(option.band.high)}`
+                    ]);
+                    drawTable(['Package', 'Status', 'Target Quote', 'Budget Band'], packageRows, [44, 22, 32, 80]);
+                }
                 mutedText(`Current basis: ${commercial.profileLabel}. ${commercial.profileHeadline}${commercial.profileNote ? ' ' + commercial.profileNote : ''}`);
                 y += 1;
 
@@ -20590,8 +20592,10 @@ const PVCalculator = {
                 setColor(DARK);
 
                 if (includeNotes) {
-                    subTitle('Pricing Assumptions');
-                    commercial.notes.forEach(note => bulletItem(note, 'info', 2));
+                    if ((commercial.notes?.length || 0) > 0) {
+                        subTitle('Pricing Assumptions');
+                        commercial.notes.forEach(note => bulletItem(note, 'info', 2));
+                    }
                     bulletItem(`Budget band: ${formatPdfMoney(commercial.band.low)} to ${formatPdfMoney(commercial.band.high)} for ${commercial.profileLabel.toLowerCase()} assumptions.`, 'info', 2);
                     bulletItem(`Currency label is ${displayCurrencyLabel}. Replace it with your invoice currency only after tuning the market multiplier to local conditions.`, 'info', 2);
                     if (commercial.pricingSource) {
@@ -20653,12 +20657,18 @@ const PVCalculator = {
                     bulletItem(`Site risks: ${proposalDisplay.mountingTypeLabel}; ${proposalDisplay.shadingProfileLabel}; ${proposalDisplay.cableRouteLabel}; ${proposalDisplay.accessLabel}.`, proposalReadiness.risks.length > 0 ? 'warning' : 'info', 2);
                     decisionStrategy.openItems.slice(0, 2).forEach(item => bulletItem(item, 'warning', 2));
                     proposalReadiness.openItems.slice(0, 3).forEach(item => bulletItem(item, 'warning', 2));
-                    subTitle('Included Scope');
-                    commercial.scopeIncluded.forEach(item => bulletItem(item, 'info', 2));
-                    subTitle('Exclusions');
-                    commercial.exclusions.forEach(item => bulletItem(item, 'warning', 2));
-                    subTitle('Next Steps');
-                    commercial.nextSteps.forEach(item => bulletItem(item, 'info', 2));
+                    if ((commercial.scopeIncluded?.length || 0) > 0) {
+                        subTitle('Included Scope');
+                        commercial.scopeIncluded.forEach(item => bulletItem(item, 'info', 2));
+                    }
+                    if ((commercial.exclusions?.length || 0) > 0) {
+                        subTitle('Exclusions');
+                        commercial.exclusions.forEach(item => bulletItem(item, 'warning', 2));
+                    }
+                    if ((commercial.nextSteps?.length || 0) > 0) {
+                        subTitle('Next Steps');
+                        commercial.nextSteps.forEach(item => bulletItem(item, 'info', 2));
+                    }
                 }
             }
 
@@ -20918,7 +20928,7 @@ const PVCalculator = {
             // NEXT PAGE: SYSTEM DIAGRAM (SVG image + fallback text diagram)
             // ══════════════════════════════════════════════════════════
 
-            if (!clientExport) {
+            if (audienceMode === 'installer') {
 
             newPage();
             sectionTitle('System Overview Diagram');
@@ -21579,10 +21589,10 @@ const PVCalculator = {
                     if (pdfManaged.savings > 0) {
                         labelValue('vs Engineering:', `${pdfManaged.savings}% smaller than ${InverterSizingEngine.formatMarketRange(pdfManaged.engineeringVA)}`);
                     }
-                    if (pdfManaged.conditions.length > 0) {
+                    if ((pdfManaged.conditions?.length || 0) > 0) {
                         y += 2;
                         mutedText(`Conditions (${pdfManaged.conditionCount}):`);
-                        for (const cond of pdfManaged.conditions) {
+                        for (const cond of (pdfManaged.conditions || [])) {
                             checkSpace(8);
                             mutedText(`• ${cond.text}`);
                         }
@@ -21604,15 +21614,16 @@ const PVCalculator = {
                 labelValue('Chemistry:', batt.chemistryName);
                 labelValue('Bank Voltage:', `${batt.bankVoltage}V`);
                 labelValue('Total Capacity:', `${Math.round(batt.totalCapacityAh)} Ah  (${fmtEnergy(batt.totalCapacityWh)})`);
-                labelValue('Usable Capacity:', `${fmtEnergy(batt.usableCapacityWh)}  (${Math.round(DEFAULTS.BATTERY_SPECS[batt.chemistry].maxDoD * 100)}% DoD)`);
+                const battChemSpecs = DEFAULTS.BATTERY_SPECS[batt.chemistry] || DEFAULTS.BATTERY_SPECS.lifepo4;
+                labelValue('Usable Capacity:', `${fmtEnergy(batt.usableCapacityWh)}  (${Math.round(battChemSpecs.maxDoD * 100)}% DoD)`);
                 labelValue('Configuration:', `${batt.cellsInSeries}S x ${batt.stringsInParallel}P = ${batt.totalCells} cells/units`);
                 const _ahPerUnit = (batt.isManualOverride || batt.isUnitCountOverride)
                     ? Math.round(batt.totalCapacityAh / Math.max(1, batt.stringsInParallel || 1))
                     : batt.recommendedAhPerCell;
                 labelValue('Ah per Unit:', `${_ahPerUnit} Ah`);
-                labelValue('Max Discharge:', `${batt.maxDischargeCurrent} A  (${DEFAULTS.BATTERY_SPECS[batt.chemistry].maxDischargeRate}C)`);
-                labelValue('Max Charge:', `${batt.maxChargeCurrent} A  (${DEFAULTS.BATTERY_SPECS[batt.chemistry].maxChargeRate}C)`);
-                labelValue('Cycle Life:', `${DEFAULTS.BATTERY_SPECS[batt.chemistry].cycleLife}+ cycles at ${Math.round(DEFAULTS.BATTERY_SPECS[batt.chemistry].maxDoD * 100)}% DoD`);
+                labelValue('Max Discharge:', `${batt.maxDischargeCurrent} A  (${battChemSpecs.maxDischargeRate}C)`);
+                labelValue('Max Charge:', `${batt.maxChargeCurrent} A  (${battChemSpecs.maxChargeRate}C)`);
+                labelValue('Cycle Life:', `${battChemSpecs.cycleLife}+ cycles at ${Math.round(battChemSpecs.maxDoD * 100)}% DoD`);
 
                 // Design basis and tier recommendations in PDF
                 if (batt.designBasis && !batt.isManualOverride) {
