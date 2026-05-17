@@ -32751,10 +32751,10 @@ const PVCalculator = {
             }
 
             // ══════════════════════════════════════════════════════════
-            // CONDITIONAL DETAILED PAGES (if checkbox is checked)
+            // CONDITIONAL DETAILED PAGES (installer only — never shown in client mode)
             // ══════════════════════════════════════════════════════════
 
-            if (includeDetails) {
+            if (includeDetails && audienceMode === 'installer') {
 
                 // ── LOAD TABLE ──
                 newPage();
