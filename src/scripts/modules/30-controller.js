@@ -20123,14 +20123,14 @@ const PVCalculator = {
             }
 
             // Location name
-            const locKey = document.getElementById('location') ? document.getElementById('location').value : 'lagos';
+            const locKey = config.location || 'lagos';
             const locName = (DEFAULTS.REGION_PROFILES[locKey] || {}).name || 'Custom Location';
             const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
             const timeStr = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             const systemTypeValue = (document.getElementById('systemType') || {}).value || 'off_grid';
             const systemTypeLabel = { off_grid: 'Off-Grid', hybrid: 'Hybrid', grid_tie: 'Grid-Tie' }[systemTypeValue] || 'Off-Grid';
-            const reportTitle = clientExport ? 'PV Client Estimate' : 'PV System Design Report';
-            const headerSubtitle = clientExport ? 'Client-facing estimate report' : 'Advanced Photovoltaic System Design Report';
+            const reportTitle = audienceMode === 'client' ? 'PV Client Estimate' : 'PV System Design Report';
+            const headerSubtitle = audienceMode === 'client' ? 'Client-facing estimate report' : 'Advanced Photovoltaic System Design Report';
 
             // ── HELPER FUNCTIONS ──
 
@@ -20831,20 +20831,22 @@ const PVCalculator = {
                 if (R.multiMPPTResult?.distributions) {
                     const rec = R.multiMPPTResult.recommended;
                     const channels = R.multiMPPTResult.distributions?.[rec]?.channels;
-                    if (Array.isArray(channels) && channels.length > 0) {
-                        y += 2;
-                        checkSpace(channels.length * 8 + 16);
-                        subTitle(`Multi-MPPT Distribution (${rec})`);
-                        const mpptHeaders = ['Channel', 'Strings', 'Voc (cold)', 'Isc', 'Power'];
-                        const mpptRows = channels.map((ch, i) => [
-                            `MPPT ${i + 1}`,
-                            ch.strings ?? ch.stringCount ?? '—',
-                            ch.vocCold != null ? `${ch.vocCold.toFixed(1)}V` : '—',
-                            ch.isc != null ? `${ch.isc.toFixed(2)}A` : '—',
-                            ch.power != null ? `${Math.round(ch.power)}W` : '—'
-                        ]);
-                        drawTable(mpptHeaders, mpptRows, [24, 20, 28, 20, 28]);
-                        y += 3;
+                    if (audienceMode === 'installer') {
+                        if (Array.isArray(channels) && channels.length > 0) {
+                            y += 2;
+                            checkSpace(channels.length * 8 + 16);
+                            subTitle(`Multi-MPPT Distribution (${rec})`);
+                            const mpptHeaders = ['Channel', 'Strings', 'Voc (cold)', 'Isc', 'Power'];
+                            const mpptRows = channels.map((ch, i) => [
+                                `MPPT ${i + 1}`,
+                                ch.strings ?? ch.stringCount ?? '—',
+                                ch.vocCold != null ? `${ch.vocCold.toFixed(1)}V` : '—',
+                                ch.isc != null ? `${ch.isc.toFixed(2)}A` : '—',
+                                ch.power != null ? `${Math.round(ch.power)}W` : '—'
+                            ]);
+                            drawTable(mpptHeaders, mpptRows, [24, 20, 28, 20, 28]);
+                            y += 3;
+                        }
                     }
                 }
             }
@@ -20878,7 +20880,7 @@ const PVCalculator = {
             }
 
             // Expert mode badge
-            const isExpertPdf = document.getElementById('expertMode')?.checked || false;
+            const isExpertPdf = config.expertMode ?? (document.getElementById('expertMode')?.checked || false);
             if (isExpertPdf) {
                 checkSpace(12);
                 y += 2;
@@ -21131,7 +21133,7 @@ const PVCalculator = {
                 const acRun = (cables.acRuns || []).find(r => /Inverter AC Output/i.test(r.name))
                               || (cables.acRuns || [])[0];
 
-                const maxPhaseI = Math.max(...phaseAllocation.phases.map(p => Number(p.currentA)));
+                const maxPhaseI = Math.max(...phaseAllocation.phases.map(p => Number(p.currentA) || 0));
                 const neutralI  = Number(phaseAllocation.neutralCurrentA || 0);
                 const neutralUpsize = neutralI > maxPhaseI * 0.5;
 
@@ -21152,6 +21154,10 @@ const PVCalculator = {
                     warnings: []
                 }));
 
+                const phaseRecMm2 = acRun?.recommendedMm2 || 0;
+                const phaseMktMm2 = acRun?.marketMm2 || 0;
+                const reduceNeutral = !neutralUpsize && phaseRecMm2 > 16;
+                const neutralMkt = reduceNeutral ? Math.max(16, phaseMktMm2 * 0.5) : phaseMktMm2;
                 const neutralRow = {
                     name: neutralUpsize
                         ? 'Neutral Conductor (full-size — imbalance >50%)'
@@ -21163,12 +21169,12 @@ const PVCalculator = {
                     recommendedMm2: neutralUpsize
                         ? (acRun?.recommendedMm2 || 0)
                         : (acRun?.recommendedMm2 || 0) > 16 ? Math.max(16, (acRun?.recommendedMm2 || 0) * 0.5) : (acRun?.recommendedMm2 || 0),
-                    marketMm2: neutralUpsize
-                        ? (acRun?.marketMm2 || 0)
-                        : Math.max(2.5, (acRun?.marketMm2 || 0) * 0.5),
+                    marketMm2: neutralUpsize ? phaseMktMm2 : neutralMkt,
                     sizeRangeDisplay: neutralUpsize
-                        ? (acRun?.sizeRangeDisplay || `${acRun?.recommendedMm2 || 0}mm²`)
-                        : `${Math.max(2.5, (acRun?.marketMm2 || 0) * 0.5)}mm² (reduced)`,
+                        ? (acRun?.sizeRangeDisplay || `${phaseRecMm2}mm²`)
+                        : reduceNeutral
+                            ? `${neutralMkt}mm² (reduced — IEC 60364-5-52 §524.2)`
+                            : `${neutralMkt}mm² (equal to phase — IEC 60364-5-52 §524.2)`,
                     actualVoltageDropPercent: 0,
                     ampacityRating: acRun?.ampacityRating || 0,
                     ampacityOK: (acRun?.ampacityRating || 0) >= Number(neutralI),
@@ -21224,8 +21230,15 @@ const PVCalculator = {
             if (allBlocks.length > 0) {
                 sectionTitle('Hard Blocks — Action Required');
                 y += 1;
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(8);
+                const blockLines = allBlocks.reduce(
+                    (n, b) => n + doc.splitTextToSize(b, contentW - 12).length, 0);
+                const rectH = blockLines * 5 + 8;
+                if (y - 2 + rectH > pageH - mB) newPage();
                 setFillColor(RED_BG);
-                doc.roundedRect(mL, y - 2, contentW, allBlocks.length * 14 + 6, 2, 2, 'F');
+                doc.roundedRect(mL, y - 2, contentW, rectH, 2, 2, 'F');
+                doc.setFont('helvetica', 'normal');
                 allBlocks.forEach(block => {
                     bulletItem(block, 'critical', 2);
                     y += 1;
@@ -21461,6 +21474,27 @@ const PVCalculator = {
             // CONDITIONAL DETAILED PAGES (installer only — never shown in client mode)
             // ══════════════════════════════════════════════════════════
 
+            if (audienceMode === 'client') {
+                const clientBlocks = OutputGenerator.collectAllBlocks(R);
+                const clientWarnings = OutputGenerator.collectAllWarnings(R);
+                if (clientBlocks.length > 0 || clientWarnings.length > 0) {
+                    newPage();
+                    if (clientBlocks.length > 0) {
+                        sectionTitle('Action Required Before Installation');
+                        y += 1;
+                        clientBlocks.forEach(b => { bulletItem(b, 'critical', 2); y += 1; });
+                        y += 4;
+                    }
+                    sectionTitle('Design Notices');
+                    if (clientWarnings.length === 0) {
+                        bodyText('No warnings — system design is within all limits.');
+                    } else {
+                        clientWarnings.forEach(w => { bulletItem(w.message || w, 'warning', 2); });
+                    }
+                    y += 4;
+                }
+            }
+
             if (includeDetails && audienceMode === 'installer') {
 
                 // ── LOAD TABLE ──
@@ -21512,12 +21546,14 @@ const PVCalculator = {
                 }
 
                 // Appliance table
-                if (LoadEngine.appliances.length > 0) {
+                const pdfAppliances = (R.appliances && R.appliances.length > 0)
+                    ? R.appliances : LoadEngine.appliances;
+                if (pdfAppliances.length > 0) {
                     subTitle('Appliance List');
                     const appHeaders = phaseAllocation
                         ? ['Appliance', 'Qty', 'Watts', 'Hours', 'Duty%', 'Type', 'Phase', 'Daily Wh']
                         : ['Appliance', 'Qty', 'Watts', 'Hours', 'Duty%', 'Type', 'Daily Wh'];
-                    const appRows = LoadEngine.appliances.map((a, index) => [
+                    const appRows = pdfAppliances.map((a, index) => [
                         a.name.length > 28 ? a.name.substring(0, 27) + '…' : a.name,
                         a.quantity,
                         a.ratedPowerW,
@@ -21532,8 +21568,10 @@ const PVCalculator = {
                     const appSubtotalWh = appRows.reduce((sum, row) => sum + row[row.length - 1], 0);
                     const marginWh = Math.round(agg.dailyEnergyWh) - appSubtotalWh;
                     labelValue('Appliance subtotal (pre-margin):', `${fmtEnergy(appSubtotalWh)}`);
-                    if (Math.abs(marginWh) > 2) {
-                        labelValue('+ Design allowance (margin & derating):', `+${fmtEnergy(Math.abs(marginWh))}`);
+                    if (marginWh > 2) {
+                        labelValue('+ Design allowance (margin & derating):', `+${fmtEnergy(marginWh)}`);
+                    } else if (marginWh < -2) {
+                        labelValue('Rounding adjustment:', `−${fmtEnergy(-marginWh)}`);
                     }
                     labelValue('= Daily energy total:', `${fmtEnergy(agg.dailyEnergyWh)}`);
                     y += 2;
@@ -21594,7 +21632,7 @@ const PVCalculator = {
 
                 // Managed Practical in PDF
                 const pdfManaged = inv.managedMode;
-                if (pdfManaged && audienceMode !== 'client') {
+                if (pdfManaged) {
                     y += 3;
                     checkSpace(40);
                     subTitle('Managed Practical Alternative');
