@@ -46,6 +46,7 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 | Enh 2     | 498ea2f | 2026-05-16 | Hamburger result nav two-tier hierarchy: section links (Executive Snapshot, Commercial Estimate, Warnings[conditional], Detailed Results, Disclaimer, Export) + indented tab sub-links under Detailed Results; adds navigateToResultSection(sectionId) helper |
 | Batch 22B V4+V5 | 8c373e6 | 2026-05-16 | V4: info advisory when all MPPT fields at HTML defaults (500V/27A/7500W); V5: getConfig ambientTempMin/Max falsy-zero fix (|| → isNaN guard) |
 | Enh 3     | fb3f6d8 | 2026-05-16 | Collapsible Detailed Results sub-nav in hamburger: ▾/▸ caret toggles 12 tab sub-links without navigating; adds toggleDetailResultNav() method |
+| Batch 23A | f636551 | 2026-05-17 | Battery chemistry crash (lifepo4 fallback guard before 4 DEFAULTS.BATTERY_SPECS accesses); managedMode.conditions crash (optional-chain + \|\| [] guard); Local-Build-Up finance zeroed (wrong arg shape → pass this.results, {inputs,totals}, {}); client mode technical leak (!clientExport → audienceMode==='installer' for System Diagram section); Local-Build-Up orphaned headings (DOM-read notes/scope/exclusions/nextSteps; guard Package Comparison + 3 subTitle blocks on array.length > 0) |
 
 ---
 
@@ -75,4 +76,4 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 - Build must pass (`npm run build` exit 0) before any commit
 - After committing, run `git log origin/main..HEAD --oneline` — if any lines appear, those commits are NOT pushed. Run `git push origin main`.
 
-*Last updated: 2026-05-16 (post-Enh 3 — collapsible Detailed Results sub-nav)*
+*Last updated: 2026-05-17 (post-Batch 23A — PDF crash + client-privacy + local-build-up finance fixes)*
