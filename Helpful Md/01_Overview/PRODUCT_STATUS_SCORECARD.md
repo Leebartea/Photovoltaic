@@ -161,6 +161,43 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 23B — 15 Medium/Low PDF Fixes (commit fb09916 — 2026-05-17)
+
+- **P6** — Division-by-zero guard on `agg.dailyEnergyWh` in daytime energy percentage (was printing `NaN%`)
+- **P7** — Division-by-zero guard on `pv.totalPanels` at both diagram-text and label sites (was printing `Infinity Wp`)
+- **P8** — Hard-block red rect height uncapped: removed `Math.min(..., 60)` so >4 blocks no longer overflow background
+- **P9** — Multi-MPPT channel distribution table injected in installer appendix after MPPT Validation row
+- **P10** — Override State row suppressed when `commercial.isLocalBuildUp` is true (was always printing "No manual overrides")
+- **P11** — `Number(p.currentA) || 0` and `Number(neutralI) || 0` NaN guards on phase current rows
+- **P12** — Confidence breakdown text uses `doc.splitTextToSize` to prevent margin bleed at full-penalty values
+- **P13** — SVG captured by `getElementById('systemDiagramSvg')` + `id="systemDiagramSvg"` added to root `<svg>` tag
+- **P14** — `drawTable` cell truncation now uses `doc.getTextWidth()` instead of `/1.85` heuristic
+- **P15** — Footer right stamp: `companyName` sliced to 40 chars (`safeCompanyName`) before concatenation
+- **P16** — `decisionStrategy.detail` and `finance.strategicNote` guarded against undefined before rendering blank bullets
+- **P17** — Neutral conductor floor: `phaseMm2 > 16 ? Math.max(16, phaseMm2 * 0.5) : phaseMm2` — IEC 60364-5-52 §524.2 compliant
+- **P18** — Location name NFD-normalised (`normalize('NFD')`) and diacritics stripped before filename sanitisation
+- **P19** — Duplicate standalone `addPageFooter()` call removed; post-build loop is sole stamp owner (Batch 21B intent preserved)
+- **P20** — `validityDays` singular/plural ternary applied to the inconsistent Commercial Terms label site
+
+---
+
+### Batch 23A Hotfix — P4 Installer Appendix Gate (commit 71de307 — 2026-05-17)
+
+- The main conditional detailed pages block (`if (includeDetails)`) was missing an audience check
+- Changed to `if (includeDetails && audienceMode === 'installer')` so the full engineering appendix (load table, inverter/battery/PV detail, protection devices, system losses) is never shown in client mode regardless of whether "Include Details" checkbox is ticked
+
+---
+
+### Batch 23A — PDF Crash + Client Privacy + Local-Build-Up Finance (commit f636551 — 2026-05-17)
+
+- **P1** — Battery chemistry crash fixed: `battChemSpecs = DEFAULTS.BATTERY_SPECS[batt.chemistry] || DEFAULTS.BATTERY_SPECS.lifepo4` guard before 4 property accesses
+- **P2** — `managedMode.conditions` crash fixed: `pdfManaged.conditions?.length` optional chain + `|| []` guard on for-of loop
+- **P3** — Local-Build-Up finance zeroed fixed: `calculateCommercialFinanceSummary` now called as `(this.results, { inputs, totals }, {})` matching correct signature
+- **P4** — Client mode technical content leak fixed: system diagram gate changed from `!clientExport` to `audienceMode === 'installer'`
+- **P5** — Local-Build-Up orphaned headings fixed: `notes/scopeIncluded/exclusions/nextSteps` now DOM-read from proposal fields; Package Comparison table + 3 `subTitle` blocks each guarded on `array.length > 0`
+
+---
+
 ### Enh 3 — Collapsible Detailed Results Sub-Nav in Hamburger (commit fb3f6d8 — 2026-05-16)
 
 - "Detailed Results" in hamburger nav now has a ▾/▸ caret button beside it — clicking the caret expands or collapses the 12 tab sub-links without triggering navigation
