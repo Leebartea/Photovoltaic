@@ -47,6 +47,8 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 | Batch 22B V4+V5 | 8c373e6 | 2026-05-16 | V4: info advisory when all MPPT fields at HTML defaults (500V/27A/7500W); V5: getConfig ambientTempMin/Max falsy-zero fix (|| → isNaN guard) |
 | Enh 3     | fb3f6d8 | 2026-05-16 | Collapsible Detailed Results sub-nav in hamburger: ▾/▸ caret toggles 12 tab sub-links without navigating; adds toggleDetailResultNav() method |
 | Batch 23A | f636551 | 2026-05-17 | Battery chemistry crash (lifepo4 fallback guard before 4 DEFAULTS.BATTERY_SPECS accesses); managedMode.conditions crash (optional-chain + \|\| [] guard); Local-Build-Up finance zeroed (wrong arg shape → pass this.results, {inputs,totals}, {}); client mode technical leak (!clientExport → audienceMode==='installer' for System Diagram section); Local-Build-Up orphaned headings (DOM-read notes/scope/exclusions/nextSteps; guard Package Comparison + 3 subTitle blocks on array.length > 0) |
+| Batch 23A Hotfix | 71de307 | 2026-05-17 | P4 remainder: installer appendix block (if includeDetails → if includeDetails && audienceMode==='installer') to suppress engineering pages in client mode unconditionally |
+| Batch 23B | — | 2026-05-17 | 15 medium/low PDF fixes: P6 agg.dailyEnergyWh div-zero; P7 pv.totalPanels div-zero (2 sites); P8 hard-block rect uncapped; P9 multi-MPPT channel table; P10 Override State hidden in local-build-up; P11 phase currentA NaN guard; P12 confidence text splitTextToSize; P13 SVG selector by ID; P14 drawTable truncation via getTextWidth; P15 footer companyName capped 40 chars; P16 blank strategic note guards; P17 neutral conductor IEC 60364 ≤16mm² fix; P18 diacritics normalised in filename; P19 duplicate addPageFooter removed; P20 validityDays plural consistent |
 
 ---
 
@@ -76,4 +78,4 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 - Build must pass (`npm run build` exit 0) before any commit
 - After committing, run `git log origin/main..HEAD --oneline` — if any lines appear, those commits are NOT pushed. Run `git push origin main`.
 
-*Last updated: 2026-05-17 (post-Batch 23A — PDF crash + client-privacy + local-build-up finance fixes)*
+*Last updated: 2026-05-17 (post-Batch 23A Hotfix — P4 installer appendix fully gated; Batch 23B queued)*
