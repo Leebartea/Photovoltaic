@@ -1,7 +1,7 @@
 # Fix Batch Roadmap — PV Calculator
 
 This document tracks all planned fix batches in priority order.
-Updated after each batch. Last update: 2026-05-18 (post-Batch 25B).
+Updated after each batch. Last update: 2026-05-18 (post-Batch 25C).
 
 ---
 
@@ -52,18 +52,11 @@ Updated after each batch. Last update: 2026-05-18 (post-Batch 25B).
 | Batch 24  | e670aa5 | 2026-05-17 | P17 remaining neutral IEC 60364 (marketMm2+sizeRangeDisplay); B1 hard-block rect overflow guard; B2 maxPhaseI NaN→0; B3 MPPT channel table client gate; B4 client safety page (hard blocks + warnings in plain language); B5 locKey config.location not DOM; B6 reportTitle keyed off audienceMode; B7 negative marginWh sign-aware label; B8 dead audienceMode!=client removed; B9 isExpertPdf from config snapshot; B10 PDF appliances from R.appliances snapshot |
 | Batch 25A | cbb52db | 2026-05-18 | SVG renderOverviewTab: svgBankV from unitVoltage×seriesStrings (13 voltage label fixes — battery 48V→24V bug); dual/triple MPPT string split with channel headers + M1-Sx labels; 3-phase L1/L2/L3 conductor stripes + acServiceBadge; grid-tie Utility Grid node + bidirectional arrow; pure grid-tie battery optional overlay; system title "Grid-Tied" aware |
 | Batch 25B | 6a17a8f | 2026-05-18 | 5 chemistry crash guards (4 × DEFAULTS.BATTERY_SPECS[key] in 10-engines.ts + 1 × .cellVoltage in controller); grid-tie backup label replaced with "no backup / exports to utility" message; MPPT Validation gate relaxed from usesStandaloneMPPT to R.mpptValidation (hybrid + grid-tie systems now show validation on cover page) |
+| Batch 25C | 062a6fe | 2026-05-18 | installationScale field ('residential'/'commercial'/'utility') derived from arrayWattage after PV Practical Engine; Commercial Plant Engineering PDF section (≥ 50 kWp: transformer kVA, combiner count, DC cable notes, IEC 61724-1 SCADA, region-keyed grid code); SVG panel grid capped at 16 rows for single-MPPT arrays with dashed DC Combiner Box indicator for hidden strings |
 
 ---
 
 ## Open Batches (Planned)
-
----
-
-### Batch 25C — Commercial Scale (MEDIUM — future)
-
-- **F5-a** — Add `installationScale: 'residential' | 'commercial' | 'utility'` field (auto-derived from `pv.arrayWattage`)
-- **F5-b** — Commercial-scale PDF section: transformer sizing, string combiner count, SCADA note, grid-code reference
-- **F5-c** — SVG combiner scaling for arrays > 20 strings
 
 ---
 
@@ -106,4 +99,4 @@ Engine: when `hints.bankVoltage !== null`, use it as a hard constraint on unit s
 - Build must pass (`npm run build` exit 0) before any commit
 - After committing, run `git log origin/main..HEAD --oneline` — if any lines appear, those commits are NOT pushed. Run `git push origin main`.
 
-*Last updated: 2026-05-18 (post-Batch 25B — chemistry guards + grid-tie PDF fixes; Batch 25C + Batch 26 remain)*
+*Last updated: 2026-05-18 (post-Batch 25C — installationScale, commercial PDF section, SVG combiner cap; Batch 26 remains)*

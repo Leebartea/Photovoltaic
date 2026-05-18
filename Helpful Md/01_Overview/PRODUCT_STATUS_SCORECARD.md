@@ -161,6 +161,14 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 25C — Commercial Scale: installationScale + Commercial PDF + SVG Combiner (commit 062a6fe — 2026-05-18)
+
+- **installationScale field** — `pvArray.installationScale` (`'residential'` / `'commercial'` / `'utility'`) derived after PV Practical Engine from `arrayWattage` thresholds (≥ 500 kWp = utility, ≥ 50 kWp = commercial); available in PDF and SVG scope
+- **Commercial Plant Engineering PDF section** — fires when `pv.arrayWattage >= 50000`; covers: transformer kVA (array kW ÷ 0.85, rounded up), string combiner box count (16 strings/combiner), DC cable schedule compliance notes (IEC 62548 / NEC 690.8), IEC 61724-1 Class B SCADA monitoring requirements, and region-keyed grid code (14 location keys: NG/KE/GH/US/BR/EU/IN/UAE/AU + legacy aliases)
+- **SVG combiner row-cap (F5-c)** — single-MPPT arrays > 16 strings now cap the rendered panel grid at 16 rows; a dashed orange "DC Combiner Box" pill appears below showing "aggregates N additional strings (Strings 17–P)"; multi-MPPT arrays are unaffected (full per-row render preserves channel partition headers)
+
+---
+
 ### Batch 25B — Engine Chemistry Guards + Grid-Tie PDF Fixes (commit 6a17a8f — 2026-05-18)
 
 - **Chemistry crash guards (10-engines.ts)** — 4 bare `DEFAULTS.BATTERY_SPECS[chemistry]` accesses at lines 1816, 3518, 4434, 4505 now have `|| DEFAULTS.BATTERY_SPECS.lifepo4` fallback; unknown chemistry keys (e.g., from imported project data) no longer crash the sizing engine
