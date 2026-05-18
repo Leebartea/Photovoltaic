@@ -23418,6 +23418,7 @@ const PVCalculator = {
         this.toggleMultiMPPT();
         this.updateAudienceMode();
         this.toggleManualMode();
+        this.applyBatteryModeChrome(document.getElementById('manualMode')?.checked || false);
         this.onSystemTypeChange();
         this.updateThreePhaseClusterUI();
         this.onBatteryChemistryChange();
@@ -36925,6 +36926,8 @@ const PVCalculator = {
             }
         });
 
+        this.applyBatteryModeChrome(isManual);
+
         if (isManual && !isClientMode) {
             batteryIndicator.classList.remove('hidden');
         } else {
@@ -36989,6 +36992,188 @@ const PVCalculator = {
             this.autoSuggestPanelSpecs();
         }
         this.refreshInputSectionFlow({ preserveState: true });
+    },
+
+    applyBatteryModeChrome(isManual) {
+        const card = document.getElementById('equipmentSpecsCard');
+        if (card) {
+            card.classList.toggle('auto-mode-battery', !isManual);
+            card.classList.toggle('manual-mode-battery', isManual);
+        }
+        const badgeAuto   = document.getElementById('batteryModeBadgeAuto');
+        const badgeManual = document.getElementById('batteryModeBadgeManual');
+        const switchAuto  = document.getElementById('batteryModeSwitchAuto');
+        const switchManual= document.getElementById('batteryModeSwitchManual');
+        const subtitle    = document.getElementById('batteryCardSubtitle');
+        const summary     = document.getElementById('batteryEngineSummary');
+        if (badgeAuto)   badgeAuto.classList.toggle('hidden', isManual);
+        if (badgeManual) badgeManual.classList.toggle('hidden', !isManual);
+        if (switchAuto)  switchAuto.classList.toggle('hidden', isManual);
+        if (switchManual)switchManual.classList.toggle('hidden', !isManual);
+        if (subtitle) subtitle.textContent = isManual
+            ? 'Values are taken as-is. Engine still validates against load and flags risk.'
+            : 'Engine sizes everything you leave blank — fill any field to lock it as a hard constraint.';
+        if (summary) summary.style.display = isManual ? 'none' : '';
+        this.refreshBatteryFieldLockStates();
+        this.refreshAllBatteryInlineValidations();
+    },
+
+    switchToManualFromBattery() {
+        const cb = document.getElementById('manualMode');
+        if (cb && !cb.checked) { cb.checked = true; this.toggleManualMode(); }
+        document.getElementById('batteryCardHeader')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    },
+
+    resetBatteryToAuto() {
+        ['batteryManualKwh', 'batteryManualAh', 'batteryManualStrings'].forEach(id => {
+            const el = document.getElementById(id); if (el) el.value = '';
+        });
+        const mv = document.getElementById('batteryManualVoltage'); if (mv) mv.value = 'auto';
+        const ms = document.getElementById('batteryManualSeries');  if (ms) ms.value = 'auto';
+        const cb = document.getElementById('manualMode');
+        if (cb && cb.checked) { cb.checked = false; this.toggleManualMode(); }
+    },
+
+    refreshBatteryFieldLockStates() {
+        const isManual = document.getElementById('manualMode')?.checked;
+        if (isManual) return;
+        const mark = (id, locked) => {
+            const el = document.getElementById(id); if (!el) return;
+            el.classList.toggle('is-locked', !!locked);
+            el.classList.toggle('is-auto', !locked);
+        };
+        const ahSel = document.getElementById('batteryUnitAh');
+        mark('batteryUnitAh', ahSel && ahSel.value !== 'auto');
+        const vSel = document.getElementById('batteryUnitVoltage');
+        mark('batteryUnitVoltage', vSel && vSel.value !== 'auto');
+        const c = document.getElementById('batteryUnitCount');
+        mark('batteryUnitCount', c && parseInt(c.value) > 0);
+        const k = document.getElementById('batteryKwhInput');
+        mark('batteryKwhInput', k && parseFloat(k.value) > 0);
+    },
+
+    refreshAllBatteryInlineValidations() {
+        ['batteryUnitAh', 'batteryUnitVoltage', 'batteryUnitCount', 'batteryKwhInput']
+            .forEach(id => this.validateBatteryFieldInline(id));
+    },
+
+    validateBatteryFieldInline(fieldId) {
+        const slot = document.getElementById(fieldId + 'Validation');
+        if (!slot) return;
+        if (document.getElementById('manualMode')?.checked) { slot.innerHTML = ''; return; }
+        const v = this.computeBatteryPreCalcValidation(fieldId);
+        if (!v) { slot.innerHTML = ''; return; }
+        const icon = v.severity === 'error' ? '⛔' : v.severity === 'info' ? 'ℹ' : '⚠';
+        slot.innerHTML = `<div class="field-validation field-validation-${v.severity}"><span style="flex-shrink:0">${icon}</span><span>${v.text}</span></div>`;
+    },
+
+    computeBatteryPreCalcValidation(fieldId) {
+        const dailyWh   = this._lastDailyEnergyWh || 1500;
+        const autonomy  = parseFloat(document.getElementById('autonomyDays')?.value) || 1;
+        const margin    = (parseFloat(document.getElementById('designMargin')?.value) || 125) / 100;
+        const chem      = document.getElementById('batteryChemistry')?.value || 'lifepo4';
+        const specs     = (DEFAULTS.BATTERY_SPECS && DEFAULTS.BATTERY_SPECS[chem]) || { maxDoD: 0.8, dischargeEfficiency: 0.95 };
+        const reqNominalWh = (dailyWh * autonomy / specs.dischargeEfficiency / specs.maxDoD) * margin;
+        const BANK_V = 48;
+
+        if (fieldId === 'batteryUnitVoltage') {
+            const vSel = document.getElementById('batteryUnitVoltage');
+            if (!vSel || vSel.value === 'auto') return null;
+            const v = vSel.value === 'custom' ? parseFloat(document.getElementById('batteryUnitVoltageCustom')?.value) : parseFloat(vSel.value);
+            if (!v) return null;
+            const loadVA = this._lastApparentVA || (dailyWh / 4);
+            if (v <= 12 && loadVA > 1500) return { severity: 'error', text: `12 V unit bus is unrealistic for ~${Math.round(loadVA)} VA. DC current would exceed 125 A — use 24 V or 48 V.` };
+            if (v <= 24 && loadVA > 3500) return { severity: 'error', text: `24 V unit bus is impractical above 3.5 kVA (~${Math.round(loadVA)} VA). Use 48 V.` };
+            const standard = [2, 6, 12, 24, 36, 48, 51.2];
+            if (!standard.includes(v)) return { severity: 'warn', text: `${v} V is non-standard — most rack inverters expect 12/24/48 V multiples.` };
+            return null;
+        }
+        if (fieldId === 'batteryUnitCount') {
+            const cnt = parseInt(document.getElementById('batteryUnitCount')?.value);
+            if (!cnt) return null;
+            const ahSel = document.getElementById('batteryUnitAh');
+            const unitAh = (ahSel && ahSel.value !== 'auto')
+                ? (ahSel.value === 'custom' ? parseFloat(document.getElementById('batteryUnitAhCustom')?.value) : parseFloat(ahSel.value)) || 200
+                : 200;
+            const reqAh = reqNominalWh / BANK_V;
+            const total = cnt * unitAh;
+            if (total < reqAh * 0.7) return { severity: 'error', text: `${cnt} × ${unitAh} Ah = ${Math.round(total)} Ah falls well short of ~${Math.round(reqAh)} Ah needed for ${autonomy}-day autonomy.` };
+            if (total < reqAh * 0.9) return { severity: 'warn', text: `${cnt} × ${unitAh} Ah = ${Math.round(total)} Ah is below the ~${Math.round(reqAh)} Ah engine target. Cycle life and autonomy will be reduced.` };
+            return null;
+        }
+        if (fieldId === 'batteryKwhInput') {
+            const k = parseFloat(document.getElementById('batteryKwhInput')?.value);
+            if (!k) return null;
+            const reqKWh = reqNominalWh / 1000;
+            if (k < reqKWh * 0.7) return { severity: 'error', text: `${k} kWh is below the required ~${reqKWh.toFixed(1)} kWh nominal for ${autonomy}-day autonomy.` };
+            if (k < reqKWh * 0.9) return { severity: 'warn', text: `${k} kWh is slightly below the recommended ~${reqKWh.toFixed(1)} kWh nominal.` };
+            return null;
+        }
+        return null;
+    },
+
+    onBatteryUnitCountInput() {
+        this.refreshBatteryFieldLockStates();
+        this.validateBatteryFieldInline('batteryUnitCount');
+    },
+
+    renderBatteryEngineSummary(battery, hints) {
+        const isManual = document.getElementById('manualMode')?.checked;
+        const wrap = document.getElementById('batteryEngineSummary');
+        if (!wrap || isManual) { if (wrap) wrap.style.display = 'none'; return; }
+        wrap.style.display = '';
+        wrap.classList.remove('is-empty');
+        const head = wrap.querySelector('.battery-engine-summary-head');
+        if (head) head.innerHTML = '<strong>Engine recommendation</strong>';
+        const grid = document.getElementById('batteryEngineSummaryGrid');
+        if (grid) {
+            grid.style.display = '';
+            const unitAh = battery.recommendedAhPerCell || Math.round((battery.totalCapacityAh || 0) / Math.max(1, battery.stringsInParallel || 1));
+            const h = hints || {};
+            const cells = [
+                { label: 'Bank V',    value: `${battery.bankVoltage || 0} V`,                  locked: !!(h.unitVoltage) },
+                { label: 'Chemistry', value: battery.chemistryName || battery.chemistry || '—', locked: false },
+                { label: 'Unit Ah',   value: `${unitAh} Ah`,                                   locked: !!(h.unitAh) },
+                { label: 'Config',    value: `${battery.cellsInSeries || 0}S × ${battery.stringsInParallel || 0}P`, locked: !!(h.unitCount) },
+                { label: 'Total',     value: `${((battery.totalCapacityWh || 0) / 1000).toFixed(2)} kWh`,  locked: false },
+            ];
+            grid.innerHTML = cells.map(c =>
+                `<div class="battery-engine-summary-cell${c.locked ? ' locked' : ''}">
+                    <div class="battery-engine-summary-value">${c.value}</div>
+                    <div class="battery-engine-summary-label">${c.label}</div>
+                </div>`
+            ).join('');
+        }
+        const foot = document.getElementById('batteryEngineSummaryFoot');
+        if (foot) {
+            foot.style.display = '';
+            const h = hints || {};
+            const locked = [h.unitVoltage && 'voltage', h.unitAh && 'unit Ah', h.unitCount && 'count'].filter(Boolean);
+            const locksEl = document.getElementById('batteryEngineSummaryLocks');
+            if (locksEl) locksEl.innerHTML = locked.length
+                ? `<span style="color:#16a34a;">🔒 Locked: ${locked.join(', ')}</span>`
+                : `<span style="color:var(--text-muted)">Engine picked everything</span>`;
+        }
+        const why = document.getElementById('batteryEngineWhyBody');
+        if (why && battery.designBasis) {
+            const db = battery.designBasis;
+            why.innerHTML = `
+                <div><b>Daily load:</b> ${Math.round(db.dailyLoadWh || 0)} Wh &times; ${db.autonomyDays || 1} day autonomy</div>
+                <div><b>Required nominal:</b> ${db.requiredNominalKWh ? db.requiredNominalKWh.toFixed(2) : '—'} kWh (load &divide; DoD &divide; eff &times; margin)</div>
+                ${db.climateNote ? `<div><b>Climate:</b> ${db.climateNote}</div>` : ''}
+                <div><b>Module:</b> ${battery.moduleMatch ? battery.moduleMatch.label : `${battery.recommendedAhPerCell || 0} Ah &times; ${battery.stringsInParallel || 0}P`}</div>
+                ${(battery.warnings && battery.warnings.length) ? `<div style="margin-top:6px;color:#92400e;"><b>Notes:</b> ${battery.warnings.join(' &middot; ')}</div>` : ''}
+            `.trim();
+        }
+    },
+
+    toggleBatteryEngineWhy() {
+        const body = document.getElementById('batteryEngineWhyBody');
+        const btn  = document.getElementById('batteryEngineWhyToggle');
+        if (!body) return;
+        const open = body.classList.toggle('is-open');
+        if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (btn) btn.textContent = open ? 'Why? ▴' : 'Why? ▾';
     },
 
     /**
@@ -41259,7 +41444,7 @@ const PVCalculator = {
         const isManual = document.getElementById('manualMode')?.checked;
         if (isManual) return null;
 
-        const hints = { unitAh: null, unitCount: null };
+        const hints = { unitAh: null, unitVoltage: null, unitCount: null };
 
         // Unit Ah hint — only when user changed from 'auto'
         const ahSel = document.getElementById('batteryUnitAh');
@@ -41271,6 +41456,15 @@ const PVCalculator = {
                 const v = parseFloat(ahSel.value);
                 if (v > 0) hints.unitAh = v;
             }
+        }
+
+        // Unit voltage hint — only when user chose a specific voltage (not 'auto')
+        const vSel = document.getElementById('batteryUnitVoltage');
+        if (vSel && vSel.value !== 'auto') {
+            const v = vSel.value === 'custom'
+                ? parseFloat(document.getElementById('batteryUnitVoltageCustom')?.value)
+                : parseFloat(vSel.value);
+            if (v > 0) hints.unitVoltage = v;
         }
 
         // Unit count hint — explicit user entry
@@ -41380,6 +41574,8 @@ const PVCalculator = {
 
             // Phase 2: Aggregation
             const aggregation = AggregationEngine.calculate(LoadEngine.appliances, config);
+            this._lastDailyEnergyWh = aggregation.dailyEnergyWh || 0;
+            this._lastApparentVA    = aggregation.peakSimultaneousVA || 0;
 
             // Phase 3: Inverter Sizing (auto or manual)
             let inverter = InverterSizingEngine.calculate(aggregation, config);
@@ -41521,6 +41717,8 @@ const PVCalculator = {
                     noteEl.innerHTML = '';
                 }
             }
+
+            this.renderBatteryEngineSummary(battery, batteryHints);
 
             // Apply manual battery overrides if set
             if (isManualMode) {
@@ -45060,6 +45258,7 @@ const PVCalculator = {
             this._selectedBatteryUnitAh = null;
             this._refreshBatteryTabs();
         }
+        this.refreshBatteryFieldLockStates(); this.validateBatteryFieldInline('batteryUnitAh');
     },
 
     onBatteryCustomAhInput() {
@@ -45080,6 +45279,7 @@ const PVCalculator = {
             this._selectedBatteryUnitVoltage = parseFloat(sel.value);
             this._refreshBatteryTabs();
         }
+        this.refreshBatteryFieldLockStates(); this.validateBatteryFieldInline('batteryUnitVoltage');
     },
 
     onBatteryCustomVoltageInput() {
@@ -45152,6 +45352,7 @@ const PVCalculator = {
             this._selectedBatteryUnitAh = perUnitAh;
             this._refreshBatteryTabs();
         }
+        this.refreshBatteryFieldLockStates(); this.validateBatteryFieldInline('batteryKwhInput');
     },
 
     /**
