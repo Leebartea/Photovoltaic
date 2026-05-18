@@ -244,17 +244,14 @@ header p {
 
 /* Split-pane independent scroll — desktop (≥1025px) */
 @media (min-width: 1025px) {
-    html, body { height: 100%; }
-    body { display: flex; flex-direction: column; overflow: hidden; }
-    .container {
-        flex: 1;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
+    .main-grid {
+        align-items: start;
     }
-    .main-grid { flex: 1; min-height: 0; }
     .input-column,
     .results-column {
+        position: sticky;
+        top: 0;
+        max-height: 100vh;
         overflow-y: auto;
         scroll-behavior: smooth;
         scrollbar-gutter: stable;
