@@ -19749,6 +19749,7 @@ const PVCalculator = {
         const count = parseInt(document.getElementById('mpptInputCount').value) || 1;
         const additionalSection = document.getElementById('mpptAdditionalSection');
         const mppt3Section = document.getElementById('mppt3Section');
+        const mppt4Section = document.getElementById('mppt4Section');
 
         if (count >= 2) {
             additionalSection.classList.remove('hidden');
@@ -19760,6 +19761,14 @@ const PVCalculator = {
             mppt3Section.classList.remove('hidden');
         } else {
             mppt3Section.classList.add('hidden');
+        }
+
+        if (mppt4Section) {
+            if (count >= 4) {
+                mppt4Section.classList.remove('hidden');
+            } else {
+                mppt4Section.classList.add('hidden');
+            }
         }
     },
 
@@ -23072,6 +23081,18 @@ const PVCalculator = {
                 maxPower: parseFloat(document.getElementById('mppt3MaxPower').value) || 3000,
                 maxChargeCurrent: parseFloat(document.getElementById('mppt3MaxChargeCurrent').value) || 60,
                 label: 'MPPT 3'
+            });
+        }
+
+        if (inputCount >= 4) {
+            allMPPTs.push({
+                maxVoltage: parseFloat(document.getElementById('mppt4MaxVoltage')?.value) || 500,
+                minVoltage: parseFloat(document.getElementById('mppt4MinVoltage')?.value) || 60,
+                maxOperatingVoltage: parseFloat(document.getElementById('mppt4MaxOperatingVoltage')?.value) || 450,
+                maxCurrent: parseFloat(document.getElementById('mppt4MaxCurrent')?.value) || 18,
+                maxPower: parseFloat(document.getElementById('mppt4MaxPower')?.value) || 3000,
+                maxChargeCurrent: parseFloat(document.getElementById('mppt4MaxChargeCurrent')?.value) || 60,
+                label: 'MPPT 4'
             });
         }
 
