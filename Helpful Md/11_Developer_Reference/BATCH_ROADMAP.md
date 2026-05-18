@@ -57,6 +57,7 @@ Updated after each batch. Last update: 2026-05-18 (post-Batch 26B + Hotfix).
 | Batch 26B | e68b2c1 | 2026-05-18 | AUTO/MANUAL badge header, field lock indicators (is-locked/is-auto), engine summary card with Why? expand, inline pre-calc validation (voltage bus, count×Ah vs autonomy), "Auto" option on batteryUnitVoltage, getBatteryHints() extended with voltage hint, applyBatteryModeChrome() + helpers, daily energy cache for pre-calc validation |
 | Hotfix 26B | fdc1ce2 | 2026-05-18 | Remove stale userBatteryUnitCount reference in post-override re-emit block — use battery.stringsInParallel; fixes calculation-on-restore crash |
 | Hotfix: Dual MPPT SVG | 0c84121 | 2026-05-18 | SVG panel grid renders all MPPT channels (mpptTotalRows = sum of ch.config.parallel replaces primary-only p); per-channel series in inner column loop; multi-MPPT PV Array title shows each channel S×P joined with + |
+| Batch 27 | bcd6c8d | 2026-05-18 | Split-pane independent scroll: @media (min-width: 1025px) app-shell (html/body height:100% overflow:hidden, .container flex-column, .main-grid flex:1 min-height:0), .input-column + .results-column overflow-y:auto scroll-behavior:smooth scrollbar-gutter:stable, .results-column .tabs position:sticky top:0; mobile ≤1024px unchanged |
 
 ---
 
@@ -64,16 +65,17 @@ Updated after each batch. Last update: 2026-05-18 (post-Batch 26B + Hotfix).
 
 ---
 
-### Batch 27 — Split-Pane Independent Scroll Layout (UX)
+### Batch 28 — Quad-MPPT (4-Input MPPT Support)
 
-User request: results tab and system config tab currently scroll together. Should be independent.
+Dual and Triple MPPT are fully working (Batch 25A + Hotfix). Quad-MPPT needs the DOM surface wired before option 4 can be added to the select.
 
-**Global standard approach:**
-- Desktop (≥1024px): both columns `height: calc(100vh - topbar)`, each with `overflow-y: auto` — user scrolls config and results independently
-- Tablet (768–1023px): same two-column layout, narrower
-- Mobile (<768px): single column, normal page scroll — no fixed-height constraint
-
-**Opus pre-dive needed:** Read current flex/grid layout structure in `pv_calculator_ui.html` to find exact container IDs, current `overflow` and `height` rules, and the correct CSS to modify. Also verify the hamburger nav doesn't break when columns are fixed-height.
+**Scope:**
+- Add 3 new DOM inputs in `pv_calculator_ui.html` under the MPPT 2 block (mirroring MPPT 2 field layout): `mppt4MaxVoltage`, `mppt4MaxCurrent`, `mppt4MaxPower`
+- Add option `<option value="4">4 (Quad MPPT)</option>` to the MPPT count select
+- Add a 4th arm to `getMPPT()` in `30-controller.js` that reads the new fields
+- Verify `MultiMPPTDistributor` in `10-engines.ts` handles 4 channels (engine is generic — likely works already, needs confirmation)
+- Update SVG channel split (now working correctly after Hotfix) — no changes needed if engine returns 4 `mpptAssignments`
+- Opus pre-dive needed to confirm engine handles 4 channels and to get exact DOM structure of the existing MPPT 2 block to mirror
 
 ---
 
@@ -99,4 +101,4 @@ User request: results tab and system config tab currently scroll together. Shoul
 - Build must pass (`npm run build` exit 0) before any commit
 - After committing, run `git log origin/main..HEAD --oneline` — if any lines appear, those commits are NOT pushed. Run `git push origin main`.
 
-*Last updated: 2026-05-18 (post-Hotfix Dual MPPT SVG — all MPPT channels now render; Batch 27 split-pane layout queued)*
+*Last updated: 2026-05-18 (post-Batch 27 — split-pane independent scroll done; Quad-MPPT queued as Batch 28)*

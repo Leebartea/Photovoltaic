@@ -161,6 +161,16 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 27 — Split-Pane Independent Scroll Layout (commit bcd6c8d — 2026-05-18)
+
+- **App-shell layout (desktop ≥1025px)** — `html, body { height: 100%; overflow: hidden; }` + `body { display: flex; flex-direction: column; }` + `.container { flex: 1; min-height: 0; display: flex; flex-direction: column; }` + `.main-grid { flex: 1; min-height: 0; }` — the two-column grid now fills the remaining viewport after the header and mode banner, with neither column overflowing the page
+- **Independent column scroll** — `.input-column` and `.results-column` each get `overflow-y: auto; scroll-behavior: smooth; scrollbar-gutter: stable` — scrolling in the config pane no longer moves the results pane and vice versa; gutter reserved before scrollbar appears to prevent layout shift
+- **Sticky tab bar in results pane** — `.results-column .tabs { position: sticky; top: 0; z-index: 10; background: var(--card-bg) }` — the tab strip stays visible when scrolling deep into any result tab
+- **Mobile unchanged** — the `@media (max-width: 1024px)` collapse to single-column (already in place) is unaffected; on mobile the page scrolls normally as before
+- **Section nav and theme toggle unaffected** — both are `position: fixed` on the viewport and decoupled from the column scroll containers; verified by Opus pre-dive before implementation
+
+---
+
 ### Hotfix: Dual MPPT SVG Panel Grid (commit 0c84121 — 2026-05-18)
 
 **Root cause (Opus audit):** `pv.stringsInParallel` is overwritten with only the primary MPPT's parallel count after multi-MPPT distribution (line 23511); the SVG row-draw loop used bare `p = pv.stringsInParallel` as its bound, so for a 7S×1P + 7S×1P two-channel split `renderedRows = 1` — MPPT 2's panels, header, and dashed channel divider were never drawn.
