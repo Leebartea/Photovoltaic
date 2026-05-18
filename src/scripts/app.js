@@ -5650,10 +5650,11 @@ const BatterySizingEngine = {
      * @param {string} chemistry
      * @returns {BatterySizingResult}
      */
-    calculate(aggregatedLoad, inverterReq, config, chemistry) {
+    calculate(aggregatedLoad, inverterReq, config, chemistry, hints) {
         const warnings = [];
         const blocks = [];
         const suggestions = [];
+        const h = hints || {};
         const specs = DEFAULTS.BATTERY_SPECS[chemistry] || DEFAULTS.BATTERY_SPECS.lifepo4;
         const bankVoltage = inverterReq.dcBusVoltage;
         const cellVoltage = specs.cellVoltage;
@@ -5696,10 +5697,25 @@ const BatterySizingEngine = {
                 totalCapacityWh = totalCapacityAh * effectiveBankVoltage;
             }
         }
-        // Select cell Ah rating and parallel strings
-        const recommendedAh = isLithium ? this.selectLithiumCellAh(totalCapacityAh) : this.selectCellAh(totalCapacityAh);
-        const stringsParallel = Math.ceil(totalCapacityAh / recommendedAh);
-        const actualCapacityAh = stringsParallel * recommendedAh;
+        // Select cell Ah rating and parallel strings — respect user hints from auto-mode input
+        let recommendedAh = isLithium ? this.selectLithiumCellAh(totalCapacityAh) : this.selectCellAh(totalCapacityAh);
+        let isAhOverride = false;
+        if (h.unitAh && h.unitAh > 0) {
+            recommendedAh = h.unitAh;
+            isAhOverride = true;
+        }
+        let stringsParallel = Math.ceil(totalCapacityAh / recommendedAh);
+        const autoSuggestedStrings = stringsParallel;
+        let isUnitCountOverride = false;
+        if (h.unitCount && h.unitCount > 0) {
+            const deliveredAh = h.unitCount * recommendedAh;
+            if (deliveredAh < totalCapacityAh * 0.9) {
+                warnings.push(`You selected ${h.unitCount} battery unit(s) (${Math.round(deliveredAh)}Ah). Engine target: ${Math.round(totalCapacityAh)}Ah. Autonomy and cycle life may be reduced.`);
+            }
+            stringsParallel = h.unitCount;
+            isUnitCountOverride = true;
+        }
+        let actualCapacityAh = stringsParallel * recommendedAh;
         // Recalculate actual current ratings
         maxDischargeCurrent = actualCapacityAh * specs.maxDischargeRate;
         const maxChargeCurrent = actualCapacityAh * specs.maxChargeRate;
@@ -5775,6 +5791,9 @@ or reduce inverter VA.`);
             moduleMatch,
             isLithium,
             effectiveBankVoltage,
+            isAhOverride,
+            isUnitCountOverride,
+            autoSuggestedStrings,
             warnings,
             blocks,
             suggestions
@@ -34129,6 +34148,31 @@ const PVCalculator = {
         };
     },
 
+    getBatteryHints() {
+        const isManual = document.getElementById('manualMode')?.checked;
+        if (isManual) return null;
+
+        const hints = { unitAh: null, unitCount: null };
+
+        // Unit Ah hint — only when user changed from 'auto'
+        const ahSel = document.getElementById('batteryUnitAh');
+        if (ahSel && ahSel.value !== 'auto') {
+            if (ahSel.value === 'custom') {
+                const v = parseFloat(document.getElementById('batteryUnitAhCustom')?.value);
+                if (v > 0) hints.unitAh = v;
+            } else {
+                const v = parseFloat(ahSel.value);
+                if (v > 0) hints.unitAh = v;
+            }
+        }
+
+        // Unit count hint — explicit user entry
+        const c = parseInt(document.getElementById('batteryUnitCount')?.value);
+        if (c > 0) hints.unitCount = c;
+
+        return hints;
+    },
+
     /**
      * Get MPPT specifications from form
      */
@@ -34356,45 +34400,19 @@ const PVCalculator = {
             }
 
             // Phase 4: Battery Sizing (auto or manual)
-            let battery = BatterySizingEngine.calculate(aggregation, inverter, config, batteryChemistry);
+            const batteryHints = isManualMode ? null : this.getBatteryHints();
+            let battery = BatterySizingEngine.calculate(aggregation, inverter, config, batteryChemistry, batteryHints);
 
-            // Apply optional battery unit count override (works in both auto and manual)
-            const userBatteryUnitCount = parseInt(document.getElementById('batteryUnitCount').value);
-            if (userBatteryUnitCount > 0) {
-                const unitAh = battery.recommendedAhPerCell;
-                const unitV = (DEFAULTS.BATTERY_SPECS[batteryChemistry] || DEFAULTS.BATTERY_SPECS.lifepo4).cellVoltage;
-                const cellsPerUnit = Math.round(battery.bankVoltage / unitV);
-                const autoStrings = battery.stringsInParallel;
-
-                battery.stringsInParallel = userBatteryUnitCount;
-                battery.totalCapacityAh = Math.round(userBatteryUnitCount * unitAh * 10) / 10;
-                battery.totalCapacityWh = Math.round(battery.totalCapacityAh * battery.bankVoltage * 10) / 10;
-                battery.totalCells = cellsPerUnit * userBatteryUnitCount;
-
-                const specs = DEFAULTS.BATTERY_SPECS[batteryChemistry];
-                battery.usableCapacityWh = Math.round(battery.totalCapacityWh * specs.maxDoD * 10) / 10;
-                battery.maxDischargeCurrent = Math.round(battery.totalCapacityAh * specs.maxDischargeRate * 10) / 10;
-                battery.maxChargeCurrent = Math.round(battery.totalCapacityAh * specs.maxChargeRate * 10) / 10;
-
-                battery.isUnitCountOverride = true;
-                battery.autoSuggestedStrings = autoStrings;
-
-                // Warn if undersized
-                if (userBatteryUnitCount < autoStrings) {
-                    battery.warnings.push(
-                        `You selected ${userBatteryUnitCount} battery unit(s) (${battery.totalCapacityAh}Ah). Auto-suggested: ${autoStrings} units (${autoStrings * unitAh}Ah). Autonomy and cycle life may be reduced.`
-                    );
+            // Unit-count note (constraint logic now runs inside the engine via batteryHints)
+            const noteEl = document.getElementById('batteryUnitCountNote');
+            if (noteEl) {
+                if (battery.isUnitCountOverride) {
+                    const unitAh = battery.recommendedAhPerCell;
+                    noteEl.innerHTML = `<strong>${battery.stringsInParallel}x ${unitAh}Ah</strong> = ${battery.totalCapacityAh}Ah total (${battery.totalCapacityWh}Wh). `
+                        + `Auto would use ${battery.autoSuggestedStrings || '—'} unit(s).`;
+                } else {
+                    noteEl.innerHTML = '';
                 }
-
-                // Update the note
-                const noteEl = document.getElementById('batteryUnitCountNote');
-                if (noteEl) {
-                    noteEl.innerHTML = `<strong>${userBatteryUnitCount}x ${unitAh}Ah</strong> = ${battery.totalCapacityAh}Ah total (${battery.totalCapacityWh}Wh). `
-                        + `Auto would use ${autoStrings} unit(s).`;
-                }
-            } else {
-                const noteEl = document.getElementById('batteryUnitCountNote');
-                if (noteEl) noteEl.innerHTML = '';
             }
 
             // Apply manual battery overrides if set

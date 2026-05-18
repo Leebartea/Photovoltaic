@@ -1808,10 +1808,11 @@ const BatterySizingEngine = {
      * @param {string} chemistry
      * @returns {BatterySizingResult}
      */
-    calculate(aggregatedLoad, inverterReq, config, chemistry) {
+    calculate(aggregatedLoad, inverterReq, config, chemistry, hints) {
         const warnings = [];
         const blocks = [];
         const suggestions = [];
+        const h = hints || {};
 
         const specs = DEFAULTS.BATTERY_SPECS[chemistry] || DEFAULTS.BATTERY_SPECS.lifepo4;
         const bankVoltage = inverterReq.dcBusVoltage;
@@ -1868,10 +1869,27 @@ const BatterySizingEngine = {
             }
         }
 
-        // Select cell Ah rating and parallel strings
-        const recommendedAh = isLithium ? this.selectLithiumCellAh(totalCapacityAh) : this.selectCellAh(totalCapacityAh);
-        const stringsParallel = Math.ceil(totalCapacityAh / recommendedAh);
-        const actualCapacityAh = stringsParallel * recommendedAh;
+        // Select cell Ah rating and parallel strings — respect user hints from auto-mode input
+        let recommendedAh = isLithium ? this.selectLithiumCellAh(totalCapacityAh) : this.selectCellAh(totalCapacityAh);
+        let isAhOverride = false;
+        if (h.unitAh && h.unitAh > 0) {
+            recommendedAh = h.unitAh;
+            isAhOverride = true;
+        }
+        let stringsParallel = Math.ceil(totalCapacityAh / recommendedAh);
+        const autoSuggestedStrings = stringsParallel;
+        let isUnitCountOverride = false;
+        if (h.unitCount && h.unitCount > 0) {
+            const deliveredAh = h.unitCount * recommendedAh;
+            if (deliveredAh < totalCapacityAh * 0.9) {
+                warnings.push(
+                    `You selected ${h.unitCount} battery unit(s) (${Math.round(deliveredAh)}Ah). Engine target: ${Math.round(totalCapacityAh)}Ah. Autonomy and cycle life may be reduced.`
+                );
+            }
+            stringsParallel = h.unitCount;
+            isUnitCountOverride = true;
+        }
+        let actualCapacityAh = stringsParallel * recommendedAh;
 
         // Recalculate actual current ratings
         maxDischargeCurrent = actualCapacityAh * specs.maxDischargeRate;
@@ -1969,6 +1987,9 @@ or reduce inverter VA.`
             moduleMatch,
             isLithium,
             effectiveBankVoltage,
+            isAhOverride,
+            isUnitCountOverride,
+            autoSuggestedStrings,
             warnings,
             blocks,
             suggestions
