@@ -161,6 +161,19 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 26B + Hotfix — Auto/Manual Battery UX (commits e68b2c1 + fdc1ce2 — 2026-05-18)
+
+- **AUTO / MANUAL badges** — green "AUTO" badge (engine sizes blanks) and amber "MANUAL" badge (values taken as-is) replace the old `#batteryManualIndicator` chip; "Switch to Manual →" link in auto mode, "Reset to Auto" button in manual mode
+- **Field lock indicators** — `is-locked` / `is-auto` CSS classes applied per-field in auto mode; empty = soft green border (engine-owned), filled = solid green border (user-locked hard constraint)
+- **Engine summary card** (`#batteryEngineSummary`) — pre-calculate: "Engine will decide / Run Calculate"; post-calculate: 5-cell grid (Bank V / Chemistry / Unit Ah / Config / Total kWh) with green highlight on user-locked cells + collapsible "Why?" panel showing engine reasoning (daily load × autonomy, DoD/eff/margin, module choice, surge headroom, warnings)
+- **Inline pre-calculate validation** — color-coded warn/error/info messages below `batteryUnitAh`, `batteryUnitVoltage`, `batteryUnitCount`, `batteryKwhInput`; checks bus voltage realism (12V > 1.5kVA → error), count × Ah vs autonomy target (< 70% → error, < 90% → warn)
+- **"Auto (engine picks)" added to batteryUnitVoltage** — was previously defaulted to "12V" with no auto option; `getBatteryHints()` extended to also read voltage hint when ≠ "auto"
+- **applyBatteryModeChrome()** wired into `toggleManualMode()` and init path; `switchToManualFromBattery()` / `resetBatteryToAuto()` / `refreshBatteryFieldLockStates()` helpers added
+- **Daily energy cached** (`this._lastDailyEnergyWh` / `this._lastApparentVA`) after each aggregation for use in pre-calculate validation without needing a full engine pass
+- **Hotfix fdc1ce2** — stale `userBatteryUnitCount` reference in post-override re-emit block (line 23324) replaced with `battery.stringsInParallel`; calculation-on-restore crash eliminated
+
+---
+
 ### Batch 26A — Smart Battery Hints Engine Foundation (commit c6be0b5 — 2026-05-18)
 
 - **Engine hints API** — `BatterySizingEngine.calculate()` accepts optional 5th arg `hints: { unitAh, unitCount }`; fully backwards-compatible (undefined = existing auto behaviour)

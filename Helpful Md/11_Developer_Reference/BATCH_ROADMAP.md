@@ -1,7 +1,7 @@
 # Fix Batch Roadmap — PV Calculator
 
 This document tracks all planned fix batches in priority order.
-Updated after each batch. Last update: 2026-05-18 (post-Batch 26A).
+Updated after each batch. Last update: 2026-05-18 (post-Batch 26B + Hotfix).
 
 ---
 
@@ -54,6 +54,8 @@ Updated after each batch. Last update: 2026-05-18 (post-Batch 26A).
 | Batch 25B | 6a17a8f | 2026-05-18 | 5 chemistry crash guards (4 × DEFAULTS.BATTERY_SPECS[key] in 10-engines.ts + 1 × .cellVoltage in controller); grid-tie backup label replaced with "no backup / exports to utility" message; MPPT Validation gate relaxed from usesStandaloneMPPT to R.mpptValidation (hybrid + grid-tie systems now show validation on cover page) |
 | Batch 25C | 062a6fe | 2026-05-18 | installationScale field ('residential'/'commercial'/'utility') derived from arrayWattage after PV Practical Engine; Commercial Plant Engineering PDF section (≥ 50 kWp: transformer kVA, combiner count, DC cable notes, IEC 61724-1 SCADA, region-keyed grid code); SVG panel grid capped at 16 rows for single-MPPT arrays with dashed DC Combiner Box indicator for hidden strings |
 | Batch 26A | c6be0b5 | 2026-05-18 | BatterySizingEngine.calculate() extended with optional hints arg (unitAh, unitCount); engine applies constraints before cell-selection: locked Ah overrides selectLithiumCellAh, locked count overrides stringsParallel + warns if bank Ah < 90% target; return object gains isAhOverride/isUnitCountOverride/autoSuggestedStrings; getBatteryHints() controller helper reads auto-mode fields; 40-line post-engine unit-count patch removed |
+| Batch 26B | e68b2c1 | 2026-05-18 | AUTO/MANUAL badge header, field lock indicators (is-locked/is-auto), engine summary card with Why? expand, inline pre-calc validation (voltage bus, count×Ah vs autonomy), "Auto" option on batteryUnitVoltage, getBatteryHints() extended with voltage hint, applyBatteryModeChrome() + helpers, daily energy cache for pre-calc validation |
+| Hotfix 26B | fdc1ce2 | 2026-05-18 | Remove stale userBatteryUnitCount reference in post-override re-emit block — use battery.stringsInParallel; fixes calculation-on-restore crash |
 
 ---
 
@@ -83,6 +85,19 @@ Batch 26A (engine foundation) is done. Batch 26B adds the full visual layer.
 
 ---
 
+### Batch 27 — Split-Pane Independent Scroll Layout (UX)
+
+User request: results tab and system config tab currently scroll together. Should be independent.
+
+**Global standard approach:**
+- Desktop (≥1024px): both columns `height: calc(100vh - topbar)`, each with `overflow-y: auto` — user scrolls config and results independently
+- Tablet (768–1023px): same two-column layout, narrower
+- Mobile (<768px): single column, normal page scroll — no fixed-height constraint
+
+**Opus pre-dive needed:** Read current flex/grid layout structure in `pv_calculator_ui.html` to find exact container IDs, current `overflow` and `height` rules, and the correct CSS to modify. Also verify the hamburger nav doesn't break when columns are fixed-height.
+
+---
+
 ### Enhancement — Local Market Pricing Engine (see Batch 17 above)
 
 ---
@@ -105,4 +120,4 @@ Batch 26A (engine foundation) is done. Batch 26B adds the full visual layer.
 - Build must pass (`npm run build` exit 0) before any commit
 - After committing, run `git log origin/main..HEAD --oneline` — if any lines appear, those commits are NOT pushed. Run `git push origin main`.
 
-*Last updated: 2026-05-18 (post-Batch 26A — engine hints API; Batch 26B UX layer remains)*
+*Last updated: 2026-05-18 (post-Batch 26B + Hotfix — full auto/manual UX done; Batch 27 split-pane layout queued)*
