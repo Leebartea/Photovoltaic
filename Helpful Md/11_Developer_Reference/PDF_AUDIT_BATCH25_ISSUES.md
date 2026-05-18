@@ -25,6 +25,34 @@ All 11 items **VERIFIED**. Codebase is clean post-Batch 24.
 
 ---
 
+## SVG Battery Voltage Bug (user-confirmed screenshot — 2026-05-17)
+
+### SVG-BV — HIGH — Battery bank header, MCCB, and inverter DC label show 24V when user selected 48V
+
+**User report:** In auto mode, user selected 48V / 150Ah. The SVG battery cell interior and unit label show "48V" correctly, but the battery bank header title shows "LiFePO4 | 24V / 150Ah", Battery DC MCCB shows "500A / 24VDC", and the inverter DC-In label shows "24VDC → 230VAC 1φ".
+
+**Evidence from screenshot (Hybrid Solar System — Full Configuration):**
+
+| SVG element | Displayed | Should show |
+|---|---|---|
+| Battery Bank header title | `LiFePO4 \| 24V / 150Ah` | `LiFePO4 \| 48V / 150Ah` |
+| Battery cell interior | `48V / 150Ah` | correct ✓ |
+| Unit label | `1x 48V/150Ah (1S)` | correct ✓ |
+| Battery DC MCCB | `500A / 24VDC` | `500A / 48VDC` |
+| Inverter DC-In label | `24VDC → 230VAC 1φ` | `48VDC → 230VAC 1φ` |
+
+**Root cause:** The SVG is split-source. The battery header, MCCB, and inverter DC label all read `batt.bankVoltage` (which stays at the `batteryBankVoltage` DOM default of 24V). The cell interior and unit label read `batt.unitVoltage` (correctly updated when the catalog unit is selected). The engine builds the 48V bank from the chosen unit but `batt.bankVoltage` in the results is never updated to match.
+
+**Fix:** In `renderSystemDiagram`, derive bank voltage from unit × series count wherever `batt.bankVoltage` is used in battery header, MCCB label, and inverter DC-In label:
+```js
+const svgBankV = (batt.unitVoltage || 0) * (batt.seriesStrings || 1) || batt.bankVoltage;
+```
+Use `svgBankV` for: battery bank header title, Battery DC MCCB voltage label, inverter DC-In voltage string.
+
+**Batch assignment:** 25A (same function as SVG MPPT/3-phase/grid-tie fixes)
+
+---
+
 ## Feature-Completeness Audit
 
 ### F1 — Grid-Tied Mode (`systemType === 'grid_tie'`)
@@ -308,4 +336,67 @@ These are still open from the Batch 24 Opus sweep. Rank them after Batch 25 is d
 
 ---
 
-*Documented: 2026-05-17 — Opus Batch 24 verification + feature-completeness audit, Batch 25 planning*
+---
+
+## Batch 25A — Opus Code Dive Verified (2026-05-18)
+
+**Function identity:** The SVG is built inside `renderOverviewTab(details)` (NOT a function named `renderSystemDiagram`).
+- **Method start:** line 24457
+- **SVG build start:** line 24564 (comment "FULL VISUAL SYSTEM OVERVIEW")
+- **SVG build end:** ~line 25009 (closing `</svg>` tag)
+- **Two layout branches:** `if (isHybrid)` at line 24693 / `else { /* OFF-GRID */ }` at line 24845
+
+**Key variables in scope (lines 24458–24527):**
+- `config = details.config` — has `systemType`, `phaseType`, `acVoltage`
+- `batt = details.battery` — has `bankVoltage`, `bankVoltageNominal`, `unitVoltage` (NO — `unitVoltage` is NOT in `batt`)
+- `unitVoltage = this.getBatteryUnitVoltage()` — form-driven, line ~24499 — THIS is the user-selected unit voltage
+- `batteriesInSeries = Math.max(1, Math.round(batt.bankVoltage / unitVoltage))` — line ~24501
+- `details.multiMPPTResult` — available, propagated through OutputGenerator
+- `isHybrid = config.systemType === 'hybrid' || config.systemType === 'grid_tie'` — line 24483
+
+**Battery voltage bug root cause (confirmed):** Engine sets `batt.bankVoltage` from inverter VA tier auto-selection (`dcBusVoltage`). When user picks a 48V unit but the tier defaults to 24V, `batt.bankVoltage = 24` while `unitVoltage = 48`. SVG is split-source: header/MCCB/inverter read `batt.bankVoltage`, cell interior reads `unitVoltage`.
+
+**svgBankV fix formula (insert after line 24507):**
+```js
+const svgBankV = Math.max(
+    (unitVoltage || 0) * (batteriesInSeries || 1),
+    batt.bankVoltage || 0
+) || batt.bankVoltage || 48;
+```
+
+### Complete fix site table (Batch 25A)
+
+| # | Fix type | File | Action | Line(s) |
+|---|----------|------|--------|---------|
+| 1 | `svgBankV` derivation | 30-controller.js | **Insert after** 24507 | — |
+| 2 | `battBreakerLabelDisplay` init + patch | 30-controller.js | **Insert after** 24494 + after 24507 | — |
+| 3 | Battery title — hybrid | 30-controller.js | Replace `batt.bankVoltage` | 24770 |
+| 4 | Battery title — hybrid mixed | 30-controller.js | Replace `batt.bankVoltage` | 24768 |
+| 5 | Inverter DC→AC — hybrid | 30-controller.js | Replace `inv.dcBusVoltage` | 24717 |
+| 6 | Breaker label — hybrid | 30-controller.js | Replace `battBreakerLabel` | 24744 |
+| 7 | Breaker label — off-grid | 30-controller.js | Replace `battBreakerLabel` | 24880 |
+| 8 | DC Bus label — off-grid | 30-controller.js | Replace `batt.bankVoltage` | 24870 |
+| 9 | Inverter DC→AC — off-grid | 30-controller.js | Replace `inv.dcBusVoltage` | 24891 |
+| 10 | Battery title — off-grid | 30-controller.js | Replace `batt.bankVoltage` | 24912 |
+| 11 | Battery title — off-grid mixed | 30-controller.js | Replace `batt.bankVoltage` | 24910 |
+| 12 | Battery spec desc — hybrid | 30-controller.js | Replace `batt.bankVoltage` | 24826 |
+| 13 | Battery spec desc — off-grid | 30-controller.js | Replace `batt.bankVoltage` | 24961 |
+| 14 | `mpptDist`/`mpptChannels`/`isMultiMPPT` block | 30-controller.js | **Insert after** 24598 | — |
+| 15 | PV panel grid loop (full replacement) | 30-controller.js | Replace loop | 24640–24667 |
+| 16 | Hybrid MPPT count label | 30-controller.js | Replace | 24706 |
+| 17 | Off-grid MPPT count label | 30-controller.js | Replace | 24852 |
+| 18 | Phase/grid classification flags | 30-controller.js | Replace | 24483 |
+| 19 | Right-column width budget | 30-controller.js | Replace | 24592, 24594 |
+| 20 | AC phase badge — hybrid | 30-controller.js | **Insert after** 24749 | — |
+| 21 | Utility Grid node — hybrid | 30-controller.js | **Insert after** 24749 (after badge) | — |
+| 22 | AC phase badge — off-grid | 30-controller.js | **Insert after** 24977 | — |
+| 23 | L1/L2/L3 conductor stripes — hybrid | 30-controller.js | Replace | 24735 |
+| 24 | L1/L2/L3 conductor stripes — off-grid | 30-controller.js | Replace | 24970 |
+| 25 | Battery optional overlay — grid-tie | 30-controller.js | **Insert after** 24773 | — |
+| 26 | AC Loads subtitle — hybrid | 30-controller.js | Replace | 24837 |
+| 27 | AC Loads subtitle — off-grid | 30-controller.js | Replace | 24986 |
+| 28 | System title (Grid-Tied aware) | 30-controller.js | Replace | 25001 |
+
+*All 28 fixes are SVG-layer only. No engine changes required.*
+
+*Documented: 2026-05-18 — Opus full dive (uninterrupted), exact line numbers verified*
