@@ -49,10 +49,72 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 | Batch 23A | f636551 | 2026-05-17 | Battery chemistry crash (lifepo4 fallback guard before 4 DEFAULTS.BATTERY_SPECS accesses); managedMode.conditions crash (optional-chain + \|\| [] guard); Local-Build-Up finance zeroed (wrong arg shape → pass this.results, {inputs,totals}, {}); client mode technical leak (!clientExport → audienceMode==='installer' for System Diagram section); Local-Build-Up orphaned headings (DOM-read notes/scope/exclusions/nextSteps; guard Package Comparison + 3 subTitle blocks on array.length > 0) |
 | Batch 23A Hotfix | 71de307 | 2026-05-17 | P4 remainder: installer appendix block (if includeDetails → if includeDetails && audienceMode==='installer') to suppress engineering pages in client mode unconditionally |
 | Batch 23B | fb09916 | 2026-05-17 | 15 medium/low PDF fixes: P6 agg.dailyEnergyWh div-zero; P7 pv.totalPanels div-zero (2 sites); P8 hard-block rect uncapped; P9 multi-MPPT channel table; P10 Override State hidden in local-build-up; P11 phase currentA NaN guard; P12 confidence text splitTextToSize; P13 SVG selector by ID; P14 drawTable truncation via getTextWidth; P15 footer companyName capped 40 chars; P16 blank strategic note guards; P17 neutral conductor IEC 60364 ≤16mm² fix; P18 diacritics normalised in filename; P19 duplicate addPageFooter removed; P20 validityDays plural consistent |
+| Batch 24  | e670aa5 | 2026-05-17 | P17 remaining neutral IEC 60364 (marketMm2+sizeRangeDisplay); B1 hard-block rect overflow guard; B2 maxPhaseI NaN→0; B3 MPPT channel table client gate; B4 client safety page (hard blocks + warnings in plain language); B5 locKey config.location not DOM; B6 reportTitle keyed off audienceMode; B7 negative marginWh sign-aware label; B8 dead audienceMode!=client removed; B9 isExpertPdf from config snapshot; B10 PDF appliances from R.appliances snapshot |
 
 ---
 
 ## Open Batches (Planned)
+
+---
+
+### Batch 25A — SVG Diagram Feature Gaps (HIGH — user-reported + Opus audit)
+
+Full details in `PDF_AUDIT_BATCH25_ISSUES.md`.
+
+Three SVG gaps confirmed by Opus audit. All share the same root cause: `renderSystemDiagram` has no branches for systemType, phase count, or MPPT count.
+
+**25A fixes (implement together — same function):**
+- **F3-a** — Dual/triple MPPT: SVG never shows multiple string groups — diagram ignores `mpptCount` / `multiMPPTResult.channels` (user-confirmed: fields appear but SVG unchanged)
+- **F2-a** — 3-phase: SVG shows single conductor output — no L1/L2/L3/N symbols or "3φ 400/230V" badge on inverter AC output
+- **F1-a** — Grid-tie: SVG shows off-grid topology — no grid utility node, bidirectional meter, or export arrow for `systemType === 'grid_tie'`
+- **SVG-BV** — Battery bank header, MCCB, and inverter DC label show wrong voltage in auto mode — reads stale `batt.bankVoltage` (config default 24V) instead of deriving from `batt.unitVoltage × batt.seriesStrings`
+
+**SVG-BV fix (battery voltage split-source bug):**
+In `renderSystemDiagram`, replace bare `batt.bankVoltage` references in the battery header title, MCCB voltage label, and inverter DC-In label with:
+```js
+const svgBankV = (batt.unitVoltage || 0) * (batt.seriesStrings || 1) || batt.bankVoltage;
+```
+
+---
+
+### Batch 25B — Feature Verification + Config Pipe Fixes (MEDIUM/LOW)
+
+- **F1-b** — Cover page backup-hours line rendered for grid-tie (meaningless; show export kWh instead)
+- **F1-c** — `usesStandaloneMPPT` gate conflates hardware flag with Voc/Isc electrical validation
+- **F1-d** — Grid-tie finance: export-credit revenue flow not confirmed in `calculateCommercialFinanceSummary`
+- **F2-b** — `getConfig` phase pickup: verify `phases` field read from DOM reaches `PhaseBalancingEngine`
+- **F2-c** — Phase-imbalance warning: confirm it flows into `allWarnings` (page 3 list)
+- **F3-b** — `mpptCount` field-to-engine pipe: verify `config.mpptCount` reaches `MultiMPPTEngine`
+- **F4-b** — Engine 3-MPPT input limit: grep `10-engines.ts` for `<= 2` clamp in channel distribution
+- **F4-c** — DOM `mpptCount` select: confirm max value allows 3 or 4
+- **F6-a** — Battery chemistry keys: enumerate `DEFAULTS.BATTERY_SPECS`, verify DOM select `value` attrs match
+- **F6-b** — `battChemSpecs` guard: confirm all `DEFAULTS.BATTERY_SPECS[batt.chemistry]` accesses in `10-engines.ts` are guarded
+- **F6-c** — `chemistryName` fallback: confirm undefined-safe label when unknown chemistry key
+
+---
+
+### Batch 25C — Commercial Scale (MEDIUM — future)
+
+- **F5-a** — Add `installationScale: 'residential' | 'commercial' | 'utility'` field (auto-derived from `pv.arrayWattage`)
+- **F5-b** — Commercial-scale PDF section: transformer sizing, string combiner count, SCADA note, grid-code reference
+- **F5-c** — SVG combiner scaling for arrays > 20 strings
+
+---
+
+### Batch 26 — Smart Partial-Auto Battery Mode (feature)
+
+User request: in auto mode, if the user fills some battery fields (e.g. voltage = 48V, Ah left blank), the engine treats filled fields as hard constraints and auto-sizes only what's left.
+
+**Design:**
+```js
+// In getConfig — read battery "hints":
+batteryHints: {
+    bankVoltage: (el.value && el.value !== '0') ? parseInt(el.value) : null,
+    chemistry:   chemEl.value || null,
+    // null = auto-choose, non-null = respect this value
+}
+```
+Engine: when `hints.bankVoltage !== null`, use it as a hard constraint on unit selection, then size Ah to meet daily energy target at that voltage. When all hints are null, existing auto-select behavior unchanged.
 
 ---
 
@@ -78,4 +140,4 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 - Build must pass (`npm run build` exit 0) before any commit
 - After committing, run `git log origin/main..HEAD --oneline` — if any lines appear, those commits are NOT pushed. Run `git push origin main`.
 
-*Last updated: 2026-05-17 (post-Batch 23B — all 20 Opus PDF audit findings closed)*
+*Last updated: 2026-05-18 (post-Batch 24 verified; Batch 25A–C + Batch 26 planned from Opus feature audit)*

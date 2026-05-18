@@ -161,6 +161,22 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 24 — PDF Correctness + Client Safety + IEC 60364 Compliance (commit e670aa5 — 2026-05-17)
+
+- **P17 (complete)** — Neutral conductor fix completed: helper vars `phaseRecMm2`, `phaseMktMm2`, `reduceNeutral` now gate both `marketMm2` and `sizeRangeDisplay` on `> 16mm²`; PDF cable table now prints correct size with IEC 60364-5-52 §524.2 citation
+- **B1** — Hard-block red rect pre-measured with `splitTextToSize` per block; `newPage()` called if rect would overflow into footer — eliminates bullets outside red highlight
+- **B2** — `maxPhaseI` NaN guard: `|| 0` added to `phases.map(p => Number(p.currentA))` — prevents silent neutral-upsize suppression
+- **B3** — Multi-MPPT channel distribution table on cover page wrapped in `if (audienceMode !== 'client')` — engineering data no longer leaks into client PDFs
+- **B4** — Client safety page injected before installer appendix block: `clientBlocks` / `clientWarnings` declared in client scope; plain-language "Action Required Before Installation" + "Design Notices" sections rendered when `audienceMode === 'client'`
+- **B5** — Cover page location reads `config.location || 'lagos'` instead of live DOM — eliminates post-calculate location drift
+- **B6** — `reportTitle` / `headerSubtitle` keyed off `audienceMode` directly (not `clientExport`) — title matches content when client + includeDetails=true
+- **B7** — `marginWh < -2` now renders as "Rounding adjustment −X Wh" instead of misleading "+X Wh Design allowance"
+- **B8** — Dead `audienceMode !== 'client'` condition inside installer-only block removed — simplifies logic, no behavior change
+- **B9** — `isExpertPdf` reads `config.expertMode` snapshot with DOM fallback — badge reflects calculation-time state, not export-time DOM
+- **B10** — PDF load table iterates `R.appliances` snapshot; falls back to `LoadEngine.appliances` — eliminates post-calculate appliance drift
+
+---
+
 ### Batch 23B — 15 Medium/Low PDF Fixes (commit fb09916 — 2026-05-17)
 
 - **P6** — Division-by-zero guard on `agg.dailyEnergyWh` in daytime energy percentage (was printing `NaN%`)
