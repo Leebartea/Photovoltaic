@@ -658,6 +658,31 @@ header p {
     gap: 30px;
 }
 
+/* Split-pane independent scroll — desktop (≥1025px) */
+@media (min-width: 1025px) {
+    html, body { height: 100%; }
+    body { display: flex; flex-direction: column; overflow: hidden; }
+    .container {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    .main-grid { flex: 1; min-height: 0; }
+    .input-column,
+    .results-column {
+        overflow-y: auto;
+        scroll-behavior: smooth;
+        scrollbar-gutter: stable;
+    }
+    .results-column .tabs {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: var(--card-bg);
+    }
+}
+
 @media (max-width: 1024px) {
     .main-grid {
         grid-template-columns: 1fr;
