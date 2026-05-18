@@ -23321,10 +23321,10 @@ const PVCalculator = {
             }
 
             // Re-emit unit-count warning with final totalCapacityAh after all overrides settle.
-            if (battery.isUnitCountOverride && userBatteryUnitCount > 0 && userBatteryUnitCount < (battery.autoSuggestedStrings || 0)) {
+            if (battery.isUnitCountOverride && battery.stringsInParallel > 0 && battery.stringsInParallel < (battery.autoSuggestedStrings || 0)) {
                 battery.warnings = (battery.warnings || []).filter(w => !/You selected \d+ battery unit/.test(w));
                 battery.warnings.push(
-                    `You selected ${userBatteryUnitCount} battery unit(s) (${battery.totalCapacityAh}Ah). Auto-suggested: ${battery.autoSuggestedStrings} units. Autonomy and cycle life may be reduced.`
+                    `You selected ${battery.stringsInParallel} battery unit(s) (${battery.totalCapacityAh}Ah). Auto-suggested: ${battery.autoSuggestedStrings} units. Autonomy and cycle life may be reduced.`
                 );
             }
 
