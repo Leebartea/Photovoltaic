@@ -40296,6 +40296,69 @@ const PVCalculator = {
             }
 
             // ══════════════════════════════════════════════════════════
+            // COMMERCIAL-SCALE PLANT ENGINEERING (>= 50 kWp)
+            // ══════════════════════════════════════════════════════════
+            if ((pv.arrayWattage || 0) >= 50000) {
+                sectionTitle('Commercial Plant Engineering');
+                y += 1;
+
+                const txKVA = Math.ceil((pv.arrayWattage || 0) / 0.85 / 1000);
+                labelValue('Plant Capacity:', `${fmtWp(pv.arrayWattage)}  |  ${pv.totalPanels} panels  |  Scale: ${pv.installationScale || 'commercial'}`);
+                labelValue('Step-Up Transformer:', `${txKVA} kVA recommended (array kW ÷ 0.85 derating, rounded up)`);
+                mutedText('Sizing is an order-of-magnitude estimate; final transformer kVA, vector group and impedance must be confirmed by the LV/MV engineer against utility short-circuit, voltage step and harmonic limits.');
+                y += 2;
+
+                const stringsTotal = (pv.stringsInParallel || 0);
+                const combinerCount = stringsTotal > 0 ? Math.ceil(stringsTotal / 16) : 0;
+                labelValue('String Combiner Boxes:', `${combinerCount} unit${combinerCount === 1 ? '' : 's'} (16 strings / combiner estimate)`);
+                labelValue('Strings In Parallel:', `${stringsTotal}  |  Panels per string: ${pv.panelsInSeries || 0}`);
+                mutedText('Each combiner shall include per-string fuses (IEC 60269-6 / UL 2579 gPV), DC SPDs (IEC 61643-31 Type II), and a load-break DC isolator. Coordinate fuse rating with array Isc × 1.56.');
+                y += 2;
+
+                subTitle('DC Cable Schedule');
+                bodyText('Commercial-scale arrays require a separate DC combiner-to-inverter cable schedule that is not produced by this estimator. Each combiner-to-inverter feeder must be sized for:');
+                bodyText('• Continuous current ≥ Combined string Isc × 1.25 (per IEC 62548 / NEC 690.8).', 4);
+                bodyText('• Voltage drop ≤ 1.5 % at STC operating current over the actual run length.', 4);
+                bodyText('• Insulation rated for Voc(cold) of the longest string and the DC bus voltage class.', 4);
+                bodyText('• Mechanical protection per IEC 62548 § 7 (UV / abrasion / rodent / re-entrant corner).', 4);
+                y += 2;
+
+                subTitle('Monitoring & SCADA');
+                bodyText('IEC 61724-1 Class B (commercial) data logger and remote SCADA gateway are recommended for plants ≥ 50 kWp. Minimum monitored channels:');
+                bodyText('• POA irradiance (Class B pyranometer or reference cell), module temperature, ambient temperature.', 4);
+                bodyText('• Per-inverter AC power, energy, and fault registers (Modbus TCP / SunSpec preferred).', 4);
+                bodyText('• Revenue / utility meter at the point of common coupling (PCC).', 4);
+                bodyText('• String-level monitoring at the combiner (current shunts) for any plant ≥ 100 kWp.', 4);
+                y += 2;
+
+                subTitle('Grid Code & Interconnection');
+                const gridCodeByLocation = {
+                    lagos_ng:   'NCC/NERC Distribution Code + Nigerian Grid Code',
+                    lagos:      'NCC/NERC Distribution Code + Nigerian Grid Code',
+                    nairobi_ke: 'EPRA Grid Connection Standards',
+                    accra_gh:   'EC / GRIDCo Grid Code',
+                    us_south:   'IEEE 1547-2018 + NEC Art. 690 + local utility interconnection',
+                    us_north:   'IEEE 1547-2018 + NEC Art. 690 + local utility interconnection',
+                    brazil:     'ANEEL REN 1.000 / 482 + ABNT NBR 16690 (PV) interconnection rules',
+                    eu_central: 'VDE-AR-N 4105 / VDE-AR-N 4110 (HV) — BDEW Mittelspannung',
+                    eu_south:   'CEI 0-21 / CEI 0-16 (Italy) — EN 50549-1/2 (EU baseline)',
+                    temperate:  'VDE-AR-N 4105 / VDE-AR-N 4110 (HV) — BDEW Mittelspannung',
+                    india:      'CEA Grid Connectivity Standards + State DISCOM Code',
+                    uae:        'DEWA / FEWA Grid Connection Standards',
+                    desert:     'DEWA / FEWA Grid Connection Standards',
+                    australia:  'AS/NZS 4777.1 + AS 61000.3.6 + local DNSP code',
+                    generic:    'Consult local grid authority for interconnection requirements'
+                };
+                const gridCodeText = gridCodeByLocation[config.location] || gridCodeByLocation.generic;
+                labelValue('Applicable Grid Code:', gridCodeText);
+                if (compliance?.authority) {
+                    labelValue('Local Authority:', `${compliance.authority}`);
+                }
+                mutedText('Plants at this capacity typically require pre-energization utility approval (export sanction, protection settings, ride-through compliance, anti-islanding test). Engage the DNO/utility early in detailed design.');
+                y += 2;
+            }
+
+            // ══════════════════════════════════════════════════════════
             // FINAL PAGE: DISCLAIMER
             // ══════════════════════════════════════════════════════════
 
@@ -41788,6 +41851,13 @@ const PVCalculator = {
             // Phase 5B: PV Practical Engine
             const pvPractical = PVPracticalEngine.calculate(LoadEngine.appliances, pvArray, batteryPractical, aggregation, config, this.getPanel());
             pvArray.practical = pvPractical;
+
+            pvArray.installationScale = (pvArray.arrayWattage >= 500000)
+                ? 'utility'
+                : (pvArray.arrayWattage >= 50000)
+                    ? 'commercial'
+                    : 'residential';
+
             const equipmentLibrary = this.getEquipmentPresetDetails(true);
 
             this.results = {
@@ -43102,7 +43172,13 @@ const PVCalculator = {
         const wattColorMap = {};
         uniqueWattages.forEach((w, i) => { wattColorMap[w] = panelGroupColors[i % panelGroupColors.length]; });
 
-        // Draw every panel — partitioned by MPPT channel when multi-MPPT is active
+        // Draw every panel — partitioned by MPPT channel when multi-MPPT is active.
+        // For large single-MPPT arrays (> 16 strings), cap rendered rows and show a combiner indicator.
+        const COMBINER_THRESHOLD = 16;
+        const useCombinerCap = !isMultiMPPT && p > COMBINER_THRESHOLD;
+        const renderedRows = useCombinerCap ? COMBINER_THRESHOLD : p;
+        const hiddenStrings = useCombinerCap ? (p - COMBINER_THRESHOLD) : 0;
+
         const pvGridStartY = Y + 26;
         const rowToChannel = [];
         if (isMultiMPPT) {
@@ -43114,7 +43190,7 @@ const PVCalculator = {
         }
         let panelIdx = 0;
         let lastChannel = -1;
-        for (let row = 0; row < p; row++) {
+        for (let row = 0; row < renderedRows; row++) {
             const channelIdx = isMultiMPPT ? rowToChannel[row] : 0;
             if (isMultiMPPT && channelIdx !== lastChannel) {
                 const headerY = pvGridStartY + row * (panelH + panelGapY) - 4;
@@ -43145,7 +43221,7 @@ const PVCalculator = {
                 ? `M${(rowToChannel[row] || 0) + 1}-S${row + 1}`
                 : `String ${row + 1}`;
             svg += `<text x="${pvPadX + pvGridW + 4}" y="${pvGridStartY + row * (panelH + panelGapY) + panelH/2 + 3}" font-size="8" fill="#92400e">${stringLabel}</text>`;
-            if (row < p - 1) {
+            if (row < renderedRows - 1) {
                 const sameChannel = !isMultiMPPT || rowToChannel[row] === rowToChannel[row + 1];
                 if (sameChannel) {
                     const lineY1 = pvGridStartY + row * (panelH + panelGapY) + panelH;
@@ -43154,6 +43230,15 @@ const PVCalculator = {
                     svg += `<line x1="${pvPadX + pvGridW - panelGapX - 8}" y1="${lineY1}" x2="${pvPadX + pvGridW - panelGapX - 8}" y2="${lineY2}" stroke="#2563eb" stroke-width="1" stroke-dasharray="3"/>`;
                 }
             }
+        }
+        if (useCombinerCap) {
+            const combinerY = pvGridStartY + renderedRows * (panelH + panelGapY) + 6;
+            const combinerW = Math.min(pvGridW, 320);
+            const combinerX = pvPadX + (pvGridW - combinerW) / 2;
+            const combinerH = 28;
+            svg += `<rect x="${combinerX}" y="${combinerY}" width="${combinerW}" height="${combinerH}" rx="6" fill="#fed7aa" stroke="#c2410c" stroke-width="1.5" stroke-dasharray="5 3"/>`;
+            svg += `<text x="${combinerX + combinerW/2}" y="${combinerY + 12}" text-anchor="middle" font-size="9" font-weight="bold" fill="#7c2d12">DC Combiner Box</text>`;
+            svg += `<text x="${combinerX + combinerW/2}" y="${combinerY + 23}" text-anchor="middle" font-size="8" fill="#9a3412">aggregates ${hiddenStrings} additional string${hiddenStrings === 1 ? '' : 's'} (Strings ${COMBINER_THRESHOLD + 1}–${p})</text>`;
         }
         // Voltage/current labels below panel grid
         const pvLabelY = pvGridStartY + pvGridH + 4;
