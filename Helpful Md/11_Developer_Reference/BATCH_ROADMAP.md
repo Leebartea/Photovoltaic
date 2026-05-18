@@ -58,24 +58,11 @@ Updated after each batch. Last update: 2026-05-18 (post-Batch 26B + Hotfix).
 | Hotfix 26B | fdc1ce2 | 2026-05-18 | Remove stale userBatteryUnitCount reference in post-override re-emit block — use battery.stringsInParallel; fixes calculation-on-restore crash |
 | Hotfix: Dual MPPT SVG | 0c84121 | 2026-05-18 | SVG panel grid renders all MPPT channels (mpptTotalRows = sum of ch.config.parallel replaces primary-only p); per-channel series in inner column loop; multi-MPPT PV Array title shows each channel S×P joined with + |
 | Batch 27 | bcd6c8d → 7569d80 | 2026-05-18 | Split-pane independent scroll: .main-grid align-items:start; .input-column + .results-column position:sticky top:0, max-height:100vh, overflow-y:auto, scroll-behavior:smooth, scrollbar-gutter:stable; .results-column .tabs sticky top:0; header scrolls naturally (app-shell approach reverted — caused tiny columns); mobile ≤1024px unchanged |
+| Batch 28 | ab7ab0d | 2026-05-18 | Quad-MPPT: option 4 (Quad MPPT) on mpptInputCount select; mppt4Section DOM block (mppt4MaxVoltage/Current/Power/MinVoltage/MaxOperatingVoltage/MaxChargeCurrent, hidden by default); toggleMultiMPPT() show/hide for count≥4; getMPPT() push for inputCount≥4; engine + SVG generic — zero engine/SVG changes needed |
 
 ---
 
 ## Open Batches (Planned)
-
----
-
-### Batch 28 — Quad-MPPT (4-Input MPPT Support)
-
-Dual and Triple MPPT are fully working (Batch 25A + Hotfix). Quad-MPPT needs the DOM surface wired before option 4 can be added to the select.
-
-**Scope:**
-- Add 3 new DOM inputs in `pv_calculator_ui.html` under the MPPT 2 block (mirroring MPPT 2 field layout): `mppt4MaxVoltage`, `mppt4MaxCurrent`, `mppt4MaxPower`
-- Add option `<option value="4">4 (Quad MPPT)</option>` to the MPPT count select
-- Add a 4th arm to `getMPPT()` in `30-controller.js` that reads the new fields
-- Verify `MultiMPPTDistributor` in `10-engines.ts` handles 4 channels (engine is generic — likely works already, needs confirmation)
-- Update SVG channel split (now working correctly after Hotfix) — no changes needed if engine returns 4 `mpptAssignments`
-- Opus pre-dive needed to confirm engine handles 4 channels and to get exact DOM structure of the existing MPPT 2 block to mirror
 
 ---
 
@@ -101,4 +88,4 @@ Dual and Triple MPPT are fully working (Batch 25A + Hotfix). Quad-MPPT needs the
 - Build must pass (`npm run build` exit 0) before any commit
 - After committing, run `git log origin/main..HEAD --oneline` — if any lines appear, those commits are NOT pushed. Run `git push origin main`.
 
-*Last updated: 2026-05-18 (post-Batch 27 — split-pane independent scroll done; Quad-MPPT queued as Batch 28)*
+*Last updated: 2026-05-18 (post-Batch 28 — Quad-MPPT done; all 1/2/3/4 MPPT inputs fully supported)*

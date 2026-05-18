@@ -161,6 +161,17 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 28 — Quad-MPPT (commit ab7ab0d — 2026-05-18)
+
+- **Option 4 added** to `mpptInputCount` select — "4 (Quad MPPT)" now appears alongside Single / Dual / Triple
+- **`mppt4Section` DOM block** — static HTML (hidden by default, mirrors MPPT 3 layout exactly): `mppt4MaxVoltage` / `mppt4MaxCurrent` / `mppt4MaxPower` / `mppt4MinVoltage` / `mppt4MaxOperatingVoltage` / `mppt4MaxChargeCurrent` with heading "MPPT 4 (Fourth Input)"
+- **`toggleMultiMPPT()`** extended with `count >= 4` show/hide branch for `mppt4Section`
+- **`getMPPT()`** extended with `inputCount >= 4` push that reads the 6 new DOM fields and labels the channel `'MPPT 4'`; optional-chain guards on all 6 element reads
+- **Engine zero-changes** — `MultiMPPTDistributor.distribute()` iterates `allMPPTs.length` generically; loop at line 5091 in `10-engines.ts` handles 4 channels automatically; `mpptAssignments` shape unchanged
+- **SVG zero-changes** — channel render loop in `renderOverviewTab` iterates `mpptChannels` generically; MPPT 4 assignment auto-renders as "MPPT 4 — XS×YP" with M4-Sx panel labels; confirmed by Opus pre-dive
+
+---
+
 ### Batch 27 — Split-Pane Independent Scroll Layout (commit bcd6c8d — 2026-05-18)
 
 - **App-shell layout (desktop ≥1025px)** — `html, body { height: 100%; overflow: hidden; }` + `body { display: flex; flex-direction: column; }` + `.container { flex: 1; min-height: 0; display: flex; flex-direction: column; }` + `.main-grid { flex: 1; min-height: 0; }` — the two-column grid now fills the remaining viewport after the header and mode banner, with neither column overflowing the page
