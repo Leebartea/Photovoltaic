@@ -1813,7 +1813,7 @@ const BatterySizingEngine = {
         const blocks = [];
         const suggestions = [];
 
-        const specs = DEFAULTS.BATTERY_SPECS[chemistry];
+        const specs = DEFAULTS.BATTERY_SPECS[chemistry] || DEFAULTS.BATTERY_SPECS.lifepo4;
         const bankVoltage = inverterReq.dcBusVoltage;
         const cellVoltage = specs.cellVoltage;
         const isLithium = chemistry === 'lifepo4';
@@ -3515,7 +3515,7 @@ const PVArrayEngine = {
         const blocks = [];
         const suggestions = [];
 
-        const batterySpecs = DEFAULTS.BATTERY_SPECS[batteryReq.chemistry];
+        const batterySpecs = DEFAULTS.BATTERY_SPECS[batteryReq.chemistry] || DEFAULTS.BATTERY_SPECS.lifepo4;
 
         // System efficiency
         const systemEfficiency =
@@ -4431,7 +4431,7 @@ const SystemLossEngine = {
      * Calculate comprehensive system losses
      */
     calculate(aggregatedLoad, batteryReq, pvDesign, cableSizing, config) {
-        const batterySpecs = DEFAULTS.BATTERY_SPECS[batteryReq.chemistry];
+        const batterySpecs = DEFAULTS.BATTERY_SPECS[batteryReq.chemistry] || DEFAULTS.BATTERY_SPECS.lifepo4;
 
         // Component efficiencies
         const inverterEff = DEFAULTS.INVERTER_EFFICIENCY;
@@ -4502,7 +4502,7 @@ const UpgradeSimulator = {
     analyzeUpgradePaths(results, panel, mppt, config) {
         const paths = [];
         const batteryChemistry = results.battery.chemistry;
-        const battSpec = DEFAULTS.BATTERY_SPECS[batteryChemistry];
+        const battSpec = DEFAULTS.BATTERY_SPECS[batteryChemistry] || DEFAULTS.BATTERY_SPECS.lifepo4;
         const parallelLimit = this.BATTERY_PARALLEL_LIMITS[batteryChemistry] || { maxParallel: 4, reason: 'General safety limit' };
 
         // ---- 1. BATTERY EXPANSION ----

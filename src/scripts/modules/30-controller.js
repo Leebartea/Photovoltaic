@@ -20826,8 +20826,11 @@ const PVCalculator = {
                 labelValue('Battery Bank:', `${Math.round(batt.totalCapacityAh)} Ah  |  ${batt.cellsInSeries}S${batt.stringsInParallel}P  |  ${batt.chemistryName}  |  ${fmtEnergy(batt.totalCapacityWh)}`);
             }
             labelValue('PV Array:', `${fmtWp(pv.arrayWattage)}  |  ${pv.panelsInSeries}S × ${pv.stringsInParallel}P = ${pv.totalPanels} panels`);
-            if (commercial?.usesStandaloneMPPT && R.mpptValidation) {
+            if (R.mpptValidation) {
                 labelValue('MPPT Validation:', R.mpptValidation.isValid ? 'PASS — All checks within limits' : 'ISSUES — See warnings below');
+                if (commercial?.usesStandaloneMPPT) {
+                    labelValue('Standalone MPPT:', 'Yes — separate charge controller required');
+                }
                 if (R.multiMPPTResult?.distributions) {
                     const rec = R.multiMPPTResult.recommended;
                     const channels = R.multiMPPTResult.distributions?.[rec]?.channels;
@@ -20919,7 +20922,11 @@ const PVCalculator = {
                 bodyText(clientHeadline);
                 y += 1;
                 bulletItem(`Recommended system: ${inv.recommendedSizeVA}VA inverter, ${Math.round(batt.totalCapacityAh)}Ah ${batt.chemistryName}, and ${pv.arrayWattage}Wp of PV (${pv.totalPanels} panels).`, 'info', 2);
-                bulletItem(`Average-load backup target: about ${backupLabelPdf}.`, 'info', 2);
+                if (systemTypeValue !== 'grid_tie') {
+                    bulletItem(`Average-load backup target: about ${backupLabelPdf}.`, 'info', 2);
+                } else {
+                    bulletItem(`Backup capability: none — grid-tie configuration exports to utility instead of storing energy on-site.`, 'info', 2);
+                }
                 bulletItem(`Modeled solar production: about ${(pv.dailyEnergyWh / 1000).toFixed(1)} kWh/day in the selected sun profile.`, 'info', 2);
                 bulletItem(`Installer: ${proposalDisplay.installerLabel}. Client / site: ${proposalDisplay.clientLabel} | ${proposalDisplay.siteLabel}.`, 'info', 2);
                 bulletItem(`Business context: ${businessContext.profile?.label || 'Custom / Mixed Site'} | ${businessContext.operatingIntent?.label || 'Backup-Only Resilience'} | ${businessContext.continuityClass?.label || 'Business Critical'}.`, 'info', 2);
@@ -22974,7 +22981,7 @@ const PVCalculator = {
             const userBatteryUnitCount = parseInt(document.getElementById('batteryUnitCount').value);
             if (userBatteryUnitCount > 0) {
                 const unitAh = battery.recommendedAhPerCell;
-                const unitV = DEFAULTS.BATTERY_SPECS[batteryChemistry].cellVoltage;
+                const unitV = (DEFAULTS.BATTERY_SPECS[batteryChemistry] || DEFAULTS.BATTERY_SPECS.lifepo4).cellVoltage;
                 const cellsPerUnit = Math.round(battery.bankVoltage / unitV);
                 const autoStrings = battery.stringsInParallel;
 
