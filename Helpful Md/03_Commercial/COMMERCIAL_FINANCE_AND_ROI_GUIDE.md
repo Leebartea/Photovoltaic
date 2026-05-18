@@ -25,6 +25,14 @@ The current build now surfaces finance / ROI in:
 - package comparison cards
 - PDF export
 
+## Pricing Mode And Finance Input
+
+The finance layer uses the project cost total as its starting point. The project cost total comes from whichever pricing mode is active in `Proposal Pricing`:
+
+**$/Wp Benchmark mode** — cost is derived from international benchmark rates. This is the default.
+
+**Local Cost Build-Up mode** — cost is derived from per-unit local prices entered by the installer (panel unit price, inverter price, battery price per unit, BOS, logistics, permits, labour, profit margin). Use this in markets (e.g., Nigeria) where local supplier prices differ significantly from $/Wp benchmarks. The resulting total is FX-safe and feeds directly into the finance calculations below.
+
 ## Inputs
 
 The finance layer reads these fields from `Proposal Pricing`:

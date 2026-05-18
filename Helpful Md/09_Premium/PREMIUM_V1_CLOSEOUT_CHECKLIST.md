@@ -1,5 +1,8 @@
 # Premium V1 Closeout Checklist
 
+> **PLANNED FUTURE CAPABILITY — NOT YET IMPLEMENTED**
+> This checklist describes the backend and premium/paid feature set that has not yet been deployed. The current product is entirely offline-first with no active premium tier, no backend server, and no live seat or entitlement system. The "100% repo closeout" language below refers to the documentation and code scaffolding being ready — not to any live paid product being operational.
+
 ## Purpose
 
 This file exists to stop the premium/backend lane from turning into an endless loop.

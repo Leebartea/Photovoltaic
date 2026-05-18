@@ -1,10 +1,12 @@
 # Proposal Branding And Release Control Guide
 
+> **Note on backend sync:** Any reference below to "shared company-profile sync", "backend-backed sync", or "team publishing" describes the future backend integration path. The current released product is offline-first and browser-only — all branding, profile, and release-template features work entirely from browser storage with no backend required or available.
+
 ## Purpose
 
 This guide explains the optional branding and release block inside `Proposal Identity & Site Survey`.
 
-It adds local workflow layers first, and now also supports an optional backend-backed shared profile sync path:
+It adds local workflow layers first, and now also supports an optional backend-backed shared profile sync path (planned future capability — not yet active):
 
 - a browser-saved company profile library
 - optional branded asset slots for accent, issuer tagline, and footer note

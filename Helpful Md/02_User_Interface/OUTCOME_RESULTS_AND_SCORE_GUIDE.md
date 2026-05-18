@@ -140,9 +140,23 @@ This is the modeled bank capacity at the chosen battery voltage and chemistry.
 
 If the card shows a wrench icon, manual override is active.
 
+If the battery is in **AUTO mode** (green AUTO badge), the engine chose all battery parameters and an engine summary card (`#batteryEngineSummary`) appears in the Battery tab after Calculate with a 5-cell grid explaining the engine's decisions. A collapsible "Why?" section gives the plain-language reasoning.
+
+If the battery is in **MANUAL mode** (amber MANUAL badge), the installer fixed the battery spec as a hard constraint and the engine sized other components around it.
+
 ### PV Array (W)
 
 This is the modeled PV nameplate required for the selected load story and operating posture.
+
+### Installation Scale
+
+Derived automatically from modeled array wattage:
+
+- `Residential` — array below 10 kWp
+- `Commercial` — array 10 kWp to below 50 kWp
+- `Utility` — array 50 kWp and above
+
+This affects advisory language, proposal framing, and the PDF export. At Utility scale (≥50 kWp), the PDF export includes a Commercial Plant Engineering section with transformer kVA recommendation, DC combiner count, IEC 61724-1 SCADA notes, and region-keyed grid code references.
 
 ### Solar Panels
 

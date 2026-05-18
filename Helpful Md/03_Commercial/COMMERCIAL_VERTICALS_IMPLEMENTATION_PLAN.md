@@ -28,6 +28,9 @@ The calculator is already strong in these areas:
 - advisory commercial finance / ROI tied to the current support story and package posture
 - regional compliance packs plus authority-specific submission-pack readiness
 - tailoring-adjacent motor logic and surge-aware load modeling
+- **Local Cost Build-Up pricing mode**: per-unit local prices for panels, inverter, battery, BOS, logistics, permits, labour, and margin — with region-aware defaults and FX-safe arithmetic — so markets like Nigeria are not forced to use $/Wp international benchmarks
+- **Battery AUTO/MANUAL mode**: the engine can decide all battery parameters automatically (AUTO, green badge) or the installer can lock fields as hard constraints (MANUAL, amber badge); partial-auto is also supported
+- **installationScale** classification (residential / commercial / utility) with scale-appropriate advisory language and Commercial Plant Engineering PDF section at ≥50 kWp
 
 It is not yet complete for heavier commercial field work because the remaining gap is not basic sizing math. The remaining gap is now **lifecycle-finance depth beyond the current advisory ROI layer**, **optional supplier/live-data layers** beyond the current offline heuristics, and any future move from captive-site scoping into true utility / mini-grid engineering.
 

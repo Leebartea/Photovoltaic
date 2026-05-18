@@ -72,6 +72,9 @@ The Advanced PV System Calculator is an **offline-first, browser-based** PV desi
 - Panel wattage auto-suggest: after Calculate, a tier hint appears below the panel wattage field showing the optimal Wp for the estimated array kWp; one-click Apply available; no forced override
 - MPPT specs at-default advisory: when all three primary MPPT fields remain at HTML placeholder values (500V/27A/7500W), an info advisory prompts the user to enter actual datasheet values
 - Mobile hamburger result navigation: after Calculate, a two-tier nav block appears in the hamburger menu with section-level links (Executive Snapshot, Commercial Estimate, Warnings, Detailed Results, Disclaimer, Export) and indented ↳ tab sub-links under Detailed Results; the "Detailed Results" entry has a ▾/▸ caret for collapsing the tab sub-list; all links use `navigateToResultSection`/`navigateToResultTab` helpers that expand collapsed sections and scroll precisely without focus-scroll conflict
+- **Battery AUTO/MANUAL mode** (Batch 26): the battery sizing section has two postures. In AUTO mode (green badge) the engine decides all battery parameters (Ah, voltage, unit count, kWh) and the fields are read-only with `is-auto` CSS lock indicators. In MANUAL mode (amber badge) the user locks all fields as hard constraints and the engine respects them. Partial-auto is supported: the user can fill some fields and leave others for the engine. Post-calculate, an engine summary card (`#batteryEngineSummary`) displays a 5-cell grid of engine decisions with a collapsible "Why?" explanation. Reset to Auto / Switch to Manual buttons toggle the posture without clearing the load list. The "Auto (engine picks)" option in the voltage selector is the trigger for AUTO voltage selection.
+- **installationScale** field: derived from modeled array wattage — `residential` (<10 kWp), `commercial` (10–50 kWp), `utility` (≥50 kWp). Drives advisory language, proposal framing, and gates the Commercial Plant Engineering PDF section.
+- **Commercial Plant Engineering PDF section** (Batch 25C): automatically included in PDF export when array wattage is ≥50 kWp (`installationScale === 'utility'`). Contains transformer kVA recommendation, DC combiner count, IEC 61724-1 SCADA monitoring notes, and region-keyed grid code references.
 
 **Target users:** Solar installers, electrical engineers, proposal teams, and system designers working with off-grid and hybrid PV installations for residential, commercial, and small-industrial captive sites across global markets.
 
@@ -190,7 +193,7 @@ After clicking "Calculate System Design", the right column renders 12 tabs:
 | Overview | `renderOverviewTab()` | 6262-6813 | Full SVG system diagram + component spec sheets |
 | Load | `renderLoadTab()` | 6814-6856 | Power/energy breakdown, daytime/nighttime split |
 | Inverter | `renderInverterTab()` | 6857-7187 | Three-tier sizing (Conservative/Recommended/Optimized), stagger option, market range, manual tier verification |
-| Battery | `renderBatteryTab()` | 7188-7246 | Capacity, chemistry, charge/discharge rates, kWh |
+| Battery | `renderBatteryTab()` | 7188-7246 | Capacity, chemistry, charge/discharge rates, kWh; AUTO/MANUAL mode badge, engine summary card (#batteryEngineSummary), field lock indicators |
 | Batt Config | `renderBatteryConfigTab()` | 7247-7483 | Visual SVG battery bank layout, series/parallel wiring |
 | PV Array | `renderPVTab()` | 7708-7848 | Panel count, string config, voltage/current, derating |
 | PV Config | `renderConfigTab()` | 7996-8177 | Configuration comparison table, scoring, pros/cons, multi-MPPT distribution |
@@ -232,6 +235,14 @@ The Overview tab (Line 6262) renders a **dynamically sized SVG diagram** showing
 Two rendering paths: **off-grid** (separate MPPT + inverter boxes) and **hybrid** (combined inverter with MPPT sub-box). Battery rendering adapts dimensions when `parallelStrings > 3` for compact display.
 
 **Mixed battery bank grid:** When `battery.isMixedBank && battery.mixedBankData`, the SVG Overview uses `battGridCols = mixedBankData.totalUnits` and `battGridRows = 1` (single row with all units). Each battery box shows its individual Ah with group-specific fill colors. Both hybrid and off-grid rendering paths support this layout.
+
+**Multi-MPPT channel headers (dual/triple MPPT):** When 2 or 3 MPPT inputs are used, the SVG panel grid renders distinct channel sections separated by a dashed vertical divider line. Each channel has a header label (`MPPT 1 — XS×YP` / `MPPT 2 — XS×YP`) and individual panel labels use the `M1-Sx` / `M2-Sx` prefix format so channel allocation is visible at a glance.
+
+**Single-MPPT combiner row-cap:** When a single-MPPT array exceeds 16 string rows, the SVG caps the rendered grid at 16 rows and adds a "DC Combiner Box" indicator label to indicate that a combiner box is assumed in the field wiring.
+
+**3-phase conductor stripes:** On 3-phase jobs the AC bus section of the SVG uses three colored conductor stripes (L1/L2/L3) to visually distinguish phase allocation.
+
+**Battery voltage label:** The battery bank SVG block shows the DC bus voltage (e.g., `48V DC`) as an annotation on the battery string to make bus voltage immediately readable without opening the Battery tab.
 
 ---
 

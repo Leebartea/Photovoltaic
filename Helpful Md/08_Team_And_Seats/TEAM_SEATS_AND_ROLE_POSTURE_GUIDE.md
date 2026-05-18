@@ -1,5 +1,8 @@
 # Team Seats And Role Posture Guide
 
+> **PLANNED FUTURE CAPABILITY — NOT YET IMPLEMENTED**
+> This guide describes a team seat and multi-user role system that has not yet been built or deployed. The current product has no multi-user login, no seat management, and no server-side role enforcement. All content below describes the intended future design for when a backend is introduced.
+
 ## Purpose
 
 This guide explains the new `team seat` layer in the premium/backend workflow.

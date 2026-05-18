@@ -140,6 +140,46 @@ On mobile (≤768px) the left-side section navigator collapses into a ☰ button
   - protection
   - cable
 
+## Battery AUTO/MANUAL Mode
+
+The battery sizing section has two postures:
+
+**AUTO mode** (green AUTO badge):
+- The engine decides all battery parameters — Ah, voltage, unit count, kWh
+- Fields are read-only with `is-auto` CSS lock indicators (shown as grey with a lock hint)
+- The voltage selector shows "Auto (engine picks)" as the active choice
+- After Calculate, an engine summary card (`#batteryEngineSummary`) appears as a 5-cell grid showing what the engine chose and why
+- The card has a collapsible "Why?" explanation section for the client-facing context
+- Use AUTO when you want the safest engine-recommended battery bank without manual guesswork
+
+**MANUAL mode** (amber MANUAL badge):
+- All battery fields are editable and treated as hard constraints
+- The engine sizes other components (PV, inverter) to respect your fixed battery choice
+- A `Switch to Manual` button activates this mode
+- A `Reset to Auto` button reverts to engine control without clearing the load list
+
+**Partial-auto** (mixed):
+- Fill some fields (e.g., fix the voltage to 48V) and leave others for the engine
+- The engine respects the user-set fields as fixed and decides the rest
+
+Use MANUAL when matching a specific supplier's battery model or when the client has already purchased a battery bank.
+
+## Local Cost Build-Up Pricing Mode
+
+Inside `Proposal Pricing`, the pricing mode selector lets you switch between:
+
+**$/Wp Benchmark mode** (default):
+- Prices are derived from international $/Wp benchmarks for panels, inverters, and batteries
+- Region-aware defaults are seeded automatically when the location profile changes
+- Best for quick early scoping where local procurement data is not yet available
+
+**Local Cost Build-Up mode**:
+- Enter per-unit local prices directly: panel cost per unit, inverter cost, battery cost per unit, BOS cost, logistics, permits, labour, and profit margin
+- All arithmetic is FX-safe — local currency amounts are calculated using the live FX rate field
+- Region-aware default unit prices are seeded when location changes, but the installer can override each line
+- Use this in markets (e.g., Nigeria) where local supplier prices differ significantly from international $/Wp benchmarks
+- The resulting quote total, margin, and component breakdown all derive from the local price inputs rather than benchmark rates
+
 ## What The Main Terms Mean
 
 ### Business Profile
@@ -440,6 +480,29 @@ Read it as four staged questions:
 - is the technical dossier strong enough?
 - is the approval lane clear for this path?
 - is the closeout / handover pack actually aligned?
+
+## SVG System Overview (Overview Tab)
+
+After Calculate, the Overview tab renders a full SVG system diagram. Key features for installers:
+
+**Multi-MPPT channel headers:**
+When 2 or 3 MPPT inputs are used, the panel grid shows distinct channel sections separated by a dashed vertical divider. Each channel has a header label (`MPPT 1 — XS×YP` / `MPPT 2 — XS×YP`) and panel labels use the `M1-Sx` / `M2-Sx` prefix so the MPPT channel allocation is unambiguous.
+
+**Single-MPPT combiner row-cap:**
+When a single-MPPT array exceeds 16 string rows, the diagram caps the grid at 16 rendered rows and shows a "DC Combiner Box" label, indicating a combiner box is assumed in the field wiring.
+
+**3-phase conductor stripes:**
+On 3-phase jobs, the AC bus section uses three colored conductor stripes to distinguish phase allocation (L1 / L2 / L3).
+
+**Battery voltage label:**
+The battery bank block shows the DC bus voltage (e.g., `48V DC`) as an annotation so the bus voltage is immediately readable without opening the Battery tab.
+
+Use the SVG diagram as a quick sanity check on:
+- string/parallel configuration per MPPT channel
+- whether a combiner box is required
+- bus voltage
+
+Do not treat the SVG as an IEC-compliant SLD or a substitute for a stamped drawing.
 
 ## How The Section Flow Works
 

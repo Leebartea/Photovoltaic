@@ -369,3 +369,35 @@ Open them when the job genuinely needs:
 - authority-facing or witness-facing structure
 
 That is how the product stays powerful without becoming confusing.
+
+## Cross-Scenario Features
+
+These features apply across all scenarios and are worth knowing before starting any job:
+
+### Battery AUTO/MANUAL mode
+By default the battery section is in AUTO mode (green badge): the engine decides Ah, voltage, unit count, and kWh automatically. After Calculate, an engine summary card in the Battery tab explains the engine's decisions.
+
+Switch to MANUAL mode (amber badge) when:
+- a specific battery bank has already been purchased
+- the supplier has quoted a fixed battery unit type and count
+- the client brief names a battery spec
+
+In MANUAL mode, all battery fields are editable and treated as hard constraints. The engine respects them and sizes other components around them. Reset to Auto / Switch to Manual buttons let you toggle without clearing the load list.
+
+### Local Cost Build-Up pricing
+When local supplier prices are known, switch `Proposal Pricing` to Local Cost Build-Up mode. This lets you enter per-unit costs for panels, inverter, battery, BOS, logistics, permits, labour, and margin directly instead of relying on $/Wp international benchmarks.
+
+Use Local Cost Build-Up when:
+- the supplier has quoted panel and battery unit prices locally (e.g., in NGN)
+- the client wants a local-market breakdown rather than a $/Wp rollup
+- the pricing region benchmark would give a misleading project cost
+
+Region-aware default unit prices are seeded when the location profile changes, but you can override each line. All arithmetic is FX-safe using the FX rate field.
+
+### installationScale and Commercial Plant Engineering PDF
+The app derives an installation scale from the modeled array size:
+- `Residential` (<10 kWp)
+- `Commercial` (10–50 kWp)
+- `Utility` (≥50 kWp)
+
+At Utility scale (≥50 kWp), the PDF export automatically includes a Commercial Plant Engineering section with transformer kVA recommendation, DC combiner count, IEC 61724-1 SCADA monitoring notes, and region-keyed grid code references. For plant and mini-factory jobs approaching 50 kWp, confirm whether the array size crosses this threshold before issuing the proposal.

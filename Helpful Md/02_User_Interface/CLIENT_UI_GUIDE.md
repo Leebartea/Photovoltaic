@@ -203,6 +203,15 @@ If the quote looks strong technically but the supplier quote freshness is weak, 
 
 The installer workflow now also includes a supplier refresh brief, so aging or stale quotes can be re-asked against the same design basis instead of being rebuilt loosely by hand.
 
+### Battery AUTO/MANUAL Mode
+The calculator can size the battery bank automatically (AUTO mode, shown with a green badge) or let the installer fix the battery spec manually (MANUAL mode, shown with an amber badge).
+
+In AUTO mode the engine decides all battery parameters and locks the fields. After the calculation runs, a summary card explains what the engine chose and why.
+
+In MANUAL mode the installer has fixed a specific battery choice (e.g., to match an already-purchased battery bank). Fields are editable and the engine treats them as hard constraints.
+
+Clients reading a result where the battery is in MANUAL mode should note that the battery spec is fixed — the installer has a specific reason for it.
+
 ### Supplier Quote Import
 Clients do not need to operate this directly, but it matters because it improves commercial traceability.
 

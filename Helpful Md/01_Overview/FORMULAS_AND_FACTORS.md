@@ -601,7 +601,7 @@ Default values (**Lines 1607-1619**):
 | Continuous Load Factor | 1.25 (125%) |
 | DC Voltage Drop Target | 3% |
 | AC Voltage Drop Target | 2% |
-| Voc Headroom | 3% |
+| Voc Headroom | 5% (raised from 3% for cold-weather safety; a 90% soft-warn tier also triggers before the hard block) |
 
 ### 5.2 Required PV Energy
 **Lines 2241-2258**
@@ -665,7 +665,7 @@ MaxSeriesVoc = floor((MPPT_MaxVoltage x (1 - VOC_HEADROOM_PERCENT)) / Voc_cold)
 MaxSeriesVmp = floor(MPPT_MaxOperatingVoltage / Vmp)
 MaxSeriesForMPPT = MIN(MaxSeriesVoc, MaxSeriesVmp)
 ```
-- `VOC_HEADROOM_PERCENT = 0.03` (3% safety margin, Line 1619)
+- `VOC_HEADROOM_PERCENT = 0.05` (5% safety margin, raised from 3% for cold-weather safety; a 90% soft-warn tier also fires before the hard block)
 
 ### 5.8 Minimum Panels in Series
 **Lines 2285-2288**
@@ -1278,7 +1278,7 @@ All system constants from **Lines 1607-1619**:
 | PV Soiling Loss | PV_SOILING_LOSS | 0.03 | (3%) |
 | PV Mismatch Loss | PV_MISMATCH_LOSS | 0.02 | (2%) |
 | Cable Loss Factor | CABLE_LOSS_FACTOR | 0.02 | (2%) |
-| Voc Headroom | VOC_HEADROOM_PERCENT | 0.03 | (3%) |
+| Voc Headroom | VOC_HEADROOM_PERCENT | 0.05 | (5% — raised from 3% for cold-weather safety) |
 
 ---
 

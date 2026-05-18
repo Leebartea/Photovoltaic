@@ -1,5 +1,8 @@
 # Premium Capability Roadmap
 
+> **PLANNED FUTURE CAPABILITY — NOT YET IMPLEMENTED**
+> This guide describes a paid premium tier, entitlement checks, and workspace-level limits that have not yet been implemented in the current released version. The current product is a fully free offline-first tool with no payment gating, no backend entitlement enforcement, and no premium vs. free feature split active in production. All content below describes the intended future roadmap.
+
 ## Purpose
 
 This guide lays out the safest path for introducing paid capability into the product without weakening the current offline-first structure.

@@ -1,5 +1,8 @@
 # Optional Backend Foundation Guide
 
+> **PLANNED FUTURE CAPABILITY — NOT YET IMPLEMENTED**
+> This guide describes an optional backend server layer that has not yet been built or deployed. The current product is 100% offline-first and browser-only. No backend server, team seat logic, or dynamic entitlement enforcement exists in the current released version. All content below describes the intended future architecture.
+
 ## Purpose
 
 This guide explains the cleanest backend introduction path for this product.
