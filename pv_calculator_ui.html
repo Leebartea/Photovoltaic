@@ -42906,6 +42906,15 @@ const PVCalculator = {
         const panel = this.getPanel();
         const specs = DEFAULTS.BATTERY_SPECS[batt.chemistry] || DEFAULTS.BATTERY_SPECS.lifepo4;
         const isHybrid = config.systemType === 'hybrid' || config.systemType === 'grid_tie';
+        const isGridTie = config.systemType === 'grid_tie';
+        const isPureGridTie = config.systemType === 'grid_tie';
+        const isThreePhase = config.phaseType === 'three_phase';
+        const isSplitPhase = config.phaseType === 'split';
+        const acServiceBadge = isThreePhase
+            ? '3φ 400/230V'
+            : isSplitPhase
+                ? 'Split 240/120V'
+                : `1φ ${config.acVoltage}V`;
         const compliance = details.compliance || this.getCompliancePack(config, null, details);
         const submissionPack = compliance?.submissionPack || null;
         const commercial = details.commercial || this.calculateCommercialEstimate(details);
@@ -42917,6 +42926,8 @@ const PVCalculator = {
         const acBreaker = protection.acSide?.find(d => d.name?.includes('MCB') || d.name?.includes('AC'));
         const pvBreakerLabel = pvBreaker ? pvBreaker.rating : 'Auto';
         const battBreakerLabel = battBreaker ? battBreaker.rating : 'Auto';
+        // Patch breaker voltage suffix when engine bankVoltage disagrees with unit-derived voltage.
+        let battBreakerLabelDisplay = battBreakerLabel;
         const acBreakerLabel = acBreaker ? acBreaker.rating : 'Auto';
 
         // Battery unit info (uses flexible voltage/Ah)
@@ -42930,6 +42941,17 @@ const PVCalculator = {
         const totalBatteries = (batt.isMixedBank && batt.mixedBankData && batt.mixedBankData.totalUnits)
             ? batt.mixedBankData.totalUnits
             : batteriesInSeries * parallelStrings;
+
+        // Effective DC-bus voltage: derive from battery unit × series count rather than
+        // trusting the engine's tier-guessed bankVoltage (which can mismatch user unit pick).
+        const svgBankV = Math.max(
+            (unitVoltage || 0) * (batteriesInSeries || 1),
+            batt.bankVoltage || 0
+        ) || batt.bankVoltage || 48;
+        // Patch the breaker label's voltage suffix to match svgBankV
+        if (battBreakerLabelDisplay && /\/\s*\d+\s*V(DC)?$/i.test(battBreakerLabelDisplay)) {
+            battBreakerLabelDisplay = battBreakerLabelDisplay.replace(/\/\s*\d+\s*V(DC)?$/i, `/ ${svgBankV}VDC`);
+        }
 
         // Cable info for wire labels
         const pvCable = cables?.dcRuns?.find(r => r.name?.includes('PV'));
@@ -43015,14 +43037,27 @@ const PVCalculator = {
         // Minimum box width ensures title/spec text never overflows (280px holds ~52 chars at font 8.5)
         const battBoxWPre = Math.max(battGridTotalWPre + 40, 280);
         const rightColWPre = 260; // widest right-side component (increased for long inverter text)
+        const gridNodeWidth = isHybrid ? 80 : 0; // utility grid node attaches right of AC MCB
         const colGapPre = 30;
-        const twoColW = battBoxWPre + colGapPre + rightColWPre + 60; // total with margins
+        const twoColW = battBoxWPre + colGapPre + rightColWPre + gridNodeWidth + 60; // total with margins
         const W = Math.max(900, pvGridW + 120, twoColW);
         const cx = W / 2;
         const boxR = 8;
 
         let Y = 0;
         let svg = '';
+
+        // Multi-MPPT channel map — used to partition the PV string grid below
+        const mpptDist = (details.multiMPPTResult
+            && details.multiMPPTResult.recommended >= 0
+            && details.multiMPPTResult.distributions
+            && details.multiMPPTResult.distributions[details.multiMPPTResult.recommended])
+            || null;
+        const mpptChannels = mpptDist
+            ? (mpptDist.mpptAssignments || []).filter(a => !a.unused && a.config && a.panels > 0)
+            : [];
+        const mpptCount = mpptChannels.length;
+        const isMultiMPPT = mpptCount > 1;
 
         // ===== SECTION 1: PV ARRAY — Full Panel Grid =====
         const pvPadX = Math.max(30, (W - pvGridW) / 2);
@@ -43060,10 +43095,31 @@ const PVCalculator = {
         const wattColorMap = {};
         uniqueWattages.forEach((w, i) => { wattColorMap[w] = panelGroupColors[i % panelGroupColors.length]; });
 
-        // Draw every panel
+        // Draw every panel — partitioned by MPPT channel when multi-MPPT is active
         const pvGridStartY = Y + 26;
+        const rowToChannel = [];
+        if (isMultiMPPT) {
+            mpptChannels.forEach((ch, chIdx) => {
+                const rowsForChannel = (ch.config && ch.config.parallel) || ch.parallel || 1;
+                for (let r = 0; r < rowsForChannel; r++) rowToChannel.push(chIdx);
+            });
+            while (rowToChannel.length < p) rowToChannel.push(mpptChannels.length - 1);
+        }
         let panelIdx = 0;
+        let lastChannel = -1;
         for (let row = 0; row < p; row++) {
+            const channelIdx = isMultiMPPT ? rowToChannel[row] : 0;
+            if (isMultiMPPT && channelIdx !== lastChannel) {
+                const headerY = pvGridStartY + row * (panelH + panelGapY) - 4;
+                if (lastChannel !== -1) {
+                    svg += `<line x1="${pvBoxX + 6}" y1="${headerY - 4}" x2="${pvBoxX + pvBoxW - 6}" y2="${headerY - 4}" stroke="#a16207" stroke-width="0.8" stroke-dasharray="4 3" opacity="0.7"/>`;
+                }
+                const ch = mpptChannels[channelIdx];
+                const chS = (ch.config && ch.config.series) || ch.series || 0;
+                const chP = (ch.config && ch.config.parallel) || ch.parallel || 0;
+                svg += `<text x="${pvBoxX + 8}" y="${headerY + 2}" font-size="8" font-weight="bold" fill="#7c2d12">MPPT ${channelIdx + 1} — ${chS}S × ${chP}P (${ch.panels}p)</text>`;
+                lastChannel = channelIdx;
+            }
             for (let col = 0; col < s; col++) {
                 const px = pvPadX + col * (panelW + panelGapX);
                 const py = pvGridStartY + row * (panelH + panelGapY);
@@ -43071,23 +43127,25 @@ const PVCalculator = {
                 const fillColor = perPanelWattages ? (wattColorMap[thisWatt] || '#fde68a') : '#fde68a';
                 panelIdx++;
                 svg += `<rect x="${px}" y="${py}" width="${panelW}" height="${panelH}" rx="3" fill="${fillColor}" stroke="#a16207" stroke-width="1.2"/>`;
-                // Cell lines for realism
                 svg += `<line x1="${px + panelW/3}" y1="${py}" x2="${px + panelW/3}" y2="${py + panelH}" stroke="#a16207" stroke-width="0.3" opacity="0.4"/>`;
                 svg += `<line x1="${px + 2*panelW/3}" y1="${py}" x2="${px + 2*panelW/3}" y2="${py + panelH}" stroke="#a16207" stroke-width="0.3" opacity="0.4"/>`;
                 svg += `<text x="${px + panelW/2}" y="${py + panelH/2 + 4}" text-anchor="middle" font-size="8" fill="#78350f">${thisWatt}W</text>`;
-                // Series wires between panels in same row
                 if (col < s - 1) {
                     svg += `<line x1="${px + panelW}" y1="${py + panelH/2}" x2="${px + panelW + panelGapX}" y2="${py + panelH/2}" stroke="#f59e0b" stroke-width="1.5"/>`;
                 }
             }
-            // String label
-            svg += `<text x="${pvPadX + pvGridW + 4}" y="${pvGridStartY + row * (panelH + panelGapY) + panelH/2 + 3}" font-size="8" fill="#92400e">String ${row+1}</text>`;
-            // Parallel lines between rows
+            const stringLabel = isMultiMPPT
+                ? `M${(rowToChannel[row] || 0) + 1}-S${row + 1}`
+                : `String ${row + 1}`;
+            svg += `<text x="${pvPadX + pvGridW + 4}" y="${pvGridStartY + row * (panelH + panelGapY) + panelH/2 + 3}" font-size="8" fill="#92400e">${stringLabel}</text>`;
             if (row < p - 1) {
-                const lineY1 = pvGridStartY + row * (panelH + panelGapY) + panelH;
-                const lineY2 = pvGridStartY + (row+1) * (panelH + panelGapY);
-                svg += `<line x1="${pvPadX + 8}" y1="${lineY1}" x2="${pvPadX + 8}" y2="${lineY2}" stroke="#dc2626" stroke-width="1" stroke-dasharray="3"/>`;
-                svg += `<line x1="${pvPadX + pvGridW - panelGapX - 8}" y1="${lineY1}" x2="${pvPadX + pvGridW - panelGapX - 8}" y2="${lineY2}" stroke="#2563eb" stroke-width="1" stroke-dasharray="3"/>`;
+                const sameChannel = !isMultiMPPT || rowToChannel[row] === rowToChannel[row + 1];
+                if (sameChannel) {
+                    const lineY1 = pvGridStartY + row * (panelH + panelGapY) + panelH;
+                    const lineY2 = pvGridStartY + (row+1) * (panelH + panelGapY);
+                    svg += `<line x1="${pvPadX + 8}" y1="${lineY1}" x2="${pvPadX + 8}" y2="${lineY2}" stroke="#dc2626" stroke-width="1" stroke-dasharray="3"/>`;
+                    svg += `<line x1="${pvPadX + pvGridW - panelGapX - 8}" y1="${lineY1}" x2="${pvPadX + pvGridW - panelGapX - 8}" y2="${lineY2}" stroke="#2563eb" stroke-width="1" stroke-dasharray="3"/>`;
+                }
             }
         }
         // Voltage/current labels below panel grid
@@ -43128,7 +43186,7 @@ const PVCalculator = {
             svg += `<text x="${mX+mW/2}" y="${mY+29}" text-anchor="middle" font-size="9" fill="#2563eb">Max PV: ${mppt.maxPower}W</text>`;
             svg += `<text x="${mX+mW/2}" y="${mY+42}" text-anchor="middle" font-size="8.5" fill="#3b82f6">V: ${mppt.minVoltage}\u2013${mppt.maxOperatingVoltage}\u2013${mppt.maxVoltage}V</text>`;
             svg += `<text x="${mX+mW/2}" y="${mY+55}" text-anchor="middle" font-size="8.5" fill="#3b82f6">Imax: ${mppt.maxCurrent}A | Charge: ${mppt.maxChargeCurrent}A</text>`;
-            svg += `<text x="${mX+mW/2}" y="${mY+68}" text-anchor="middle" font-size="8" fill="#60a5fa">${mppt.inputCount > 1 ? mppt.inputCount + ' MPPT inputs' : '1 MPPT input'}</text>`;
+            svg += `<text x="${mX+mW/2}" y="${mY+68}" text-anchor="middle" font-size="8" fill="#60a5fa">${isMultiMPPT ? mpptCount + ' MPPT channels active' : (mppt.inputCount > 1 ? mppt.inputCount + ' MPPT inputs' : '1 MPPT input')}</text>`;
             svg += `<text x="${mX+mW/2}" y="${mY+82}" text-anchor="middle" font-size="7.5" fill="#93c5fd">Voc(cold) ${pv.stringVocCold}V ${pv.stringVocCold <= mppt.maxVoltage ? '\u2714' : '\u2718'} | Isc ${pv.arrayIsc}A ${pv.arrayIsc <= mppt.maxCurrent ? '\u2714' : '\u2718'}</text>`;
 
             // Inverter sub-box (right)
@@ -43139,7 +43197,7 @@ const PVCalculator = {
             svg += `<text x="${iX+iW/2}" y="${iY+42}" text-anchor="middle" font-size="8.5" fill="#3b82f6">Surge: ${surgeCap}VA (${surgeMultiplier}x)</text>`;
             svg += `<text x="${iX+iW/2}" y="${iY+55}" text-anchor="middle" font-size="8.5" fill="#3b82f6">DC In: ${inv.dcInputCurrentContinuous}A / ${inv.dcInputCurrentSurge}A</text>`;
             const phSym = config.phaseType === 'three_phase' ? ' 3\u03C6' : config.phaseType === 'split' ? ' Split' : ' 1\u03C6';
-            svg += `<text x="${iX+iW/2}" y="${iY+68}" text-anchor="middle" font-size="8.5" fill="#3b82f6">${inv.dcBusVoltage}VDC \u2192 ${config.acVoltage}VAC${phSym}</text>`;
+            svg += `<text x="${iX+iW/2}" y="${iY+68}" text-anchor="middle" font-size="8.5" fill="#3b82f6">${svgBankV}VDC \u2192 ${config.acVoltage}VAC${phSym}</text>`;
             svg += `<text x="${iX+iW/2}" y="${iY+82}" text-anchor="middle" font-size="8" fill="#60a5fa">Pure Sine Wave</text>`;
 
             // Arrow MPPT → Inverter
@@ -43157,7 +43215,14 @@ const PVCalculator = {
             const rightBranchX = colStartX_h + battBoxWPre + colGapPre + rightColWPre / 2;
 
             svg += `<line x1="${leftBranchX}" y1="${Y}" x2="${leftBranchX}" y2="${Y+22}" stroke="#dc2626" stroke-width="2.5"/>`;
-            svg += `<line x1="${rightBranchX}" y1="${Y}" x2="${rightBranchX}" y2="${Y+22}" stroke="#7c3aed" stroke-width="2.5"/>`;
+            if (isThreePhase) {
+                svg += `<line x1="${rightBranchX - 6}" y1="${Y}" x2="${rightBranchX - 6}" y2="${Y+22}" stroke="#7c3aed" stroke-width="1.8"/>`;
+                svg += `<line x1="${rightBranchX}" y1="${Y}" x2="${rightBranchX}" y2="${Y+22}" stroke="#7c3aed" stroke-width="1.8"/>`;
+                svg += `<line x1="${rightBranchX + 6}" y1="${Y}" x2="${rightBranchX + 6}" y2="${Y+22}" stroke="#7c3aed" stroke-width="1.8"/>`;
+                svg += `<text x="${rightBranchX + 14}" y="${Y + 13}" font-size="7" fill="#7c3aed">L1 L2 L3</text>`;
+            } else {
+                svg += `<line x1="${rightBranchX}" y1="${Y}" x2="${rightBranchX}" y2="${Y+22}" stroke="#7c3aed" stroke-width="2.5"/>`;
+            }
             if (battCableLabel) svg += `<text x="${leftBranchX-8}" y="${Y+14}" text-anchor="end" font-size="7.5" fill="#dc2626">DC ${battCableLabel}</text>`;
             if (acCableLabel) svg += `<text x="${rightBranchX+8}" y="${Y+14}" font-size="7.5" fill="#7c3aed">AC ${acCableLabel}</text>`;
             Y += 22;
@@ -43166,12 +43231,36 @@ const PVCalculator = {
             const bbW = 140, bbH = 36;
             svg += `<rect x="${leftBranchX-bbW/2}" y="${Y}" width="${bbW}" height="${bbH}" rx="4" fill="#fee2e2" stroke="#dc2626" stroke-width="1.5"/>`;
             svg += `<text x="${leftBranchX}" y="${Y+14}" text-anchor="middle" font-size="9" font-weight="bold" fill="#991b1b">Battery DC MCCB</text>`;
-            svg += `<text x="${leftBranchX}" y="${Y+28}" text-anchor="middle" font-size="8.5" fill="#b91c1c">${battBreakerLabel}</text>`;
+            svg += `<text x="${leftBranchX}" y="${Y+28}" text-anchor="middle" font-size="8.5" fill="#b91c1c">${battBreakerLabelDisplay}</text>`;
 
             // AC MCB (right)
             svg += `<rect x="${rightBranchX-bbW/2}" y="${Y}" width="${bbW}" height="${bbH}" rx="4" fill="#f3e8ff" stroke="#7c3aed" stroke-width="1.5"/>`;
             svg += `<text x="${rightBranchX}" y="${Y+14}" text-anchor="middle" font-size="9" font-weight="bold" fill="#5b21b6">AC MCB</text>`;
             svg += `<text x="${rightBranchX}" y="${Y+28}" text-anchor="middle" font-size="8.5" fill="#7c3aed">${acBreakerLabel}</text>`;
+            // AC service phase badge (shown when multi-phase selected)
+            if (isThreePhase || isSplitPhase) {
+                const badgeW = 64, badgeH = 14;
+                const badgeX = rightBranchX - badgeW/2;
+                const badgeY = Y - badgeH - 2;
+                svg += `<rect x="${badgeX}" y="${badgeY}" width="${badgeW}" height="${badgeH}" rx="7" fill="#ede9fe" stroke="#7c3aed" stroke-width="1"/>`;
+                svg += `<text x="${rightBranchX}" y="${badgeY + 10}" text-anchor="middle" font-size="8" font-weight="bold" fill="#5b21b6">${acServiceBadge}</text>`;
+            }
+            // Utility Grid node — right of AC MCB for all hybrid/grid-tie systems
+            if (isHybrid) {
+                const gridSize = 56;
+                const gridX = rightBranchX + bbW/2 + 18;
+                const gridY = Y - 2;
+                const gridStroke = isPureGridTie ? '#0891b2' : '#0e7490';
+                const gridFill = isPureGridTie ? '#cffafe' : '#ecfeff';
+                svg += `<rect x="${gridX}" y="${gridY}" width="${gridSize}" height="${bbH + 4}" rx="6" fill="${gridFill}" stroke="${gridStroke}" stroke-width="1.5"/>`;
+                svg += `<text x="${gridX + gridSize/2}" y="${gridY + 14}" text-anchor="middle" font-size="9" font-weight="bold" fill="#155e75">Utility</text>`;
+                svg += `<text x="${gridX + gridSize/2}" y="${gridY + 26}" text-anchor="middle" font-size="8.5" fill="#155e75">Grid</text>`;
+                svg += `<text x="${gridX + gridSize/2}" y="${gridY + 36}" text-anchor="middle" font-size="7" fill="#0e7490">${acServiceBadge}</text>`;
+                const arrY = gridY + (bbH + 4) / 2;
+                svg += `<line x1="${rightBranchX + bbW/2 + 2}" y1="${arrY}" x2="${gridX - 2}" y2="${arrY}" stroke="${gridStroke}" stroke-width="1.5"/>`;
+                svg += `<polygon points="${gridX - 6},${arrY - 4} ${gridX - 6},${arrY + 4} ${gridX - 1},${arrY}" fill="${gridStroke}"/>`;
+                svg += `<polygon points="${rightBranchX + bbW/2 + 6},${arrY - 4} ${rightBranchX + bbW/2 + 6},${arrY + 4} ${rightBranchX + bbW/2 + 1},${arrY}" fill="${gridStroke}"/>`;
+            }
             Y += bbH;
 
             // Wires down to battery bank and AC loads
@@ -43190,11 +43279,16 @@ const PVCalculator = {
             // Battery title — split into 2 lines for mixed banks to prevent overflow
             if (isMixedBank) {
                 svg += `<text x="${leftBranchX}" y="${Y+12}" text-anchor="middle" font-size="10" font-weight="bold" fill="#166534">Battery Bank \u2014 ${batt.chemistryName}</text>`;
-                svg += `<text x="${leftBranchX}" y="${Y+23}" text-anchor="middle" font-size="8.5" fill="#166534">${battMixedTitleDesc} = ${batt.bankVoltage}V/${Math.round(batt.totalCapacityAh)}Ah</text>`;
+                svg += `<text x="${leftBranchX}" y="${Y+23}" text-anchor="middle" font-size="8.5" fill="#166534">${battMixedTitleDesc} = ${svgBankV}V/${Math.round(batt.totalCapacityAh)}Ah</text>`;
             } else {
-                const _battTitle = `Battery Bank \u2014 ${batt.chemistryName} | ${batt.bankVoltage}V / ${actualBankAh}Ah`;
+                const _battTitle = `Battery Bank \u2014 ${batt.chemistryName} | ${svgBankV}V / ${actualBankAh}Ah`;
                 const battTitleFont = _battTitle.length > 70 ? 8 : _battTitle.length > 40 ? 9 : 11;
                 svg += `<text x="${leftBranchX}" y="${Y+15}" text-anchor="middle" font-size="${battTitleFont}" font-weight="bold" fill="#166534">${_battTitle}</text>`;
+            }
+
+            if (isPureGridTie) {
+                svg += `<rect x="${battBoxX}" y="${Y}" width="${battBoxW}" height="${battBoxH}" rx="${boxR}" fill="#94a3b8" opacity="0.18" pointer-events="none"/>`;
+                svg += `<text x="${leftBranchX}" y="${Y + battBoxH - 6}" text-anchor="middle" font-size="8" font-weight="bold" fill="#475569">Optional / peak-shaving</text>`;
             }
 
             // Draw every battery — centered within the (possibly wider) box
@@ -43248,7 +43342,7 @@ const PVCalculator = {
             const bSpecFont = battBoxW < 300 ? 7.5 : 8.5;
             const bSpecLine = battBoxW < 300 ? 10 : 12;
             const battSpecDesc1 = isMixedBank
-                ? `${totalBatteries} batteries: ${battMixedTitleDesc} | ${batt.bankVoltage}V`
+                ? `${totalBatteries} batteries: ${battMixedTitleDesc} | ${svgBankV}V`
                 : `${totalBatteries}x ${unitVoltage}V/${selectedAh}Ah (${batteriesInSeries}S${parallelStrings > 1 ? ' x ' + parallelStrings + 'P' : ''})`;
             svg += `<text x="${leftBranchX}" y="${battSpecY + bSpecLine}" text-anchor="middle" font-size="${bSpecFont}" fill="#16a34a">${battSpecDesc1}</text>`;
             svg += `<text x="${leftBranchX}" y="${battSpecY + bSpecLine*2}" text-anchor="middle" font-size="${bSpecFont}" fill="#16a34a">Usable: ${batt.usableCapacityWh}Wh (${(specs.maxDoD*100).toFixed(0)}% DoD)</text>`;
@@ -43259,7 +43353,7 @@ const PVCalculator = {
             const ldW = rightColWPre, ldH = 90, ldX = rightBranchX - ldW/2;
             svg += `<rect x="${ldX}" y="${Y}" width="${ldW}" height="${ldH}" rx="${boxR}" fill="#faf5ff" stroke="#7c3aed" stroke-width="2"/>`;
             svg += `<text x="${rightBranchX}" y="${Y+16}" text-anchor="middle" font-size="11" font-weight="bold" fill="#5b21b6">AC Loads</text>`;
-            svg += `<text x="${rightBranchX}" y="${Y+32}" text-anchor="middle" font-size="9.5" fill="#7c3aed">${config.acVoltage}V AC | ${config.phaseType === 'three_phase' ? '3-Phase board' : 'Distribution Board'}</text>`;
+            svg += `<text x="${rightBranchX}" y="${Y+32}" text-anchor="middle" font-size="9.5" fill="#7c3aed">${acServiceBadge} | ${isThreePhase ? '3-Phase board' : isSplitPhase ? 'Split-phase board' : 'Distribution Board'}</text>`;
             svg += `<text x="${rightBranchX}" y="${Y+46}" text-anchor="middle" font-size="9" fill="#8b5cf6">Daily: ${details.aggregation?.dailyEnergyWh || '\u2014'}Wh</text>`;
             svg += `<text x="${rightBranchX}" y="${Y+60}" text-anchor="middle" font-size="9" fill="#8b5cf6">Peak: ${details.aggregation?.peakSimultaneousVA || '\u2014'}VA</text>`;
             svg += `<text x="${rightBranchX}" y="${Y+74}" text-anchor="middle" font-size="8" fill="#a78bfa">${phaseAllocation ? `Limit: ${phaseAllocation.limitingPhase} ${Math.round(phaseAllocation.limitingPhasePeakVA)}VA | ${phaseAllocation.imbalancePct}% imb.` : `Continuous: ${inv.continuousVARequired}VA needed`}</text>`;
@@ -43274,7 +43368,7 @@ const PVCalculator = {
             svg += `<text x="${cx}" y="${Y+16}" text-anchor="middle" font-size="12" font-weight="bold" fill="#1d4ed8">MPPT Charge Controller</text>`;
             svg += `<text x="${cx}" y="${Y+30}" text-anchor="middle" font-size="9" fill="#3b82f6">Standalone | Max PV: ${mppt.maxPower}W</text>`;
             svg += `<text x="${cx}" y="${Y+44}" text-anchor="middle" font-size="8.5" fill="#2563eb">V: ${mppt.minVoltage}\u2013${mppt.maxOperatingVoltage}\u2013${mppt.maxVoltage}V | I: ${mppt.maxCurrent}A | Charge: ${mppt.maxChargeCurrent}A</text>`;
-            svg += `<text x="${cx}" y="${Y+58}" text-anchor="middle" font-size="8" fill="#60a5fa">${mppt.inputCount > 1 ? mppt.inputCount + ' inputs' : '1 input'} | Voc(cold) ${pv.stringVocCold}V ${pv.stringVocCold <= mppt.maxVoltage ? '\u2714' : '\u2718'} | Isc ${pv.arrayIsc}A ${pv.arrayIsc <= mppt.maxCurrent ? '\u2714' : '\u2718'}</text>`;
+            svg += `<text x="${cx}" y="${Y+58}" text-anchor="middle" font-size="8" fill="#60a5fa">${isMultiMPPT ? mpptCount + ' MPPT channels active' : (mppt.inputCount > 1 ? mppt.inputCount + ' inputs' : '1 input')} | Voc(cold) ${pv.stringVocCold}V ${pv.stringVocCold <= mppt.maxVoltage ? '\u2714' : '\u2718'} | Isc ${pv.arrayIsc}A ${pv.arrayIsc <= mppt.maxCurrent ? '\u2714' : '\u2718'}</text>`;
             Y += mpptH;
 
             // Wire to DC bus
@@ -43292,7 +43386,7 @@ const PVCalculator = {
             const busLeft = Math.min(battBranchX - battBoxWPre/2 - 10, W/2 - 20);
             const busRight = Math.max(invBranchX + rightColWPre/2 + 10, W/2 + 20);
             svg += `<line x1="${busLeft}" y1="${Y}" x2="${busRight}" y2="${Y}" stroke="#dc2626" stroke-width="3"/>`;
-            svg += `<text x="${(busLeft+busRight)/2}" y="${Y-5}" text-anchor="middle" font-size="8.5" font-weight="bold" fill="#dc2626">${batt.bankVoltage}V DC Bus</text>`;
+            svg += `<text x="${(busLeft+busRight)/2}" y="${Y-5}" text-anchor="middle" font-size="8.5" font-weight="bold" fill="#dc2626">${svgBankV}V DC Bus</text>`;
 
             svg += `<line x1="${battBranchX}" y1="${Y}" x2="${battBranchX}" y2="${Y+22}" stroke="#dc2626" stroke-width="2.5"/>`;
             svg += `<line x1="${invBranchX}" y1="${Y}" x2="${invBranchX}" y2="${Y+22}" stroke="#dc2626" stroke-width="2.5"/>`;
@@ -43302,7 +43396,7 @@ const PVCalculator = {
             // Battery DC MCCB (left)
             svg += `<rect x="${battBranchX-bbW/2}" y="${Y}" width="${bbW}" height="${bbH}" rx="4" fill="#fee2e2" stroke="#dc2626" stroke-width="1.5"/>`;
             svg += `<text x="${battBranchX}" y="${Y+14}" text-anchor="middle" font-size="9" font-weight="bold" fill="#991b1b">Battery DC MCCB</text>`;
-            svg += `<text x="${battBranchX}" y="${Y+28}" text-anchor="middle" font-size="8.5" fill="#b91c1c">${battBreakerLabel}</text>`;
+            svg += `<text x="${battBranchX}" y="${Y+28}" text-anchor="middle" font-size="8.5" fill="#b91c1c">${battBreakerLabelDisplay}</text>`;
 
             // Inverter (right)
             const iW = rightColWPre, iH = 90, iX = invBranchX - iW/2;
@@ -43313,7 +43407,7 @@ const PVCalculator = {
             svg += `<text x="${invBranchX}" y="${Y+30}" text-anchor="middle" font-size="8.5" fill="#3b82f6">${inv.recommendedSizeVA} VA cont | Surge: ${surgeCap}VA</text>`;
             svg += `<text x="${invBranchX}" y="${Y+44}" text-anchor="middle" font-size="8" fill="#2563eb">DC: ${inv.dcInputCurrentContinuous}A / ${inv.dcInputCurrentSurge}A surge</text>`;
             const phSym2 = config.phaseType === 'three_phase' ? ' 3\u03C6' : config.phaseType === 'split' ? ' Split' : ' 1\u03C6';
-            svg += `<text x="${invBranchX}" y="${Y+58}" text-anchor="middle" font-size="8" fill="#3b82f6">${inv.dcBusVoltage}VDC \u2192 ${config.acVoltage}VAC${phSym2} Pure Sine</text>`;
+            svg += `<text x="${invBranchX}" y="${Y+58}" text-anchor="middle" font-size="8" fill="#3b82f6">${svgBankV}VDC \u2192 ${config.acVoltage}VAC${phSym2} Pure Sine</text>`;
             svg += `<text x="${invBranchX}" y="${Y+72}" text-anchor="middle" font-size="7.5" fill="#60a5fa">Need: ${Math.round(inv.continuousVARequired)}VA cont | ${Math.round(inv.surgeVARequired)}VA surge</text>`;
             svg += `</g>`;
 
@@ -43332,9 +43426,9 @@ const PVCalculator = {
             // Battery title — split into 2 lines for mixed banks to prevent overflow
             if (isMixedBank) {
                 svg += `<text x="${battBranchX}" y="${battBankY+12}" text-anchor="middle" font-size="10" font-weight="bold" fill="#166534">Battery Bank \u2014 ${batt.chemistryName}</text>`;
-                svg += `<text x="${battBranchX}" y="${battBankY+23}" text-anchor="middle" font-size="8.5" fill="#166534">${battMixedTitleDesc} = ${batt.bankVoltage}V/${Math.round(batt.totalCapacityAh)}Ah</text>`;
+                svg += `<text x="${battBranchX}" y="${battBankY+23}" text-anchor="middle" font-size="8.5" fill="#166534">${battMixedTitleDesc} = ${svgBankV}V/${Math.round(batt.totalCapacityAh)}Ah</text>`;
             } else {
-                const _battTitle2 = `Battery Bank \u2014 ${batt.chemistryName} | ${batt.bankVoltage}V / ${actualBankAh}Ah`;
+                const _battTitle2 = `Battery Bank \u2014 ${batt.chemistryName} | ${svgBankV}V / ${actualBankAh}Ah`;
                 const battTitleFont2 = _battTitle2.length > 70 ? 8 : _battTitle2.length > 40 ? 9 : 11;
                 svg += `<text x="${battBranchX}" y="${battBankY+15}" text-anchor="middle" font-size="${battTitleFont2}" font-weight="bold" fill="#166534">${_battTitle2}</text>`;
             }
@@ -43383,7 +43477,7 @@ const PVCalculator = {
             const bSpecFont2 = battBoxW < 300 ? 7.5 : 8.5;
             const bSpecLine2 = battBoxW < 300 ? 10 : 12;
             const battSpecDesc2 = isMixedBank
-                ? `${totalBatteries} batteries: ${battMixedTitleDesc} | ${batt.bankVoltage}V`
+                ? `${totalBatteries} batteries: ${battMixedTitleDesc} | ${svgBankV}V`
                 : `${totalBatteries}x ${unitVoltage}V/${selectedAh}Ah (${batteriesInSeries}S${parallelStrings > 1 ? ' x ' + parallelStrings + 'P' : ''})`;
             svg += `<text x="${battBranchX}" y="${battSpecY2 + bSpecLine2}" text-anchor="middle" font-size="${bSpecFont2}" fill="#16a34a">${battSpecDesc2}</text>`;
             svg += `<text x="${battBranchX}" y="${battSpecY2 + bSpecLine2*2}" text-anchor="middle" font-size="${bSpecFont2}" fill="#16a34a">Usable: ${batt.usableCapacityWh}Wh (${(specs.maxDoD*100).toFixed(0)}% DoD)</text>`;
@@ -43392,7 +43486,14 @@ const PVCalculator = {
 
             // Wire from inverter to AC Breaker
             const invBottom = Y + iH;
-            svg += `<line x1="${invBranchX}" y1="${invBottom}" x2="${invBranchX}" y2="${invBottom+18}" stroke="#7c3aed" stroke-width="2.5"/>`;
+            if (isThreePhase) {
+                svg += `<line x1="${invBranchX - 6}" y1="${invBottom}" x2="${invBranchX - 6}" y2="${invBottom+18}" stroke="#7c3aed" stroke-width="1.8"/>`;
+                svg += `<line x1="${invBranchX}" y1="${invBottom}" x2="${invBranchX}" y2="${invBottom+18}" stroke="#7c3aed" stroke-width="1.8"/>`;
+                svg += `<line x1="${invBranchX + 6}" y1="${invBottom}" x2="${invBranchX + 6}" y2="${invBottom+18}" stroke="#7c3aed" stroke-width="1.8"/>`;
+                svg += `<text x="${invBranchX + 14}" y="${invBottom + 12}" font-size="7" fill="#7c3aed">L1 L2 L3</text>`;
+            } else {
+                svg += `<line x1="${invBranchX}" y1="${invBottom}" x2="${invBranchX}" y2="${invBottom+18}" stroke="#7c3aed" stroke-width="2.5"/>`;
+            }
             if (acCableLabel) svg += `<text x="${invBranchX+10}" y="${invBottom+12}" font-size="7.5" fill="#7c3aed">AC ${acCableLabel}</text>`;
 
             // AC MCB
@@ -43400,6 +43501,14 @@ const PVCalculator = {
             svg += `<rect x="${invBranchX-abW/2}" y="${abY}" width="${abW}" height="${abH}" rx="4" fill="#f3e8ff" stroke="#7c3aed" stroke-width="1.5"/>`;
             svg += `<text x="${invBranchX}" y="${abY+14}" text-anchor="middle" font-size="9" font-weight="bold" fill="#5b21b6">AC MCB</text>`;
             svg += `<text x="${invBranchX}" y="${abY+28}" text-anchor="middle" font-size="8.5" fill="#7c3aed">${acBreakerLabel}</text>`;
+            // AC service phase badge (off-grid)
+            if (isThreePhase || isSplitPhase) {
+                const badgeW = 64, badgeH = 14;
+                const badgeX = invBranchX - badgeW/2;
+                const badgeY = abY - badgeH - 2;
+                svg += `<rect x="${badgeX}" y="${badgeY}" width="${badgeW}" height="${badgeH}" rx="7" fill="#ede9fe" stroke="#7c3aed" stroke-width="1"/>`;
+                svg += `<text x="${invBranchX}" y="${badgeY + 10}" text-anchor="middle" font-size="8" font-weight="bold" fill="#5b21b6">${acServiceBadge}</text>`;
+            }
 
             // Wire to AC Loads
             svg += `<line x1="${invBranchX}" y1="${abY+abH}" x2="${invBranchX}" y2="${abY+abH+16}" stroke="#7c3aed" stroke-width="2.5"/>`;
@@ -43408,7 +43517,7 @@ const PVCalculator = {
             const ldW = rightColWPre, ldH = 90, ldX = invBranchX - ldW/2, ldY = abY + abH + 16;
             svg += `<rect x="${ldX}" y="${ldY}" width="${ldW}" height="${ldH}" rx="${boxR}" fill="#faf5ff" stroke="#7c3aed" stroke-width="2"/>`;
             svg += `<text x="${invBranchX}" y="${ldY+16}" text-anchor="middle" font-size="11" font-weight="bold" fill="#5b21b6">AC Loads</text>`;
-            svg += `<text x="${invBranchX}" y="${ldY+32}" text-anchor="middle" font-size="9.5" fill="#7c3aed">${config.acVoltage}V AC | ${config.phaseType === 'three_phase' ? '3-Phase board' : 'Distribution Board'}</text>`;
+            svg += `<text x="${invBranchX}" y="${ldY+32}" text-anchor="middle" font-size="9.5" fill="#7c3aed">${acServiceBadge} | ${isThreePhase ? '3-Phase board' : isSplitPhase ? 'Split-phase board' : 'Distribution Board'}</text>`;
             svg += `<text x="${invBranchX}" y="${ldY+46}" text-anchor="middle" font-size="9" fill="#8b5cf6">Daily: ${details.aggregation?.dailyEnergyWh || '\u2014'}Wh</text>`;
             svg += `<text x="${invBranchX}" y="${ldY+60}" text-anchor="middle" font-size="9" fill="#8b5cf6">Peak: ${details.aggregation?.peakSimultaneousVA || '\u2014'}VA</text>`;
             svg += `<text x="${invBranchX}" y="${ldY+74}" text-anchor="middle" font-size="8" fill="#a78bfa">${phaseAllocation ? `Limit: ${phaseAllocation.limitingPhase} ${Math.round(phaseAllocation.limitingPhasePeakVA)}VA | ${phaseAllocation.imbalancePct}% imb.` : `Continuous: ${inv.continuousVARequired}VA | Surge: ${inv.surgeVARequired}VA`}</text>`;
@@ -43423,7 +43532,7 @@ const PVCalculator = {
         const svgH = Y + 20;
         svg = `<svg id="systemDiagramSvg" viewBox="0 0 ${W} ${svgH}" style="width:100%; max-width:${W}px; height:auto; display:block; margin:0 auto;">` +
               `<rect width="${W}" height="${svgH}" rx="12" fill="var(--bg-color, #f8fafc)" stroke="var(--border-color, #e2e8f0)" stroke-width="1.5"/>` +
-              `<text x="${cx}" y="28" text-anchor="middle" font-size="15" font-weight="bold" fill="var(--text-color, #1e293b)">${isHybrid ? 'Hybrid' : 'Off-Grid'} Solar System \u2014 Full Configuration</text>` +
+              `<text x="${cx}" y="28" text-anchor="middle" font-size="15" font-weight="bold" fill="var(--text-color, #1e293b)">${isPureGridTie ? 'Grid-Tied' : isHybrid ? 'Hybrid' : 'Off-Grid'} Solar System \u2014 Full Configuration</text>` +
               (() => {
                   const cs = details.confidenceScore ?? this.results?.confidenceScore ?? 100;
                   const cl = details.confidenceLevel ?? this.results?.confidenceLevel ?? 'High';
