@@ -1,7 +1,7 @@
 # Fix Batch Roadmap — PV Calculator
 
 This document tracks all planned fix batches in priority order.
-Updated after each batch. Last update: 2026-05-18 (post-Batch 25C).
+Updated after each batch. Last update: 2026-05-18 (post-Batch 26A).
 
 ---
 
@@ -53,6 +53,7 @@ Updated after each batch. Last update: 2026-05-18 (post-Batch 25C).
 | Batch 25A | cbb52db | 2026-05-18 | SVG renderOverviewTab: svgBankV from unitVoltage×seriesStrings (13 voltage label fixes — battery 48V→24V bug); dual/triple MPPT string split with channel headers + M1-Sx labels; 3-phase L1/L2/L3 conductor stripes + acServiceBadge; grid-tie Utility Grid node + bidirectional arrow; pure grid-tie battery optional overlay; system title "Grid-Tied" aware |
 | Batch 25B | 6a17a8f | 2026-05-18 | 5 chemistry crash guards (4 × DEFAULTS.BATTERY_SPECS[key] in 10-engines.ts + 1 × .cellVoltage in controller); grid-tie backup label replaced with "no backup / exports to utility" message; MPPT Validation gate relaxed from usesStandaloneMPPT to R.mpptValidation (hybrid + grid-tie systems now show validation on cover page) |
 | Batch 25C | 062a6fe | 2026-05-18 | installationScale field ('residential'/'commercial'/'utility') derived from arrayWattage after PV Practical Engine; Commercial Plant Engineering PDF section (≥ 50 kWp: transformer kVA, combiner count, DC cable notes, IEC 61724-1 SCADA, region-keyed grid code); SVG panel grid capped at 16 rows for single-MPPT arrays with dashed DC Combiner Box indicator for hidden strings |
+| Batch 26A | c6be0b5 | 2026-05-18 | BatterySizingEngine.calculate() extended with optional hints arg (unitAh, unitCount); engine applies constraints before cell-selection: locked Ah overrides selectLithiumCellAh, locked count overrides stringsParallel + warns if bank Ah < 90% target; return object gains isAhOverride/isUnitCountOverride/autoSuggestedStrings; getBatteryHints() controller helper reads auto-mode fields; 40-line post-engine unit-count patch removed |
 
 ---
 
@@ -60,20 +61,25 @@ Updated after each batch. Last update: 2026-05-18 (post-Batch 25C).
 
 ---
 
-### Batch 26 — Smart Partial-Auto Battery Mode (feature)
+### Batch 26B — Auto/Manual UX Differentiation + Engine Summary Card (feature)
 
-User request: in auto mode, if the user fills some battery fields (e.g. voltage = 48V, Ah left blank), the engine treats filled fields as hard constraints and auto-sizes only what's left.
+Batch 26A (engine foundation) is done. Batch 26B adds the full visual layer.
 
-**Design:**
-```js
-// In getConfig — read battery "hints":
-batteryHints: {
-    bankVoltage: (el.value && el.value !== '0') ? parseInt(el.value) : null,
-    chemistry:   chemEl.value || null,
-    // null = auto-choose, non-null = respect this value
-}
-```
-Engine: when `hints.bankVoltage !== null`, use it as a hard constraint on unit selection, then size Ah to meet daily energy target at that voltage. When all hints are null, existing auto-select behavior unchanged.
+**Scope:**
+- **AUTO badge** (green) + **MANUAL badge** (amber) on the battery card header — replaces current `#batteryManualIndicator` chip; auto mode shows "Switch to Manual →" link, manual shows prominent "Reset to Auto" button
+- **Field lock indicators** — in auto mode, empty field = soft green border; filled field = solid green lock border (`is-auto` / `is-locked` CSS classes toggled by `refreshBatteryFieldLockStates()`)
+- **Engine summary card** (`#batteryEngineSummary`) — pre-calc: "Engine will decide / Run Calculate to see recommendation"; post-calc: 5-cell grid showing bank V / chemistry / unit Ah / strings / total kWh with green lock on user-locked cells + "Why? ▾" expand showing engine reasoning
+- **Pre-calculate inline validation** — field-level warnings below each lockable input (voltage bus too low for VA, count × Ah below autonomy target, etc.); uses cached `this._lastDailyEnergyWh`
+- **"Auto" option on batteryUnitVoltage** — currently defaults to "12V" with no auto option; add `<option value="auto" selected>Auto (engine picks)</option>` as first option; extend `getBatteryHints()` to read voltage hint when selection ≠ "auto"
+- **Warning inline routing** — engine warnings tagged `{ field, severity, text }` rendered below the offending input; stack normalised back to strings after routing so existing `renderBatteryTab` works unchanged
+
+**Key functions to add to controller:**
+- `applyBatteryModeChrome(isManual)` — drives all badge/subtitle/summary visibility
+- `refreshBatteryFieldLockStates()` — applies `is-locked`/`is-auto` CSS to each field
+- `validateBatteryFieldInline(fieldId)` + `computeBatteryPreCalcValidation(fieldId)` — pre-calc field checks
+- `renderBatteryEngineSummary(battery, hints)` — post-calc summary card render
+- `toggleBatteryEngineWhy()` — Why? expand/collapse
+- `switchToManualFromBattery()` + `resetBatteryToAuto()` — header button handlers
 
 ---
 
@@ -99,4 +105,4 @@ Engine: when `hints.bankVoltage !== null`, use it as a hard constraint on unit s
 - Build must pass (`npm run build` exit 0) before any commit
 - After committing, run `git log origin/main..HEAD --oneline` — if any lines appear, those commits are NOT pushed. Run `git push origin main`.
 
-*Last updated: 2026-05-18 (post-Batch 25C — installationScale, commercial PDF section, SVG combiner cap; Batch 26 remains)*
+*Last updated: 2026-05-18 (post-Batch 26A — engine hints API; Batch 26B UX layer remains)*

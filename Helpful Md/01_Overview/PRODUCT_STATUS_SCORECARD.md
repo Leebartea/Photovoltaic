@@ -161,6 +161,17 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 26A — Smart Battery Hints Engine Foundation (commit c6be0b5 — 2026-05-18)
+
+- **Engine hints API** — `BatterySizingEngine.calculate()` accepts optional 5th arg `hints: { unitAh, unitCount }`; fully backwards-compatible (undefined = existing auto behaviour)
+- **unitAh constraint** — when user selects a specific Ah tier in auto mode, engine uses it instead of `selectLithiumCellAh()`; parallel string count adjusts to meet total capacity target
+- **unitCount constraint** — when user enters a unit count, engine uses it as `stringsParallel`; emits a plain-string warning if delivered Ah falls below 90% of target autonomy
+- **Return object enriched** — `isAhOverride`, `isUnitCountOverride`, `autoSuggestedStrings` now in every battery result; used by controller note and (in 26B) by the engine summary card
+- **Post-engine patch removed** — the 40-line unit-count override block that mutated `battery.*` after the fact is gone; `getBatteryHints()` controller helper reads auto-mode fields and passes them as engine input; `noteEl` update simplified to 6 lines using engine flags
+- **Invisible to users** — no DOM or CSS changes; behaviour is identical for all existing use cases; foundation for 26B visual layer
+
+---
+
 ### Batch 25C — Commercial Scale: installationScale + Commercial PDF + SVG Combiner (commit 062a6fe — 2026-05-18)
 
 - **installationScale field** — `pvArray.installationScale` (`'residential'` / `'commercial'` / `'utility'`) derived after PV Practical Engine from `arrayWattage` thresholds (≥ 500 kWp = utility, ≥ 50 kWp = commercial); available in PDF and SVG scope
