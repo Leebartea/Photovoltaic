@@ -18468,6 +18468,14 @@ const BackendRuntime = {
    UI CONTROLLER - Connects UI to calculation engines
    ============================================================================= */
 
+const GRID_EMISSION_FACTORS = {
+    lagos_ng: 0.42, nairobi_ke: 0.10, accra_gh: 0.41,
+    us_south: 0.39, us_north: 0.31, brazil: 0.10,
+    eu_central: 0.32, eu_south: 0.21, india: 0.71,
+    uae: 0.49, australia: 0.56, generic: 0.45
+};
+const GRID_EMISSION_FACTOR_DEFAULT = 0.45;
+
 const PVCalculator = {
     results: null,
     editingIndex: null,  // Track which appliance is being edited
@@ -39513,6 +39521,30 @@ const PVCalculator = {
                     }
                 }
             }
+
+            // --- Energy & Performance KPIs (Batch 29) ---
+            const kpis = this.getEnergyKPIs(R);
+            if (kpis.annualKWh > 0) {
+                y += 4;
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(9);
+                doc.setTextColor(...COLORS.PRIMARY);
+                doc.text('Energy & Performance', mL, y);
+                y += 5;
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(...COLORS.NORMAL);
+                labelValue('Annual production (est.):', `${kpis.annualKWh.toLocaleString()} kWh/yr`);
+                labelValue('Specific yield:', `${kpis.specificYield.toLocaleString()} kWh/kWp/yr`);
+                labelValue('Performance ratio (PR):', `${kpis.performanceRatio}%  (IEC 61724-1 basis; 75–85% typical)`);
+                labelValue('CO₂ avoided (est.):', `${kpis.co2KgYr.toLocaleString()} kg/yr  (${kpis.emFactor} kg CO₂/kWh — ${kpis.regionName})`);
+                if (kpis.vocCold > 0) {
+                    const vocStatus = kpis.vocPass
+                        ? `PASS — ${kpis.vocHeadroomPct !== null ? kpis.vocHeadroomPct + '% headroom' : 'within limit'}`
+                        : `FAIL — exceeds inverter max`;
+                    labelValue('Voc(cold) check:', `${kpis.vocCold}V vs ${kpis.mpptMaxV}V — ${vocStatus}`);
+                }
+            }
+
             labelValue('Total Appliances:', `${LoadEngine.appliances.length}  |  Daily: ${Math.round(agg.dailyEnergyWh)} Wh`);
             if (phaseAllocation) {
                 labelValue('3-Phase Balance:', `${phaseAllocation.classificationLabel} (${phaseAllocation.imbalancePct}%)  |  Limiting phase: ${phaseAllocation.limitingPhase} at ${Math.round(phaseAllocation.limitingPhasePeakVA)}VA`);
@@ -41508,6 +41540,40 @@ const PVCalculator = {
     /**
      * Get MPPT specifications from form
      */
+    getEnergyKPIs(R) {
+        const pv = R.pvArray || {};
+        const losses = R.losses || {};
+        const config = R.config || {};
+        const mpptVal = R.mpptValidation || {};
+
+        const dailyDC = pv.dailyEnergyWh || 0;
+        const arrayWp = pv.arrayWattage || 1;
+        const psh = config.avgPSH || 4;
+
+        const netDaily = losses.netAvailableEnergyDaily
+            || dailyDC * ((losses.overallSystemEfficiency || 80) / 100);
+
+        const annualKWh = Math.round(netDaily * 365 / 100) / 10;
+        const specificYield = Math.round(netDaily * 365 / (arrayWp / 1000));
+        const performanceRatio = (psh > 0 && arrayWp > 0)
+            ? Math.round(netDaily / (psh * arrayWp) * 1000) / 10 : 0;
+
+        const locationKey = config.location || 'generic';
+        const emFactor = GRID_EMISSION_FACTORS[locationKey] || GRID_EMISSION_FACTOR_DEFAULT;
+        const co2KgYr = Math.round(annualKWh * emFactor);
+
+        const vocPass = mpptVal.maxPVVoltageOK !== false;
+        const vocHeadroomPct = typeof mpptVal.voltageHeadroomPercent === 'number'
+            ? Math.round(mpptVal.voltageHeadroomPercent * 10) / 10 : null;
+        const vocCold = pv.stringVocCold || 0;
+        const mpptMaxV = config.mpptMaxVoltage || config.mpptMaxVocLimit || 500;
+        const regionName = (config.locationProfile && config.locationProfile.name)
+            || locationKey;
+
+        return { annualKWh, specificYield, performanceRatio, co2KgYr, emFactor,
+                 vocPass, vocHeadroomPct, vocCold, mpptMaxV, regionName };
+    },
+
     getMPPT() {
         const inputCount = parseInt(document.getElementById('mpptInputCount').value) || 1;
 
@@ -42734,6 +42800,17 @@ const PVCalculator = {
                     : `Up to ${surgeCap.toLocaleString()} VA startup capacity with current surge setting`
             }
         ];
+
+        const snap = this.getEnergyKPIs(this.results);
+        if (snap.annualKWh > 0) {
+            metrics.push({ value: `${snap.annualKWh.toLocaleString()} kWh`, label: 'Year-1 production', note: `${snap.specificYield.toLocaleString()} kWh/kWp/yr specific yield` });
+            metrics.push({ value: `${snap.performanceRatio}%`, label: 'Performance ratio (PR)', note: 'AC delivered ÷ nameplate potential — IEC 61724-1' });
+            metrics.push({ value: `${snap.co2KgYr.toLocaleString()} kg/yr`, label: 'CO₂ avoided', note: `${snap.emFactor} kg CO₂/kWh grid factor (${snap.regionName})` });
+            if (snap.vocCold > 0) {
+                const vocLabel = snap.vocPass ? '✔ PASS' : '✘ FAIL';
+                metrics.push({ value: vocLabel, label: 'String Voc(cold)', note: `${snap.vocCold}V vs ${snap.mpptMaxV}V — ${snap.vocPass ? (snap.vocHeadroomPct !== null ? snap.vocHeadroomPct + '% headroom' : 'within limit') : 'exceeds max'}` });
+            }
+        }
 
         return `
             <div class="card">
@@ -43986,7 +44063,13 @@ const PVCalculator = {
         html += row('Max PV Input Power', `${mppt.maxPower} W`, true);
         html += row('Max Charge Current', `${mppt.maxChargeCurrent} A`);
         if (mppt.inputCount > 1) html += row('MPPT Inputs', `${mppt.inputCount}`);
-        html += row('Voc (Cold) vs Max Voltage', `${pv.stringVocCold}V / ${mppt.maxVoltage}V ${pv.stringVocCold <= mppt.maxVoltage ? '\u2714 OK' : '\u2718 EXCEEDS'}`, true);
+        const _vocPass = R.mpptValidation?.maxPVVoltageOK !== false;
+        const _vocHeadroom = R.mpptValidation?.voltageHeadroomPercent;
+        const _vocBadge = _vocPass
+            ? '<span style="background:#16a34a;color:#fff;padding:1px 7px;border-radius:4px;font-size:0.8em;font-weight:700;">PASS</span>'
+            : '<span style="background:#dc2626;color:#fff;padding:1px 7px;border-radius:4px;font-size:0.8em;font-weight:700;">FAIL</span>';
+        const _vocDetail = _vocPass && _vocHeadroom != null ? ` (${Math.round(_vocHeadroom * 10) / 10}% headroom)` : _vocPass ? '' : ' \u2014 exceeds max';
+        html += row('Voc (Cold) vs Max Voltage', `${pv.stringVocCold}V / ${mppt.maxVoltage}V ${_vocBadge}${_vocDetail}`, true);
         html += row('Array Isc vs Max Current', `${pv.arrayIsc}A / ${mppt.maxCurrent}A ${pv.arrayIsc <= mppt.maxCurrent ? '\u2714 OK' : '\u2718 EXCEEDS'}`);
         html += `</div>`;
 
