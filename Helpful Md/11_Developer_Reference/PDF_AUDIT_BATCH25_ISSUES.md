@@ -400,3 +400,27 @@ const svgBankV = Math.max(
 *All 28 fixes are SVG-layer only. No engine changes required.*
 
 *Documented: 2026-05-18 — Opus full dive (uninterrupted), exact line numbers verified*
+
+---
+
+## Batch 25B — Opus Verified (2026-05-18)
+
+Commit: `6a17a8f` — 7 edits, 5 files, build exit 0.
+
+| ID | Status | Finding |
+|----|--------|---------|
+| B25B-1 (F2-b) | VERIFIED | `getConfig` reads `phaseType` from DOM; round-trip to `PhaseBalancingEngine` confirmed (key is `phaseType`, not `phases`) |
+| B25B-2 (F3-b) | VERIFIED | `mpptCount` pipe lives in `getMPPT()` (correct); `allMPPTs[]` array built at controller:22763–22794; reaches `MultiMPPTEngine` |
+| B25B-3 (F4-b) | VERIFIED | No `<= 2` cap in `MultiMPPTDistributor`; engine handles arbitrary channel count |
+| B25B-4 (F4-c) | DEFERRED | DOM allows up to 3 (triple MPPT); quad-MPPT requires new DOM inputs `mppt4*` + controller wiring — deferred to separate batch |
+| B25B-5 (F6-a) | VERIFIED | DOM chemistry select values (`lifepo4`, `agm`, `gel`, `fla`) exactly match `DEFAULTS.BATTERY_SPECS` keys in `00-defaults.ts` |
+| B25B-6 (F6-b) | FIXED | 4 unguarded `DEFAULTS.BATTERY_SPECS[chemistry]` at engines.ts:1816, 3518, 4434, 4505 — all now have `\|\| DEFAULTS.BATTERY_SPECS.lifepo4` fallback |
+| B25B-7 (F6-c) | AUTO-FIXED | `chemistryName: specs.name` is safe once B25B-6 line 1816 is guarded; no separate edit required |
+| B25B-8 (F1-b) | FIXED | Backup-hours bullet wrapped in `if (systemTypeValue !== 'grid_tie')` else-branch with explicit "no backup / exports to utility" message |
+| B25B-9 (F1-c) | FIXED | MPPT Validation gate changed from `commercial?.usesStandaloneMPPT && R.mpptValidation` to `R.mpptValidation`; `Standalone MPPT:` labelValue nested inside new gate |
+| B25B-10 (F1-d) | VERIFIED | Finance summary already computes `annualExportKWh × exportCreditPerKWh` for `['hybrid', 'grid_tie']`; hook is wired |
+| B25B-11 (F2-c) | VERIFIED | `ThreePhaseLoadAllocator` pushes imbalance warning at `>10%`; aggregation + `collectAllWarnings` chain confirmed intact |
+
+**Bonus fix applied:** `30-controller.js:22977` — unguarded `DEFAULTS.BATTERY_SPECS[batteryChemistry].cellVoltage` wrapped with `(... || DEFAULTS.BATTERY_SPECS.lifepo4).cellVoltage`
+
+*Documented: 2026-05-18 — Opus verification pass, Batch 25B commit 6a17a8f*

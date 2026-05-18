@@ -1,7 +1,7 @@
 # Fix Batch Roadmap — PV Calculator
 
 This document tracks all planned fix batches in priority order.
-Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
+Updated after each batch. Last update: 2026-05-18 (post-Batch 25B).
 
 ---
 
@@ -51,46 +51,11 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 | Batch 23B | fb09916 | 2026-05-17 | 15 medium/low PDF fixes: P6 agg.dailyEnergyWh div-zero; P7 pv.totalPanels div-zero (2 sites); P8 hard-block rect uncapped; P9 multi-MPPT channel table; P10 Override State hidden in local-build-up; P11 phase currentA NaN guard; P12 confidence text splitTextToSize; P13 SVG selector by ID; P14 drawTable truncation via getTextWidth; P15 footer companyName capped 40 chars; P16 blank strategic note guards; P17 neutral conductor IEC 60364 ≤16mm² fix; P18 diacritics normalised in filename; P19 duplicate addPageFooter removed; P20 validityDays plural consistent |
 | Batch 24  | e670aa5 | 2026-05-17 | P17 remaining neutral IEC 60364 (marketMm2+sizeRangeDisplay); B1 hard-block rect overflow guard; B2 maxPhaseI NaN→0; B3 MPPT channel table client gate; B4 client safety page (hard blocks + warnings in plain language); B5 locKey config.location not DOM; B6 reportTitle keyed off audienceMode; B7 negative marginWh sign-aware label; B8 dead audienceMode!=client removed; B9 isExpertPdf from config snapshot; B10 PDF appliances from R.appliances snapshot |
 | Batch 25A | cbb52db | 2026-05-18 | SVG renderOverviewTab: svgBankV from unitVoltage×seriesStrings (13 voltage label fixes — battery 48V→24V bug); dual/triple MPPT string split with channel headers + M1-Sx labels; 3-phase L1/L2/L3 conductor stripes + acServiceBadge; grid-tie Utility Grid node + bidirectional arrow; pure grid-tie battery optional overlay; system title "Grid-Tied" aware |
+| Batch 25B | 6a17a8f | 2026-05-18 | 5 chemistry crash guards (4 × DEFAULTS.BATTERY_SPECS[key] in 10-engines.ts + 1 × .cellVoltage in controller); grid-tie backup label replaced with "no backup / exports to utility" message; MPPT Validation gate relaxed from usesStandaloneMPPT to R.mpptValidation (hybrid + grid-tie systems now show validation on cover page) |
 
 ---
 
 ## Open Batches (Planned)
-
----
-
-### Batch 25A — SVG Diagram Feature Gaps (HIGH — user-reported + Opus audit)
-
-Full details in `PDF_AUDIT_BATCH25_ISSUES.md`.
-
-Three SVG gaps confirmed by Opus audit. All share the same root cause: `renderSystemDiagram` has no branches for systemType, phase count, or MPPT count.
-
-**25A fixes (implement together — same function):**
-- **F3-a** — Dual/triple MPPT: SVG never shows multiple string groups — diagram ignores `mpptCount` / `multiMPPTResult.channels` (user-confirmed: fields appear but SVG unchanged)
-- **F2-a** — 3-phase: SVG shows single conductor output — no L1/L2/L3/N symbols or "3φ 400/230V" badge on inverter AC output
-- **F1-a** — Grid-tie: SVG shows off-grid topology — no grid utility node, bidirectional meter, or export arrow for `systemType === 'grid_tie'`
-- **SVG-BV** — Battery bank header, MCCB, and inverter DC label show wrong voltage in auto mode — reads stale `batt.bankVoltage` (config default 24V) instead of deriving from `batt.unitVoltage × batt.seriesStrings`
-
-**SVG-BV fix (battery voltage split-source bug):**
-In `renderSystemDiagram`, replace bare `batt.bankVoltage` references in the battery header title, MCCB voltage label, and inverter DC-In label with:
-```js
-const svgBankV = (batt.unitVoltage || 0) * (batt.seriesStrings || 1) || batt.bankVoltage;
-```
-
----
-
-### Batch 25B — Feature Verification + Config Pipe Fixes (MEDIUM/LOW)
-
-- **F1-b** — Cover page backup-hours line rendered for grid-tie (meaningless; show export kWh instead)
-- **F1-c** — `usesStandaloneMPPT` gate conflates hardware flag with Voc/Isc electrical validation
-- **F1-d** — Grid-tie finance: export-credit revenue flow not confirmed in `calculateCommercialFinanceSummary`
-- **F2-b** — `getConfig` phase pickup: verify `phases` field read from DOM reaches `PhaseBalancingEngine`
-- **F2-c** — Phase-imbalance warning: confirm it flows into `allWarnings` (page 3 list)
-- **F3-b** — `mpptCount` field-to-engine pipe: verify `config.mpptCount` reaches `MultiMPPTEngine`
-- **F4-b** — Engine 3-MPPT input limit: grep `10-engines.ts` for `<= 2` clamp in channel distribution
-- **F4-c** — DOM `mpptCount` select: confirm max value allows 3 or 4
-- **F6-a** — Battery chemistry keys: enumerate `DEFAULTS.BATTERY_SPECS`, verify DOM select `value` attrs match
-- **F6-b** — `battChemSpecs` guard: confirm all `DEFAULTS.BATTERY_SPECS[batt.chemistry]` accesses in `10-engines.ts` are guarded
-- **F6-c** — `chemistryName` fallback: confirm undefined-safe label when unknown chemistry key
 
 ---
 
@@ -141,4 +106,4 @@ Engine: when `hints.bankVoltage !== null`, use it as a hard constraint on unit s
 - Build must pass (`npm run build` exit 0) before any commit
 - After committing, run `git log origin/main..HEAD --oneline` — if any lines appear, those commits are NOT pushed. Run `git push origin main`.
 
-*Last updated: 2026-05-18 (post-Batch 25A — SVG diagram feature gaps closed; Batch 25B–C + Batch 26 remain)*
+*Last updated: 2026-05-18 (post-Batch 25B — chemistry guards + grid-tie PDF fixes; Batch 25C + Batch 26 remain)*

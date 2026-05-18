@@ -161,6 +161,16 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 25B — Engine Chemistry Guards + Grid-Tie PDF Fixes (commit 6a17a8f — 2026-05-18)
+
+- **Chemistry crash guards (10-engines.ts)** — 4 bare `DEFAULTS.BATTERY_SPECS[chemistry]` accesses at lines 1816, 3518, 4434, 4505 now have `|| DEFAULTS.BATTERY_SPECS.lifepo4` fallback; unknown chemistry keys (e.g., from imported project data) no longer crash the sizing engine
+- **Chemistry guard (controller)** — `DEFAULTS.BATTERY_SPECS[batteryChemistry].cellVoltage` at line 22977 wrapped with fallback; same crash class as above, now covered
+- **Grid-tie backup label** — client cover page "Average-load backup target: about Site verification required" replaced with explicit "Backup capability: none — grid-tie configuration exports to utility instead of storing energy on-site" for `systemType === 'grid_tie'`
+- **MPPT Validation gate** — cover page MPPT Validation row was gated on `commercial.usesStandaloneMPPT` (off-grid only); now gates on `R.mpptValidation` — hybrid and grid-tie systems show string Voc/Isc validation results on the cover page; standalone MPPT info line preserved nested inside the new gate
+- **Opus audit result** — 6 of 11 Batch 25B items confirmed already wired (phase pickup, mpptCount pipe, engine channel limit, chemistry key match, finance export-credit, phase-imbalance chain); 4 deferred (quad-MPPT DOM option needs full controller wiring)
+
+---
+
 ### Batch 25A — SVG Diagram: Battery Voltage, MPPT Split, 3-Phase, Grid-Tie (commit cbb52db — 2026-05-18)
 
 - **SVG-BV (battery voltage)** — `svgBankV` computed from `unitVoltage × batteriesInSeries` (not the engine's tier-guessed `bankVoltage`); fixes 13 label sites — battery bank title, inverter DC→AC label, DC bus label, Battery DC MCCB suffix, and battery spec lines in both hybrid and off-grid branches; user-selected 48V now displays correctly throughout SVG
