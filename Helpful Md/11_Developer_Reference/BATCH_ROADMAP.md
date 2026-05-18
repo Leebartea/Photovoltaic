@@ -59,6 +59,7 @@ Updated after each batch. Last update: 2026-05-18 (post-Batch 26B + Hotfix).
 | Hotfix: Dual MPPT SVG | 0c84121 | 2026-05-18 | SVG panel grid renders all MPPT channels (mpptTotalRows = sum of ch.config.parallel replaces primary-only p); per-channel series in inner column loop; multi-MPPT PV Array title shows each channel S×P joined with + |
 | Batch 27 | bcd6c8d → 7569d80 | 2026-05-18 | Split-pane independent scroll: .main-grid align-items:start; .input-column + .results-column position:sticky top:0, max-height:100vh, overflow-y:auto, scroll-behavior:smooth, scrollbar-gutter:stable; .results-column .tabs sticky top:0; header scrolls naturally (app-shell approach reverted — caused tiny columns); mobile ≤1024px unchanged |
 | Batch 28 | ab7ab0d | 2026-05-18 | Quad-MPPT: option 4 (Quad MPPT) on mpptInputCount select; mppt4Section DOM block (mppt4MaxVoltage/Current/Power/MinVoltage/MaxOperatingVoltage/MaxChargeCurrent, hidden by default); toggleMultiMPPT() show/hide for count≥4; getMPPT() push for inputCount≥4; engine + SVG generic — zero engine/SVG changes needed |
+| Batch 29 | bfbd937 | 2026-05-18 | Engineering KPIs: GRID_EMISSION_FACTORS 11-region table (0.42–0.71 kg CO₂/kWh) + 0.45 fallback; getEnergyKPIs(R) helper (annual kWh, specific yield kWh/kWp/yr, PR % IEC 61724-1, CO₂ avoided, Voc pass/fail + headroom); PDF cover "Energy & Performance" subsection (5 rows); Executive Snapshot 4 new metric tiles; PV detail tab Voc green PASS / red FAIL pill badge |
 
 ---
 
@@ -88,4 +89,4 @@ Updated after each batch. Last update: 2026-05-18 (post-Batch 26B + Hotfix).
 - Build must pass (`npm run build` exit 0) before any commit
 - After committing, run `git log origin/main..HEAD --oneline` — if any lines appear, those commits are NOT pushed. Run `git push origin main`.
 
-*Last updated: 2026-05-18 (post-Batch 28 — Quad-MPPT done; all 1/2/3/4 MPPT inputs fully supported)*
+*Last updated: 2026-05-18 (post-Batch 29 — engineering KPIs done; remaining carry-forwards: IEC/NEC citations, brand on cover, monthly bar chart, assumptions ledger, commissioning checklist, revision history)*

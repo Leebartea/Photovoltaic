@@ -161,6 +161,16 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 29 — Engineering KPIs + CO₂ + Voc Badge (commit bfbd937 — 2026-05-18)
+
+- **`GRID_EMISSION_FACTORS`** — 11-region lookup table (Nigeria 0.42, Kenya 0.10, Ghana 0.41, US South 0.39, Brazil 0.10, EU Central 0.32, India 0.71, UAE 0.49, Australia 0.56, etc.) + 0.45 kg CO₂/kWh global fallback; keyed on `config.location`
+- **`getEnergyKPIs(R)` helper** — single source of truth for all 4 KPIs; computes AC-delivered energy from `losses.netAvailableEnergyDaily` (with `overallSystemEfficiency` fallback); returns `annualKWh`, `specificYield` (kWh/kWp/yr), `performanceRatio` (%, IEC 61724-1 basis), `co2KgYr`, `emFactor`, `vocPass`, `vocHeadroomPct`, `vocCold`, `mpptMaxV`, `regionName`
+- **PDF cover page** — new "Energy & Performance" subsection after MPPT Validation block: Annual production / Specific yield / Performance Ratio (with typical range note) / CO₂ avoided (with regional grid factor citation) / Voc(cold) PASS/FAIL check with headroom %
+- **Executive Snapshot** — up to 4 new metric tiles appended after existing metrics when `annualKWh > 0`: Year-1 production + specific yield note, PR%, CO₂ avoided + regional factor note, String Voc PASS/FAIL + voltage comparison
+- **PV detail tab** — Voc row upgraded from ✔/✘ glyph to green PASS / red FAIL pill badge with headroom percentage and voltage comparison
+
+---
+
 ### Batch 28 — Quad-MPPT (commit ab7ab0d — 2026-05-18)
 
 - **Option 4 added** to `mpptInputCount` select — "4 (Quad MPPT)" now appears alongside Single / Dual / Triple
