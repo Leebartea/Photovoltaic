@@ -161,6 +161,16 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Batch 25A — SVG Diagram: Battery Voltage, MPPT Split, 3-Phase, Grid-Tie (commit cbb52db — 2026-05-18)
+
+- **SVG-BV (battery voltage)** — `svgBankV` computed from `unitVoltage × batteriesInSeries` (not the engine's tier-guessed `bankVoltage`); fixes 13 label sites — battery bank title, inverter DC→AC label, DC bus label, Battery DC MCCB suffix, and battery spec lines in both hybrid and off-grid branches; user-selected 48V now displays correctly throughout SVG
+- **F3-a / F4-a (dual/triple MPPT)** — `mpptChannels` from `details.multiMPPTResult.distributions[recommended].mpptAssignments`; PV panel grid loop replaced with channel-aware version: dashed separator + "MPPT N — xS × yP" header per channel; parallel wires only connect rows within same channel; string labels use M1-S1 notation; MPPT sub-box label shows "N MPPT channels active" when multi-MPPT is active
+- **F2-a (3-phase indicators)** — `isThreePhase` / `isSplitPhase` flags + `acServiceBadge` ("3φ 400/230V" / "Split 240/120V" / "1φ NNV"); AC output wire replaced with three parallel L1/L2/L3 conductors when 3-phase; phase badge rendered near AC MCB in both branches; AC Loads subtitle uses `acServiceBadge`
+- **F1-a (grid-tie topology)** — `isPureGridTie` flag; Utility Grid node (cyan box) with bidirectional arrow rendered to right of AC MCB for all hybrid/grid-tie systems; pure grid-tie battery gets grey overlay + "Optional / peak-shaving" label; system title reads "Grid-Tied Solar System" for `grid_tie` type
+- **Column width** — `gridNodeWidth = isHybrid ? 80 : 0` added to `twoColW` to prevent clipping of grid node
+
+---
+
 ### Batch 24 — PDF Correctness + Client Safety + IEC 60364 Compliance (commit e670aa5 — 2026-05-17)
 
 - **P17 (complete)** — Neutral conductor fix completed: helper vars `phaseRecMm2`, `phaseMktMm2`, `reduceNeutral` now gate both `marketMm2` and `sizeRangeDisplay` on `> 16mm²`; PDF cable table now prints correct size with IEC 60364-5-52 §524.2 citation

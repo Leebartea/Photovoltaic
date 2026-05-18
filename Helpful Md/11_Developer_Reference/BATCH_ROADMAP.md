@@ -50,6 +50,7 @@ Updated after each batch. Last update: 2026-05-14 (post-Batch 18).
 | Batch 23A Hotfix | 71de307 | 2026-05-17 | P4 remainder: installer appendix block (if includeDetails → if includeDetails && audienceMode==='installer') to suppress engineering pages in client mode unconditionally |
 | Batch 23B | fb09916 | 2026-05-17 | 15 medium/low PDF fixes: P6 agg.dailyEnergyWh div-zero; P7 pv.totalPanels div-zero (2 sites); P8 hard-block rect uncapped; P9 multi-MPPT channel table; P10 Override State hidden in local-build-up; P11 phase currentA NaN guard; P12 confidence text splitTextToSize; P13 SVG selector by ID; P14 drawTable truncation via getTextWidth; P15 footer companyName capped 40 chars; P16 blank strategic note guards; P17 neutral conductor IEC 60364 ≤16mm² fix; P18 diacritics normalised in filename; P19 duplicate addPageFooter removed; P20 validityDays plural consistent |
 | Batch 24  | e670aa5 | 2026-05-17 | P17 remaining neutral IEC 60364 (marketMm2+sizeRangeDisplay); B1 hard-block rect overflow guard; B2 maxPhaseI NaN→0; B3 MPPT channel table client gate; B4 client safety page (hard blocks + warnings in plain language); B5 locKey config.location not DOM; B6 reportTitle keyed off audienceMode; B7 negative marginWh sign-aware label; B8 dead audienceMode!=client removed; B9 isExpertPdf from config snapshot; B10 PDF appliances from R.appliances snapshot |
+| Batch 25A | cbb52db | 2026-05-18 | SVG renderOverviewTab: svgBankV from unitVoltage×seriesStrings (13 voltage label fixes — battery 48V→24V bug); dual/triple MPPT string split with channel headers + M1-Sx labels; 3-phase L1/L2/L3 conductor stripes + acServiceBadge; grid-tie Utility Grid node + bidirectional arrow; pure grid-tie battery optional overlay; system title "Grid-Tied" aware |
 
 ---
 
@@ -140,4 +141,4 @@ Engine: when `hints.bankVoltage !== null`, use it as a hard constraint on unit s
 - Build must pass (`npm run build` exit 0) before any commit
 - After committing, run `git log origin/main..HEAD --oneline` — if any lines appear, those commits are NOT pushed. Run `git push origin main`.
 
-*Last updated: 2026-05-18 (post-Batch 24 verified; Batch 25A–C + Batch 26 planned from Opus feature audit)*
+*Last updated: 2026-05-18 (post-Batch 25A — SVG diagram feature gaps closed; Batch 25B–C + Batch 26 remain)*
