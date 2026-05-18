@@ -57,7 +57,7 @@ Updated after each batch. Last update: 2026-05-18 (post-Batch 26B + Hotfix).
 | Batch 26B | e68b2c1 | 2026-05-18 | AUTO/MANUAL badge header, field lock indicators (is-locked/is-auto), engine summary card with Why? expand, inline pre-calc validation (voltage bus, count×Ah vs autonomy), "Auto" option on batteryUnitVoltage, getBatteryHints() extended with voltage hint, applyBatteryModeChrome() + helpers, daily energy cache for pre-calc validation |
 | Hotfix 26B | fdc1ce2 | 2026-05-18 | Remove stale userBatteryUnitCount reference in post-override re-emit block — use battery.stringsInParallel; fixes calculation-on-restore crash |
 | Hotfix: Dual MPPT SVG | 0c84121 | 2026-05-18 | SVG panel grid renders all MPPT channels (mpptTotalRows = sum of ch.config.parallel replaces primary-only p); per-channel series in inner column loop; multi-MPPT PV Array title shows each channel S×P joined with + |
-| Batch 27 | bcd6c8d | 2026-05-18 | Split-pane independent scroll: @media (min-width: 1025px) app-shell (html/body height:100% overflow:hidden, .container flex-column, .main-grid flex:1 min-height:0), .input-column + .results-column overflow-y:auto scroll-behavior:smooth scrollbar-gutter:stable, .results-column .tabs position:sticky top:0; mobile ≤1024px unchanged |
+| Batch 27 | bcd6c8d → 7569d80 | 2026-05-18 | Split-pane independent scroll: .main-grid align-items:start; .input-column + .results-column position:sticky top:0, max-height:100vh, overflow-y:auto, scroll-behavior:smooth, scrollbar-gutter:stable; .results-column .tabs sticky top:0; header scrolls naturally (app-shell approach reverted — caused tiny columns); mobile ≤1024px unchanged |
 
 ---
 
