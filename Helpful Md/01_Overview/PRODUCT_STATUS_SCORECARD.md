@@ -161,6 +161,17 @@ That is why the score is `98/100` for commercial standard instead of `100/100`.
 
 The utility / mini-grid score remains `97/100`. The heavier lane is stronger because the packet, study, and witness exports now carry real deliverable-readiness state plus packet-routing discipline beside the utility-case timeline, stage gate, stage-template packet pack, deeper study-sheet basis fields like `Fault Level / SCC Ref`, `Relay Scheme Basis`, and `Transfer Scheme Basis`, a separate formal-study surface with scope cues, intake gates, screening snapshot, work pack, and data sheet, and a bounded protection/fault screening layer for AC current basis, breaker carry margin, relay/export fit, transfer-path fit, generator-source screening, limiting-phase line screening, feeder-lane connected-load screening, and fault-reference screening. It still should not be inflated into a formal feeder-study, interconnection-study, selectivity-study, or dispatch-calculation score.
 
+### Hotfix: Dual MPPT SVG Panel Grid (commit 0c84121 — 2026-05-18)
+
+**Root cause (Opus audit):** `pv.stringsInParallel` is overwritten with only the primary MPPT's parallel count after multi-MPPT distribution (line 23511); the SVG row-draw loop used bare `p = pv.stringsInParallel` as its bound, so for a 7S×1P + 7S×1P two-channel split `renderedRows = 1` — MPPT 2's panels, header, and dashed channel divider were never drawn.
+
+- **`mpptTotalRows`** — new derived value: `mpptChannels.reduce((sum, ch) => sum + (ch.config.parallel || 1), 0)` computed immediately after the channel map is built; used in place of `p` for `pvGridH`, `renderedRows`, and the `rowToChannel` padding guard when `isMultiMPPT` is true
+- **Per-channel column count** — inner panel-draw loop now iterates `chS` (the current channel's series count) instead of global `s`; correct even when channels carry different string depths
+- **Multi-MPPT PV Array title** — was `(${pv.panelsInSeries}S x ${pv.stringsInParallel}P)` (primary MPPT only, misleading); now each channel's S×P joined with ` + ` (e.g., `7S×1P + 7S×1P`); single-MPPT falls back to original format
+- **COMBINER_THRESHOLD guard confirmed innocent** — already gated on `!isMultiMPPT`; not the cause; no change needed
+
+---
+
 ### Batch 26B + Hotfix — Auto/Manual Battery UX (commits e68b2c1 + fdc1ce2 — 2026-05-18)
 
 - **AUTO / MANUAL badges** — green "AUTO" badge (engine sizes blanks) and amber "MANUAL" badge (values taken as-is) replace the old `#batteryManualIndicator` chip; "Switch to Manual →" link in auto mode, "Reset to Auto" button in manual mode

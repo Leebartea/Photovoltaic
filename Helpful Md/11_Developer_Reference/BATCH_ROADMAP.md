@@ -56,32 +56,11 @@ Updated after each batch. Last update: 2026-05-18 (post-Batch 26B + Hotfix).
 | Batch 26A | c6be0b5 | 2026-05-18 | BatterySizingEngine.calculate() extended with optional hints arg (unitAh, unitCount); engine applies constraints before cell-selection: locked Ah overrides selectLithiumCellAh, locked count overrides stringsParallel + warns if bank Ah < 90% target; return object gains isAhOverride/isUnitCountOverride/autoSuggestedStrings; getBatteryHints() controller helper reads auto-mode fields; 40-line post-engine unit-count patch removed |
 | Batch 26B | e68b2c1 | 2026-05-18 | AUTO/MANUAL badge header, field lock indicators (is-locked/is-auto), engine summary card with Why? expand, inline pre-calc validation (voltage bus, count×Ah vs autonomy), "Auto" option on batteryUnitVoltage, getBatteryHints() extended with voltage hint, applyBatteryModeChrome() + helpers, daily energy cache for pre-calc validation |
 | Hotfix 26B | fdc1ce2 | 2026-05-18 | Remove stale userBatteryUnitCount reference in post-override re-emit block — use battery.stringsInParallel; fixes calculation-on-restore crash |
+| Hotfix: Dual MPPT SVG | 0c84121 | 2026-05-18 | SVG panel grid renders all MPPT channels (mpptTotalRows = sum of ch.config.parallel replaces primary-only p); per-channel series in inner column loop; multi-MPPT PV Array title shows each channel S×P joined with + |
 
 ---
 
 ## Open Batches (Planned)
-
----
-
-### Batch 26B — Auto/Manual UX Differentiation + Engine Summary Card (feature)
-
-Batch 26A (engine foundation) is done. Batch 26B adds the full visual layer.
-
-**Scope:**
-- **AUTO badge** (green) + **MANUAL badge** (amber) on the battery card header — replaces current `#batteryManualIndicator` chip; auto mode shows "Switch to Manual →" link, manual shows prominent "Reset to Auto" button
-- **Field lock indicators** — in auto mode, empty field = soft green border; filled field = solid green lock border (`is-auto` / `is-locked` CSS classes toggled by `refreshBatteryFieldLockStates()`)
-- **Engine summary card** (`#batteryEngineSummary`) — pre-calc: "Engine will decide / Run Calculate to see recommendation"; post-calc: 5-cell grid showing bank V / chemistry / unit Ah / strings / total kWh with green lock on user-locked cells + "Why? ▾" expand showing engine reasoning
-- **Pre-calculate inline validation** — field-level warnings below each lockable input (voltage bus too low for VA, count × Ah below autonomy target, etc.); uses cached `this._lastDailyEnergyWh`
-- **"Auto" option on batteryUnitVoltage** — currently defaults to "12V" with no auto option; add `<option value="auto" selected>Auto (engine picks)</option>` as first option; extend `getBatteryHints()` to read voltage hint when selection ≠ "auto"
-- **Warning inline routing** — engine warnings tagged `{ field, severity, text }` rendered below the offending input; stack normalised back to strings after routing so existing `renderBatteryTab` works unchanged
-
-**Key functions to add to controller:**
-- `applyBatteryModeChrome(isManual)` — drives all badge/subtitle/summary visibility
-- `refreshBatteryFieldLockStates()` — applies `is-locked`/`is-auto` CSS to each field
-- `validateBatteryFieldInline(fieldId)` + `computeBatteryPreCalcValidation(fieldId)` — pre-calc field checks
-- `renderBatteryEngineSummary(battery, hints)` — post-calc summary card render
-- `toggleBatteryEngineWhy()` — Why? expand/collapse
-- `switchToManualFromBattery()` + `resetBatteryToAuto()` — header button handlers
 
 ---
 
@@ -120,4 +99,4 @@ User request: results tab and system config tab currently scroll together. Shoul
 - Build must pass (`npm run build` exit 0) before any commit
 - After committing, run `git log origin/main..HEAD --oneline` — if any lines appear, those commits are NOT pushed. Run `git push origin main`.
 
-*Last updated: 2026-05-18 (post-Batch 26B + Hotfix — full auto/manual UX done; Batch 27 split-pane layout queued)*
+*Last updated: 2026-05-18 (post-Hotfix Dual MPPT SVG — all MPPT channels now render; Batch 27 split-pane layout queued)*
