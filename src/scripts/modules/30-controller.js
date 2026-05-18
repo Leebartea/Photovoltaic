@@ -24907,10 +24907,13 @@ const PVCalculator = {
             : [];
         const mpptCount = mpptChannels.length;
         const isMultiMPPT = mpptCount > 1;
+        const mpptTotalRows = isMultiMPPT
+            ? mpptChannels.reduce((sum, ch) => sum + ((ch.config && ch.config.parallel) || ch.parallel || 1), 0)
+            : 0;
 
         // ===== SECTION 1: PV ARRAY — Full Panel Grid =====
         const pvPadX = Math.max(30, (W - pvGridW) / 2);
-        const pvGridH = p * (panelH + panelGapY);
+        const pvGridH = (isMultiMPPT ? mpptTotalRows : p) * (panelH + panelGapY);
         const pvSectionH = pvGridH + 80; // title + labels + grid
         Y = 42;
         const pvBoxX = pvPadX - 16, pvBoxW = pvGridW + 32;
@@ -24926,7 +24929,9 @@ const PVCalculator = {
             pvTitleDesc = groupDesc;
         }
         // PV title: reduce font when text is long to prevent overflow
-        const pvTitleFull = `PV Array \u2014 ${pvTitleDesc} = ${pv.arrayWattage}Wp (${pv.panelsInSeries}S x ${pv.stringsInParallel}P)`;
+        const pvTitleFull = isMultiMPPT
+            ? `PV Array \u2014 ${pvTitleDesc} = ${pv.arrayWattage}Wp (${mpptChannels.map(ch => `${(ch.config && ch.config.series) || ch.series}S\u00d7${(ch.config && ch.config.parallel) || ch.parallel}P`).join(' + ')})`
+            : `PV Array \u2014 ${pvTitleDesc} = ${pv.arrayWattage}Wp (${pv.panelsInSeries}S x ${pv.stringsInParallel}P)`;
         const pvTitleFontSize = pvTitleFull.length > 70 ? 8 : pvTitleFull.length > 40 ? 9 : 11;
         svg += `<text x="${pvBoxX + pvBoxW/2}" y="${Y+16}" text-anchor="middle" font-size="${pvTitleFontSize}" font-weight="bold" fill="#92400e">${pvTitleFull}</text>`;
         // Orientation/tilt subtitle in SVG when non-optimal
@@ -24948,7 +24953,7 @@ const PVCalculator = {
         // For large single-MPPT arrays (> 16 strings), cap rendered rows and show a combiner indicator.
         const COMBINER_THRESHOLD = 16;
         const useCombinerCap = !isMultiMPPT && p > COMBINER_THRESHOLD;
-        const renderedRows = useCombinerCap ? COMBINER_THRESHOLD : p;
+        const renderedRows = useCombinerCap ? COMBINER_THRESHOLD : (isMultiMPPT ? mpptTotalRows : p);
         const hiddenStrings = useCombinerCap ? (p - COMBINER_THRESHOLD) : 0;
 
         const pvGridStartY = Y + 26;
@@ -24958,24 +24963,24 @@ const PVCalculator = {
                 const rowsForChannel = (ch.config && ch.config.parallel) || ch.parallel || 1;
                 for (let r = 0; r < rowsForChannel; r++) rowToChannel.push(chIdx);
             });
-            while (rowToChannel.length < p) rowToChannel.push(mpptChannels.length - 1);
+            while (rowToChannel.length < (isMultiMPPT ? mpptTotalRows : p)) rowToChannel.push(mpptChannels.length - 1);
         }
         let panelIdx = 0;
         let lastChannel = -1;
         for (let row = 0; row < renderedRows; row++) {
             const channelIdx = isMultiMPPT ? rowToChannel[row] : 0;
+            const ch = isMultiMPPT ? mpptChannels[channelIdx] : null;
+            const chS = ch ? ((ch.config && ch.config.series) || ch.series || 0) : s;
+            const chP = ch ? ((ch.config && ch.config.parallel) || ch.parallel || 0) : p;
             if (isMultiMPPT && channelIdx !== lastChannel) {
                 const headerY = pvGridStartY + row * (panelH + panelGapY) - 4;
                 if (lastChannel !== -1) {
                     svg += `<line x1="${pvBoxX + 6}" y1="${headerY - 4}" x2="${pvBoxX + pvBoxW - 6}" y2="${headerY - 4}" stroke="#a16207" stroke-width="0.8" stroke-dasharray="4 3" opacity="0.7"/>`;
                 }
-                const ch = mpptChannels[channelIdx];
-                const chS = (ch.config && ch.config.series) || ch.series || 0;
-                const chP = (ch.config && ch.config.parallel) || ch.parallel || 0;
                 svg += `<text x="${pvBoxX + 8}" y="${headerY + 2}" font-size="8" font-weight="bold" fill="#7c2d12">MPPT ${channelIdx + 1} — ${chS}S × ${chP}P (${ch.panels}p)</text>`;
                 lastChannel = channelIdx;
             }
-            for (let col = 0; col < s; col++) {
+            for (let col = 0; col < (isMultiMPPT ? chS : s); col++) {
                 const px = pvPadX + col * (panelW + panelGapX);
                 const py = pvGridStartY + row * (panelH + panelGapY);
                 const thisWatt = perPanelWattages && panelIdx < perPanelWattages.length ? perPanelWattages[panelIdx] : panel.wattage;
